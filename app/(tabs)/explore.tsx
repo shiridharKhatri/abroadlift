@@ -1,31 +1,32 @@
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-  SafeAreaView,
-  StatusBar,
-  TextInput,
-  Platform,
-  Modal,
   ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { router } from "expo-router";
-import { Feather, Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
-import { searchUniversities, calculateAcceptanceChance, UniversityResult } from "../../lib/api";
-import { useFocusEffect } from "@react-navigation/native";
+import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
+import { useUser } from "../context/UserContext";
 
 const { width } = Dimensions.get("window");
 
 const THEME = {
-  primary: "#33BFFF", 
+  primary: "#33BFFF",
   secondary: "#004be3",
   textDark: "#111827",
   textGray: "#64748B",
@@ -66,7 +67,7 @@ export default function DashboardScreen() {
     // 1. Acceptance Chance calculation
     const gpa = parseFloat(user.cgpa || "0");
     const engScore = parseFloat(user.score || "0");
-    
+
     // Normalize GPA
     let gpaNorm = gpa / 4.0;
     if (gpa > 4.5) gpaNorm = gpa / 10.0;
@@ -114,7 +115,7 @@ export default function DashboardScreen() {
         try {
           setLoadingUnis(true);
           const { getCostOfLiving } = require("../../lib/api");
-          
+
           const [results, costData] = await Promise.all([
             searchUniversities("", userData.country || "UK"),
             getCostOfLiving(userData.country || "UK")
@@ -128,23 +129,23 @@ export default function DashboardScreen() {
               filtered = results.filter(uni => {
                 if (!uni.levels || uni.levels.length === 0) return true;
                 const uniLevels = uni.levels.map((l: string) => l.toLowerCase());
-                
+
                 if (userLevel.includes("bachelor") || userLevel.includes("undergrad")) {
-                   return uniLevels.some(l => l.includes("bachelor") || l.includes("undergrad"));
+                  return uniLevels.some(l => l.includes("bachelor") || l.includes("undergrad"));
                 }
                 if (userLevel.includes("master") || userLevel.includes("postgrad") || userLevel.includes("pg")) {
-                   return uniLevels.some(l => l.includes("master") || l.includes("postgrad") || l.includes("pg"));
+                  return uniLevels.some(l => l.includes("master") || l.includes("postgrad") || l.includes("pg"));
                 }
                 return true;
               });
             }
 
             setRecommendedUnis(filtered.slice(0, 5));
-            
+
             if (costData) {
               const monthlyUsd = costData.monthly_estimate_usd || 1500;
               const annualLivingUsd = monthlyUsd * 12;
-              
+
               // Tuition logic: use selected uni if available, else regional average
               let tuitionUsd = 20000;
               if (userData.selectedUniversities?.length > 0) {
@@ -154,7 +155,7 @@ export default function DashboardScreen() {
               const totalNpr = (annualLivingUsd + tuitionUsd) * USD_TO_NPR;
               setEstimatedCost(`NPR ${(totalNpr / 1000000).toFixed(1)}M`);
             }
-            
+
             calculateDynamicMetrics(userData);
             setLoadingUnis(false);
           }
@@ -171,7 +172,7 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
-      
+
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.greetingSection}>
@@ -179,10 +180,13 @@ export default function DashboardScreen() {
           <Text style={styles.subGreetingText}>Here's your abroad study overview</Text>
         </View>
         <View style={styles.topBarIcons}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => Alert.alert("Notifications", "You have no new notifications at this time.")}
+          >
             <Ionicons name="notifications-outline" size={24} color={THEME.textDark} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.profileButton}
             onPress={() => router.push("/(tabs)/profile")}
           >
@@ -191,18 +195,18 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={{ flex: 1 }}
-        showsVerticalScrollIndicator={false} 
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        
+
         {/* Global Search Bar */}
         <View style={styles.globalSearchContainer}>
           <View style={styles.globalSearchBar}>
             <Feather name="search" size={18} color="#94A3B8" />
-            <TextInput 
-              placeholder="Search university or courses" 
+            <TextInput
+              placeholder="Search university or courses"
               style={styles.globalSearchInput}
               placeholderTextColor="#94A3B8"
             />
@@ -213,14 +217,14 @@ export default function DashboardScreen() {
         </View>
 
         {/* Study Plan Card */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.studyPlanCard}
           onPress={() => setShowPlanModal(true)}
         >
           <View style={styles.studyPlanInfo}>
             <Text style={styles.flagEmoji}>{userData.flag || "🗺️"}</Text>
             <View style={styles.studyPlanTextWrapper}>
-                <Text style={styles.studyPlanLabel}>Study Plan <Text style={styles.studyCountry}>{userData.country || "Select country"}</Text></Text>
+              <Text style={styles.studyPlanLabel}>Study Plan <Text style={styles.studyCountry}>{userData.country || "Select country"}</Text></Text>
             </View>
           </View>
           <View style={styles.editButton}>
@@ -231,325 +235,325 @@ export default function DashboardScreen() {
 
         {/* Stats Row */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
-            {/* Estimated Cost Card */}
-            <View style={styles.statCard}>
-               <View>
-                 <View style={styles.statIconHeader}>
-                   <View style={[styles.statIconBox, { backgroundColor: "#F3F4F6" }]}>
-                     <MaterialCommunityIcons name="currency-usd" size={20} color={THEME.textDark} />
-                   </View>
-                   <Text style={styles.statTitle}>Estimated Cost</Text>
-                 </View>
-                 <Text style={styles.statValue}>{estimatedCost} <Text style={styles.statUnit}>/ year</Text></Text>
-                 <View style={styles.statBadge}>
-                   <View style={styles.affordableDot} />
-                   <Text style={styles.statBadgeText}>Affordable</Text>
-                 </View>
-                 <Text style={styles.statSubtitle}>Tuition + Living</Text>
-               </View>
-               <TouchableOpacity 
-                 style={styles.statButton}
-                 onPress={() => router.push({
-                   pathname: "/university/cost-breakdown",
-                   params: { country: userData.country || "UK" }
-                 })}
-               >
-                 <Text style={styles.statButtonText}>View Breakdown</Text>
-               </TouchableOpacity>
+          {/* Estimated Cost Card */}
+          <View style={styles.statCard}>
+            <View>
+              <View style={styles.statIconHeader}>
+                <View style={[styles.statIconBox, { backgroundColor: "#F3F4F6" }]}>
+                  <MaterialCommunityIcons name="currency-usd" size={20} color={THEME.textDark} />
+                </View>
+                <Text style={styles.statTitle}>Estimated Cost</Text>
+              </View>
+              <Text style={styles.statValue}>{estimatedCost} <Text style={styles.statUnit}>/ year</Text></Text>
+              <View style={styles.statBadge}>
+                <View style={styles.affordableDot} />
+                <Text style={styles.statBadgeText}>Affordable</Text>
+              </View>
+              <Text style={styles.statSubtitle}>Tuition + Living</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.statButton}
+              onPress={() => router.push({
+                pathname: "/university/cost-breakdown",
+                params: { country: userData.country || "UK" }
+              })}
+            >
+              <Text style={styles.statButtonText}>View Breakdown</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Admission Chances Card */}
+          <View style={styles.statCard}>
+            <View>
+              <View style={styles.statIconHeader}>
+                <View style={[styles.statIconBox, { backgroundColor: "#FFF7ED" }]}>
+                  <MaterialCommunityIcons name="target" size={20} color={THEME.orange} />
+                </View>
+                <Text style={styles.statTitle}>Acceptance Chance</Text>
+              </View>
+              <Text style={styles.statValue}>{acceptanceChance}</Text>
+
+              <View style={styles.checkRow}>
+                <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
+                <Text style={styles.checkText}>Good GPA</Text>
+              </View>
+              <View style={styles.checkRow}>
+                <Ionicons name="warning" size={16} color={THEME.orange} />
+                <Text style={styles.checkText}>Improve IELTS</Text>
+              </View>
             </View>
 
-             {/* Admission Chances Card */}
-             <View style={styles.statCard}>
-                <View>
-                  <View style={styles.statIconHeader}>
-                    <View style={[styles.statIconBox, { backgroundColor: "#FFF7ED" }]}>
-                      <MaterialCommunityIcons name="target" size={20} color={THEME.orange} />
-                    </View>
-                    <Text style={styles.statTitle}>Acceptance Chance</Text>
-                  </View>
-                  <Text style={styles.statValue}>{acceptanceChance}</Text>
-                  
-                  <View style={styles.checkRow}>
-                     <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                     <Text style={styles.checkText}>Good GPA</Text>
-                  </View>
-                  <View style={styles.checkRow}>
-                     <Ionicons name="warning" size={16} color={THEME.orange} />
-                     <Text style={styles.checkText}>Improve IELTS</Text>
-                  </View>
+            <TouchableOpacity
+              style={styles.statButton}
+              onPress={() => router.push("/university/admission-chance")}
+            >
+              <Text style={styles.statButtonText}>Set Goals</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Visa Readiness Card */}
+          <View style={styles.statCard}>
+            <View>
+              <View style={styles.statIconHeader}>
+                <View style={[styles.statIconBox, { backgroundColor: THEME.secondary }]}>
+                  <Text style={styles.visaIconText}>VISA</Text>
                 </View>
-
-                <TouchableOpacity 
-                  style={styles.statButton}
-                  onPress={() => router.push("/university/admission-chance")}
-                >
-                  <Text style={styles.statButtonText}>Set Goals</Text>
-                </TouchableOpacity>
-             </View>
-
-             {/* Visa Readiness Card */}
-             <View style={styles.statCard}>
-                <View>
-                  <View style={styles.statIconHeader}>
-                    <View style={[styles.statIconBox, { backgroundColor: THEME.secondary }]}>
-                      <Text style={styles.visaIconText}>VISA</Text>
-                    </View>
-                    <Text style={styles.statTitle}>Visa Readiness</Text>
-                  </View>
-                  <Text style={styles.statValue}>{visaReadiness}</Text>
-                  
-                  <View style={styles.progressBarContainer}>
-                     <View style={[styles.progressBarFull, { width: "60%", backgroundColor: THEME.blue }]} />
-                  </View>
-
-                  <View style={styles.checkRow}>
-                     <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                     <Text style={styles.checkText}>Strong Academics</Text>
-                  </View>
-                  <View style={styles.checkRow}>
-                     <Ionicons name="warning" size={16} color={THEME.orange} />
-                     <Text style={styles.checkText}>Financial Proof Weak</Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.statButton}
-                  onPress={() => router.push("/visa-readiness")}
-                >
-                  <Text style={styles.statButtonText}>Improve</Text>
-                </TouchableOpacity>
-             </View>
-         </ScrollView>
-
-         {/* Improve Your Chances Banner */}
-         <LinearGradient
-           colors={[THEME.primary, THEME.secondary]}
-           start={{ x: 0, y: 0 }}
-           end={{ x: 1, y: 1 }}
-           style={styles.improveBannerGradient}
-         >
-           <View style={styles.improveContent}>
-              <View style={styles.improveTitleRow}>
-                 <Ionicons name="sparkles" size={18} color="#FFE066" />
-                 <Text style={styles.improveTitle}>Improve Your Chances</Text>
+                <Text style={styles.statTitle}>Visa Readiness</Text>
               </View>
-              <Text style={styles.improveSubtitle}>Get personalized recommendations and actionable steps to boost your admissions success rate.</Text>
-              <TouchableOpacity 
-                 style={styles.viewPlanButton}
-                 onPress={() => router.push("/university/admission-chance")}
-              >
-                <Text style={styles.viewPlanButtonText}>View Plan</Text>
-              </TouchableOpacity>
-           </View>
-         </LinearGradient>
+              <Text style={styles.statValue}>{visaReadiness}</Text>
+
+              <View style={styles.progressBarContainer}>
+                <View style={[styles.progressBarFull, { width: "60%", backgroundColor: THEME.blue }]} />
+              </View>
+
+              <View style={styles.checkRow}>
+                <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
+                <Text style={styles.checkText}>Strong Academics</Text>
+              </View>
+              <View style={styles.checkRow}>
+                <Ionicons name="warning" size={16} color={THEME.orange} />
+                <Text style={styles.checkText}>Financial Proof Weak</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.statButton}
+              onPress={() => router.push("/visa-readiness")}
+            >
+              <Text style={styles.statButtonText}>Improve</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Improve Your Chances Banner */}
+        <LinearGradient
+          colors={[THEME.primary, THEME.secondary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.improveBannerGradient}
+        >
+          <View style={styles.improveContent}>
+            <View style={styles.improveTitleRow}>
+              <Ionicons name="sparkles" size={18} color="#FFE066" />
+              <Text style={styles.improveTitle}>Improve Your Chances</Text>
+            </View>
+            <Text style={styles.improveSubtitle}>Get personalized recommendations and actionable steps to boost your admissions success rate.</Text>
+            <TouchableOpacity
+              style={styles.viewPlanButton}
+              onPress={() => router.push("/university/admission-chance")}
+            >
+              <Text style={styles.viewPlanButtonText}>View Plan</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
 
         {/* Recommended Universities */}
         <View style={styles.sectionHeader}>
-           <View>
+          <View>
             <Text style={styles.sectionTitle}>Recommended Universities</Text>
             <Text style={styles.sectionSubtitle}>Based on your profile & budget</Text>
-           </View>
-           <TouchableOpacity onPress={() => router.push("/search")}>
-              <Text style={styles.seeAllText}>See All</Text>
-           </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={() => router.push("/search")}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
-           {loadingUnis ? (
-             <View style={{ width: width - 40, height: 280, justifyContent: 'center', alignItems: 'center' }}>
-               <ActivityIndicator size="large" color={THEME.blue} />
-               <Text style={{ marginTop: 12, color: THEME.textGray }}>Loading recommendations...</Text>
-             </View>
-           ) : recommendedUnis.length > 0 ? recommendedUnis.map((uni, idx) => (
-             <TouchableOpacity 
-               key={uni.id || idx} 
-               style={styles.uniCard}
-               onPress={() => router.push({
-                 pathname: "/university/[id]",
-                 params: { id: uni.id, country: uni.country, name: uni.name }
-               })}
-             >
-                <View style={styles.uniImageContainer}>
-                   <Image 
-                     source={{ uri: uni.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400" }} 
-                     style={styles.uniImage} 
-                   />
-                   <View style={styles.matchBadge}>
-                      <Text style={styles.matchText}>{calculateAcceptanceChance(userData, uni).score}% Match</Text>
-                   </View>
+          {loadingUnis ? (
+            <View style={{ width: width - 40, height: 280, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color={THEME.blue} />
+              <Text style={{ marginTop: 12, color: THEME.textGray }}>Loading recommendations...</Text>
+            </View>
+          ) : recommendedUnis.length > 0 ? recommendedUnis.map((uni, idx) => (
+            <TouchableOpacity
+              key={uni.id || idx}
+              style={styles.uniCard}
+              onPress={() => router.push({
+                pathname: "/university/[id]",
+                params: { id: uni.id, country: uni.country, name: uni.name }
+              })}
+            >
+              <View style={styles.uniImageContainer}>
+                <Image
+                  source={{ uri: uni.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400" }}
+                  style={styles.uniImage}
+                />
+                <View style={styles.matchBadge}>
+                  <Text style={styles.matchText}>{calculateAcceptanceChance(userData, uni).score}% Match</Text>
                 </View>
-                <View style={styles.uniCardContent}>
-                   <Text style={styles.uniCardName} numberOfLines={1}>{uni.name}</Text>
-                   <View style={styles.uniLocationRow}>
-                      <Ionicons name="location" size={14} color={THEME.orange} />
-                      <Text style={styles.uniLocationText} numberOfLines={1}>{uni.location}</Text>
-                   </View>
-                   <View style={styles.uniCostRow}>
-                      <Text style={styles.uniCostValue}>{uni.tuition}<Text style={styles.uniCostUnit}>/ year</Text></Text>
-                      <View style={[styles.safeBadge, { backgroundColor: uni.acceptanceRate && uni.acceptanceRate > 50 ? "#DCFCE7" : "#FFF7ED" }]}>
-                          <Text style={[styles.safeText, { color: uni.acceptanceRate && uni.acceptanceRate > 50 ? THEME.green : THEME.orange }]}>
-                            {uni.acceptanceRate && uni.acceptanceRate > 50 ? "Safe" : "Moderate"}
-                          </Text>
-                      </View>
-                   </View>
-                   <View style={styles.uniActions}>
-                      <TouchableOpacity style={styles.saveBtn}>
-                          <Text style={styles.saveBtnText}>Save</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={styles.compareBtn}
-                        onPress={() => router.push({
-                          pathname: "/university/[id]",
-                          params: { id: uni.id, country: uni.country, name: uni.name }
-                        })}
-                      >
-                          <Text style={styles.compareBtnText}>View</Text>
-                      </TouchableOpacity>
-                   </View>
+              </View>
+              <View style={styles.uniCardContent}>
+                <Text style={styles.uniCardName} numberOfLines={1}>{uni.name}</Text>
+                <View style={styles.uniLocationRow}>
+                  <Ionicons name="location" size={14} color={THEME.orange} />
+                  <Text style={styles.uniLocationText} numberOfLines={1}>{uni.location}</Text>
                 </View>
-             </TouchableOpacity>
-           )) : (
-             <View style={{ width: width - 40, height: 100, justifyContent: 'center', alignItems: 'center' }}>
-               <Text style={{ color: THEME.textGray }}>No recommendations found for {userData.country}</Text>
-             </View>
-           )}
+                <View style={styles.uniCostRow}>
+                  <Text style={styles.uniCostValue}>{uni.tuition}<Text style={styles.uniCostUnit}>/ year</Text></Text>
+                  <View style={[styles.safeBadge, { backgroundColor: uni.acceptanceRate && uni.acceptanceRate > 50 ? "#DCFCE7" : "#FFF7ED" }]}>
+                    <Text style={[styles.safeText, { color: uni.acceptanceRate && uni.acceptanceRate > 50 ? THEME.green : THEME.orange }]}>
+                      {uni.acceptanceRate && uni.acceptanceRate > 50 ? "Safe" : "Moderate"}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.uniActions}>
+                  <TouchableOpacity style={styles.saveBtn}>
+                    <Text style={styles.saveBtnText}>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.compareBtn}
+                    onPress={() => router.push({
+                      pathname: "/university/[id]",
+                      params: { id: uni.id, country: uni.country, name: uni.name }
+                    })}
+                  >
+                    <Text style={styles.compareBtnText}>View</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )) : (
+            <View style={{ width: width - 40, height: 100, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: THEME.textGray }}>No recommendations found for {userData.country}</Text>
+            </View>
+          )}
         </ScrollView>
 
         {/* Quick Actions */}
         <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginBottom: 16 }]}>Quick Actions</Text>
         <View style={styles.quickActionsGrid}>
-           <TouchableOpacity style={styles.quickActionItem}>
-              <View style={[styles.quickActionIconBox, { backgroundColor: "#E0F2FE" }]}>
-                <Ionicons name="search" size={20} color={THEME.blue} />
-              </View>
-              <Text style={styles.quickActionText}>Compare Universities</Text>
-           </TouchableOpacity>
-           <TouchableOpacity style={styles.quickActionItem}>
-              <View style={[styles.quickActionIconBox, { backgroundColor: "#F5F3FF" }]}>
-                <MaterialCommunityIcons name="file-document-outline" size={20} color="#8B5CF6" />
-              </View>
-              <Text style={styles.quickActionText}>View Documents</Text>
-           </TouchableOpacity>
-           <TouchableOpacity style={styles.quickActionItem}>
-              <View style={[styles.quickActionIconBox, { backgroundColor: "#DCFCE7" }]}>
-                <MaterialCommunityIcons name="bullseye-arrow" size={20} color={THEME.green} />
-              </View>
-              <Text style={styles.quickActionText}>Improve My Chances</Text>
-           </TouchableOpacity>
-           <TouchableOpacity style={styles.quickActionItem}>
-              <View style={[styles.quickActionIconBox, { backgroundColor: "#FFEDD5" }]}>
-                <Ionicons name="bookmark" size={20} color={THEME.orange} />
-              </View>
-              <Text style={styles.quickActionText}>Saved Universities</Text>
-           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionItem}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: "#E0F2FE" }]}>
+              <Ionicons name="search" size={20} color={THEME.blue} />
+            </View>
+            <Text style={styles.quickActionText}>Compare Universities</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionItem}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: "#F5F3FF" }]}>
+              <MaterialCommunityIcons name="file-document-outline" size={20} color="#8B5CF6" />
+            </View>
+            <Text style={styles.quickActionText}>View Documents</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionItem}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: "#DCFCE7" }]}>
+              <MaterialCommunityIcons name="bullseye-arrow" size={20} color={THEME.green} />
+            </View>
+            <Text style={styles.quickActionText}>Improve My Chances</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionItem}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: "#FFEDD5" }]}>
+              <Ionicons name="bookmark" size={20} color={THEME.orange} />
+            </View>
+            <Text style={styles.quickActionText}>Saved Universities</Text>
+          </TouchableOpacity>
         </View>
 
       </ScrollView>
 
       {/* Plan Edit Modal */}
       <Modal
-         animationType="slide"
-         transparent={true}
-         visible={showPlanModal}
-         onRequestClose={() => {
-           setShowPlanModal(false);
-           setModalStep('options');
-         }}
+        animationType="slide"
+        transparent={true}
+        visible={showPlanModal}
+        onRequestClose={() => {
+          setShowPlanModal(false);
+          setModalStep('options');
+        }}
       >
-         <TouchableOpacity 
-           style={styles.modalOverlay} 
-           activeOpacity={1} 
-           onPress={() => {
-             setShowPlanModal(false);
-             setModalStep('options');
-           }}
-         >
-           <View style={[styles.modalContent, modalStep === 'country' && { height: '80%' }]}>
-             <View style={styles.modalIndicator} />
-             
-             {modalStep === 'options' ? (
-               <>
-                 <Text style={styles.modalTitle}>Update Study Plan</Text>
-                 <Text style={styles.modalSubtitle}>What would you like to update first?</Text>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            setShowPlanModal(false);
+            setModalStep('options');
+          }}
+        >
+          <View style={[styles.modalContent, modalStep === 'country' && { height: '80%' }]}>
+            <View style={styles.modalIndicator} />
 
-                 <View style={styles.modalOptions}>
-                   <TouchableOpacity 
-                     style={styles.modalOption}
-                     onPress={() => setModalStep('country')}
-                   >
-                     <View style={[styles.modalOptionIcon, { backgroundColor: "#E0F2FE" }]}>
-                       <Ionicons name="globe-outline" size={24} color={THEME.blue} />
-                     </View>
-                     <View style={styles.modalOptionTextWrapper}>
-                       <Text style={styles.modalOptionTitle}>Change Destination</Text>
-                       <Text style={styles.modalOptionDesc}>Current: {userData.flag} {userData.country}</Text>
-                     </View>
-                     <Feather name="chevron-right" size={20} color="#CBD5E1" />
-                   </TouchableOpacity>
+            {modalStep === 'options' ? (
+              <>
+                <Text style={styles.modalTitle}>Update Study Plan</Text>
+                <Text style={styles.modalSubtitle}>What would you like to update first?</Text>
 
-                   <TouchableOpacity 
-                     style={styles.modalOption}
-                     onPress={() => {
-                       setShowPlanModal(false);
-                       router.push("/search");
-                     }}
-                   >
-                     <View style={[styles.modalOptionIcon, { backgroundColor: "#F3F4F6" }]}>
-                       <Ionicons name="business-outline" size={24} color={THEME.textDark} />
-                     </View>
-                     <View style={styles.modalOptionTextWrapper}>
-                       <Text style={styles.modalOptionTitle}>Find University</Text>
-                       <Text style={styles.modalOptionDesc}>Search universities in {userData.country}</Text>
-                     </View>
-                     <Feather name="chevron-right" size={20} color="#CBD5E1" />
-                   </TouchableOpacity>
-                 </View>
-               </>
-             ) : (
-               <>
-                 <View style={styles.modalHeaderRow}>
-                   <TouchableOpacity onPress={() => setModalStep('options')}>
-                     <Feather name="chevron-left" size={24} color={THEME.textDark} />
-                   </TouchableOpacity>
-                   <Text style={styles.modalTitle}>Select Destination</Text>
-                   <View style={{ width: 24 }} />
-                 </View>
-                 <Text style={styles.modalSubtitle}>Where do you want to study?</Text>
+                <View style={styles.modalOptions}>
+                  <TouchableOpacity
+                    style={styles.modalOption}
+                    onPress={() => setModalStep('country')}
+                  >
+                    <View style={[styles.modalOptionIcon, { backgroundColor: "#E0F2FE" }]}>
+                      <Ionicons name="globe-outline" size={24} color={THEME.blue} />
+                    </View>
+                    <View style={styles.modalOptionTextWrapper}>
+                      <Text style={styles.modalOptionTitle}>Change Destination</Text>
+                      <Text style={styles.modalOptionDesc}>Current: {userData.flag} {userData.country}</Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color="#CBD5E1" />
+                  </TouchableOpacity>
 
-                 <ScrollView showsVerticalScrollIndicator={false}>
-                   <View style={styles.modalGrid}>
-                     {COUNTRIES.map((c) => (
-                       <TouchableOpacity 
-                         key={c.id}
-                         style={[
-                           styles.modalCountryItem,
-                           userData.country === c.name && styles.modalCountrySelected
-                         ]}
-                         onPress={() => {
-                           setShowPlanModal(false); setModalStep('options'); router.push({ pathname: "/search", params: { pendingCountry: c.name, pendingFlag: c.flag } });
-                           setModalStep('options');
-                         }}
-                       >
-                         <Text style={styles.modalCountryFlag}>{c.flag}</Text>
-                         <Text style={styles.modalCountryName}>{c.name}</Text>
-                       </TouchableOpacity>
-                     ))}
-                   </View>
-                 </ScrollView>
-               </>
-             )}
+                  <TouchableOpacity
+                    style={styles.modalOption}
+                    onPress={() => {
+                      setShowPlanModal(false);
+                      router.push("/search");
+                    }}
+                  >
+                    <View style={[styles.modalOptionIcon, { backgroundColor: "#F3F4F6" }]}>
+                      <Ionicons name="business-outline" size={24} color={THEME.textDark} />
+                    </View>
+                    <View style={styles.modalOptionTextWrapper}>
+                      <Text style={styles.modalOptionTitle}>Find University</Text>
+                      <Text style={styles.modalOptionDesc}>Search universities in {userData.country}</Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color="#CBD5E1" />
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.modalHeaderRow}>
+                  <TouchableOpacity onPress={() => setModalStep('options')}>
+                    <Feather name="chevron-left" size={24} color={THEME.textDark} />
+                  </TouchableOpacity>
+                  <Text style={styles.modalTitle}>Select Destination</Text>
+                  <View style={{ width: 24 }} />
+                </View>
+                <Text style={styles.modalSubtitle}>Where do you want to study?</Text>
 
-             <TouchableOpacity 
-               style={styles.modalCloseBtn}
-               onPress={() => {
-                 setShowPlanModal(false);
-                 setModalStep('options');
-               }}
-             >
-               <Text style={styles.modalCloseBtnText}>Close</Text>
-             </TouchableOpacity>
-           </View>
-         </TouchableOpacity>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <View style={styles.modalGrid}>
+                    {COUNTRIES.map((c) => (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[
+                          styles.modalCountryItem,
+                          userData.country === c.name && styles.modalCountrySelected
+                        ]}
+                        onPress={() => {
+                          setShowPlanModal(false); setModalStep('options'); router.push({ pathname: "/search", params: { pendingCountry: c.name, pendingFlag: c.flag } });
+                          setModalStep('options');
+                        }}
+                      >
+                        <Text style={styles.modalCountryFlag}>{c.flag}</Text>
+                        <Text style={styles.modalCountryName}>{c.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </>
+            )}
+
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => {
+                setShowPlanModal(false);
+                setModalStep('options');
+              }}
+            >
+              <Text style={styles.modalCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -668,8 +672,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     borderWidth: 1,
     borderColor: "#F1F5F9",
-    minHeight: 280, 
-    justifyContent: "space-between", 
+    minHeight: 280,
+    justifyContent: "space-between",
   },
   statIconHeader: {
     flexDirection: "row",
