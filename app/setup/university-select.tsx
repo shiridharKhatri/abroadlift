@@ -1,27 +1,28 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-  StatusBar,
-  TextInput,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
-import { Stack, router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useUser } from "../context/UserContext";
+import { router, Stack } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  searchUniversities,
   calculateAcceptanceChance,
+  searchUniversities,
   UniversityResult,
 } from "../../lib/api";
+import { useTheme } from "../context/ThemeContext";
+import { useUser } from "../context/UserContext";
 
 const { width } = Dimensions.get("window");
 
@@ -53,24 +54,24 @@ const CARD_GRADIENTS: [string, string, string][] = [
   ["#D97706", "#F59E0B", "#FCD34D"],
 ];
 
-const getTagInfo = (label: string, score: number) => {
-  if (score >= 75) return { text: "Best Match", color: THEME.accent, bg: THEME.accentLight };
-  if (score >= 60) return { text: "Good Fit", color: THEME.primary, bg: THEME.primaryLight };
-  if (score >= 45) return { text: "Moderate", color: THEME.orange, bg: THEME.orangeLight };
-  return { text: "Reach", color: THEME.red, bg: THEME.redLight };
+const getTagInfo = (label: string, score: number, colors: any) => {
+  if (score >= 75) return { text: "Best Match", color: "#00C48C", bg: "rgba(0, 196, 140, 0.08)" };
+  if (score >= 60) return { text: "Good Fit", color: colors.primary, bg: colors.primary + "15" };
+  if (score >= 45) return { text: "Moderate", color: "#FF9F0A", bg: "rgba(255, 159, 10, 0.08)" };
+  return { text: "Reach", color: "#FF3B30", bg: "rgba(255, 59, 48, 0.08)" };
 };
 
-const ProgressBar = ({ percentage }: { percentage: number }) => {
+const ProgressBar = ({ percentage, colors }: { percentage: number; colors: any }) => {
   const getColor = (p: number) => {
-    if (p >= 70) return THEME.accent;
-    if (p >= 50) return THEME.orange;
-    return THEME.red;
+    if (p >= 70) return "#00C48C";
+    if (p >= 50) return "#FF9F0A";
+    return "#FF3B30";
   };
   const color = getColor(percentage);
 
   return (
     <View style={styles.progressRow}>
-      <View style={styles.progressTrack}>
+      <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
         <View
           style={[
             styles.progressFill,
@@ -86,6 +87,7 @@ const ProgressBar = ({ percentage }: { percentage: number }) => {
 export default function UniversitySelectionSetup() {
   const { userData, selectUniversity, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [universities, setUniversities] = useState<UniversityResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +104,7 @@ export default function UniversitySelectionSetup() {
       try {
         const country = userData.country || "USA";
         let results = await searchUniversities("", country);
-        
+
         if (results.length === 0) {
           // Fallback to all globally available universities
           results = await searchUniversities("", "All");
@@ -132,10 +134,10 @@ export default function UniversitySelectionSetup() {
   const enrichedUniversities = useMemo(() => {
     return universities.map((uni) => {
       const chance = calculateAcceptanceChance(userData, uni);
-      const tag = getTagInfo(chance.label, chance.score);
+      const tag = getTagInfo(chance.label, chance.score, colors);
       return { ...uni, admissionScore: chance.score, admissionLabel: chance.label, tag };
     });
-  }, [universities, userData]);
+  }, [universities, userData, colors]);
 
   // Sort: Best Match first, then by admission score descending
   const sortedUniversities = useMemo(() => {
@@ -183,8 +185,8 @@ export default function UniversitySelectionSetup() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
@@ -192,6 +194,9 @@ export default function UniversitySelectionSetup() {
         style={[
           styles.header,
           {
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+            borderBottomWidth: 1,
             paddingTop:
               Platform.OS === "android"
                 ? (insets.top || 30) + 10
@@ -200,12 +205,12 @@ export default function UniversitySelectionSetup() {
         ]}
       >
         <View style={styles.topRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Feather name="arrow-left" size={22} color={THEME.textDark} />
+          <TouchableOpacity style={[styles.backBtn, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+            <Feather name="arrow-left" size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Selection</Text>
-          <TouchableOpacity style={styles.skipHeaderBtn} onPress={handleSkip}>
-            <Text style={styles.skipHeaderBtnText}>Skip</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Selection</Text>
+          <TouchableOpacity style={[styles.skipHeaderBtn, { backgroundColor: colors.primary + "15" }]} onPress={handleSkip}>
+            <Text style={[styles.skipHeaderBtnText, { color: colors.primary }]}>Skip</Text>
           </TouchableOpacity>
         </View>
 
@@ -214,47 +219,51 @@ export default function UniversitySelectionSetup() {
           {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <View
               key={i}
-              style={[styles.stepDot, i === 7 && styles.stepDotActive]}
+              style={[
+                styles.stepDot,
+                { backgroundColor: colors.border },
+                i === 7 && { backgroundColor: colors.primary }
+              ]}
             />
           ))}
         </View>
 
         {/* Preferences Chip */}
-        <View style={styles.prefChip}>
+        <View style={[styles.prefChip, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={styles.prefEmoji}>{userData.flag || "🌍"}</Text>
-          <Text style={styles.prefText}>
+          <Text style={[styles.prefText, { color: colors.textSecondary }]}>
             Study in{" "}
-            <Text style={styles.prefCountry}>{userData.country || "Any"}</Text>
+            <Text style={[styles.prefCountry, { color: colors.text }]}>{userData.country || "Any"}</Text>
             {userData.studyLevel ? ` · ${userData.studyLevel}` : ""}
           </Text>
         </View>
 
-        <Text style={styles.pageTitle}>Recommended For You</Text>
-        <Text style={styles.pageSubtitle}>
+        <Text style={[styles.pageTitle, { color: colors.text }]}>Recommended For You</Text>
+        <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
           Universities matched to your profile & preferences
         </Text>
 
         {/* Search Bar */}
-        <View style={styles.searchBar}>
-          <Feather name="search" size={18} color={THEME.textLight} />
+        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Feather name="search" size={18} color={colors.textSecondary} />
           <TextInput
             placeholder="Search universities or courses..."
-            placeholderTextColor={THEME.textLight}
-            style={styles.searchInput}
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.searchInput, { color: colors.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
             clearButtonMode="while-editing"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <Feather name="x-circle" size={18} color={THEME.textLight} />
+              <Feather name="x-circle" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Results count */}
         {!loading && (
-          <Text style={styles.resultCount}>
+          <Text style={[styles.resultCount, { color: colors.textSecondary }]}>
             {filteredUniversities.length} universities found
             {userData.country && !showFallbackNotice ? ` in ${userData.country}` : " globally"}
           </Text>
@@ -281,15 +290,15 @@ export default function UniversitySelectionSetup() {
 
         {loading ? (
           <View style={styles.centerBox}>
-            <ActivityIndicator size="large" color={THEME.primary} />
-            <Text style={styles.loadingText}>Finding universities...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Finding universities...</Text>
           </View>
         ) : error ? (
           <View style={styles.centerBox}>
-            <Ionicons name="cloud-offline-outline" size={48} color={THEME.textLight} />
-            <Text style={styles.errorText}>{error}</Text>
+            <Ionicons name="cloud-offline-outline" size={48} color={colors.textSecondary} />
+            <Text style={[styles.errorText, { color: "#EF4444" }]}>{error}</Text>
             <TouchableOpacity
-              style={styles.retryBtn}
+              style={[styles.retryBtn, { backgroundColor: colors.primary }]}
               onPress={() => {
                 setLoading(true);
                 setError(null);
@@ -304,16 +313,16 @@ export default function UniversitySelectionSetup() {
           </View>
         ) : filteredUniversities.length === 0 ? (
           <View style={styles.centerBox}>
-            <Ionicons name="search-outline" size={48} color={THEME.textLight} />
-            <Text style={styles.emptyText}>
+            <Ionicons name="search-outline" size={48} color={colors.textSecondary} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               No results for "{searchQuery}"
             </Text>
             <TouchableOpacity onPress={() => setSearchQuery("")} style={{ marginBottom: 20 }}>
-              <Text style={styles.clearText}>Clear Search</Text>
+              <Text style={[styles.clearText, { color: colors.primary }]}>Clear Search</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.skipToDashboardBtn} onPress={handleSkip}>
-              <Text style={styles.skipToDashboardBtnText}>Skip to Dashboard</Text>
-              <Feather name="arrow-right" size={16} color={THEME.primary} />
+            <TouchableOpacity style={[styles.skipToDashboardBtn, { borderColor: colors.primary }]} onPress={handleSkip}>
+              <Text style={[styles.skipToDashboardBtnText, { color: colors.primary }]}>Skip to Dashboard</Text>
+              <Feather name="arrow-right" size={16} color={colors.primary} />
             </TouchableOpacity>
           </View>
         ) : (
@@ -322,7 +331,7 @@ export default function UniversitySelectionSetup() {
             const showImage = hasValidImage(uni);
 
             return (
-              <View key={String(uni.id)} style={styles.card}>
+              <View key={String(uni.id)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 {/* Card Banner */}
                 <View style={styles.cardBanner}>
                   {showImage ? (
@@ -351,9 +360,9 @@ export default function UniversitySelectionSetup() {
 
                   {/* Rank Badge */}
                   {uni.rank && uni.rank !== "N/A" && (
-                    <View style={styles.rankBadge}>
-                      <Ionicons name="trophy-outline" size={11} color={THEME.primary} />
-                      <Text style={styles.rankText}>{uni.rank}</Text>
+                    <View style={[styles.rankBadge, { backgroundColor: colors.background }]}>
+                      <Ionicons name="trophy-outline" size={11} color={colors.primary} />
+                      <Text style={[styles.rankText, { color: colors.text }]}>{uni.rank}</Text>
                     </View>
                   )}
 
@@ -373,42 +382,42 @@ export default function UniversitySelectionSetup() {
                 >
                   {/* Location */}
                   <View style={styles.locationRow}>
-                    <Ionicons name="location-outline" size={13} color={THEME.textLight} />
-                    <Text style={styles.locationText}>
+                    <Ionicons name="location-outline" size={13} color={colors.textSecondary} />
+                    <Text style={[styles.locationText, { color: colors.textSecondary }]}>
                       {uni.location || uni.country}
                     </Text>
                   </View>
 
                   {/* University Name & Course */}
-                  <Text style={styles.uniName} numberOfLines={2}>
+                  <Text style={[styles.uniName, { color: colors.text }]} numberOfLines={2}>
                     {uni.name}
                   </Text>
                   {uni.course && uni.course !== "Various Courses" && (
-                    <Text style={styles.courseName}>{uni.course}</Text>
+                    <Text style={[styles.courseName, { color: colors.textSecondary }]}>{uni.course}</Text>
                   )}
 
                   {/* Details Grid */}
                   <View style={styles.detailsRow}>
-                    <View style={styles.detailChip}>
-                      <Feather name="clock" size={13} color={THEME.textMedium} />
-                      <Text style={styles.detailChipText}>
+                    <View style={[styles.detailChip, { backgroundColor: colors.border }]}>
+                      <Feather name="clock" size={13} color={colors.text} />
+                      <Text style={[styles.detailChipText, { color: colors.text }]}>
                         {uni.duration || "Check Site"}
                       </Text>
                     </View>
-                    <View style={styles.detailChip}>
-                      <Feather name="dollar-sign" size={13} color={THEME.textMedium} />
-                      <Text style={styles.detailChipText}>
+                    <View style={[styles.detailChip, { backgroundColor: colors.border }]}>
+                      <Feather name="dollar-sign" size={13} color={colors.text} />
+                      <Text style={[styles.detailChipText, { color: colors.text }]}>
                         {formatTuition(uni.tuition)}
                       </Text>
                     </View>
                   </View>
 
                   {/* Admission Chance */}
-                  <View style={styles.admissionBox}>
+                  <View style={[styles.admissionBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     <View style={styles.admissionHeader}>
                       <View style={styles.admissionLabelRow}>
-                        <Ionicons name="analytics-outline" size={15} color={THEME.textMedium} />
-                        <Text style={styles.admissionLabel}>Your Admission Chance</Text>
+                        <Ionicons name="analytics-outline" size={15} color={colors.textSecondary} />
+                        <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Your Admission Chance</Text>
                       </View>
                       <Text
                         style={[
@@ -419,28 +428,28 @@ export default function UniversitySelectionSetup() {
                         {uni.admissionLabel}
                       </Text>
                     </View>
-                    <ProgressBar percentage={uni.admissionScore} />
+                    <ProgressBar percentage={uni.admissionScore} colors={colors} />
                   </View>
                 </TouchableOpacity>
 
                 {/* Action Buttons */}
-                <View style={styles.cardActions}>
+                <View style={[styles.cardActions, { borderTopColor: colors.border }]}>
                   <TouchableOpacity
-                    style={styles.selectBtn}
+                    style={[styles.selectBtn, { backgroundColor: colors.primary }]}
                     onPress={() => handleSelect(uni)}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.selectBtnText}>Select University</Text>
-                    <Feather name="arrow-right" size={16} color={THEME.white} />
+                    <Feather name="arrow-right" size={16} color="white" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.viewBtn}
+                    style={[styles.viewBtn, { backgroundColor: colors.border }]}
                     onPress={() =>
                       router.push(`/university/${uni.id}`)
                     }
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.viewBtnText}>View Details</Text>
+                    <Text style={[styles.viewBtnText, { color: colors.text }]}>View Details</Text>
                   </TouchableOpacity>
                 </View>
               </View>

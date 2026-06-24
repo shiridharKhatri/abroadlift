@@ -14,6 +14,7 @@ import { Stack, router } from "expo-router";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -60,6 +61,7 @@ const STUDY_LEVELS = [
 export default function StudyLevelSelection() {
   const { userData, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [selectedLevel, setSelectedLevel] = useState<string | null>(
     STUDY_LEVELS.find(l => l.name === userData.studyLevel)?.id || null
   );
@@ -70,15 +72,15 @@ export default function StudyLevelSelection() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Study Level</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Study Level</Text>
         <View style={{ width: 44 }} /> 
       </View>
 
@@ -88,7 +90,8 @@ export default function StudyLevelSelection() {
             key={i} 
             style={[
               styles.trackerSegment, 
-              i === 2 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+              { backgroundColor: colors.border },
+              i === 2 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}
@@ -99,12 +102,12 @@ export default function StudyLevelSelection() {
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.questionText}>What level of study are you planning?</Text>
+        <Text style={[styles.questionText, { color: colors.textSecondary }]}>What level of study are you planning?</Text>
 
         {/* Info Banner */}
-        <View style={styles.infoCard}>
-          <Ionicons name="sparkles" size={20} color="#D97706" />
-          <Text style={styles.infoText}>
+        <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF3C7", borderColor: "#FDE68A" }]}>
+          <Ionicons name="sparkles" size={20} color={isDark ? colors.primary : "#D97706"} />
+          <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#92400E" }]}>
             Selecting the correct level filters course requirements, admission score minimums, and stay-back work permit paths.
           </Text>
         </View>
@@ -119,20 +122,21 @@ export default function StudyLevelSelection() {
                 activeOpacity={0.8}
                 style={[
                   styles.levelItem,
-                  isSelected && styles.selectedItem,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + "15" },
                 ]}
                 onPress={() => handleSelect(level.id, level.name)}
               >
-                <View style={[styles.iconWrapper, isSelected && styles.selectedIconWrapper]}>
+                <View style={[styles.iconWrapper, { backgroundColor: colors.border }, isSelected && { backgroundColor: colors.primary }]}>
                   {level.provider === 'Ionicons' ? (
-                    <Ionicons name={level.icon as any} size={22} color={isSelected ? COLORS.primary : COLORS.textGray} />
+                    <Ionicons name={level.icon as any} size={22} color={isSelected ? "white" : colors.textSecondary} />
                   ) : (
-                    <MaterialCommunityIcons name={level.icon as any} size={22} color={isSelected ? COLORS.primary : COLORS.textGray} />
+                    <MaterialCommunityIcons name={level.icon as any} size={22} color={isSelected ? "white" : colors.textSecondary} />
                   )}
                 </View>
                 <View style={styles.textWrapper}>
-                  <Text style={[styles.levelName, isSelected && styles.selectedLevelName]}>{level.name}</Text>
-                  <Text style={styles.levelDesc}>{level.desc}</Text>
+                  <Text style={[styles.levelName, { color: colors.text }, isSelected && { color: colors.primary, fontWeight: "800" }]}>{level.name}</Text>
+                  <Text style={[styles.levelDesc, { color: colors.textSecondary }]}>{level.desc}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -141,10 +145,11 @@ export default function StudyLevelSelection() {
       </ScrollView>
 
       {/* Sticky Bottom Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
           style={[
             styles.continueButton,
+            { backgroundColor: colors.primary, shadowColor: colors.primary },
             !selectedLevel && { opacity: 0.5 }
           ]}
           disabled={!selectedLevel}

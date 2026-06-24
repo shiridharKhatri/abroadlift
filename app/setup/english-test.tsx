@@ -15,6 +15,7 @@ import { Stack, router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -42,6 +43,7 @@ const TEST_TIPS: Record<TestType, string> = {
 export default function EnglishTestSelection() {
   const { userData, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [hasTakenTest, setHasTakenTest] = useState<boolean | null>(
     userData.testType && userData.testType !== "Not Taken" ? true :
     userData.englishLevel && userData.englishLevel !== "N/A" ? false : null
@@ -102,15 +104,15 @@ export default function EnglishTestSelection() {
     : (hasTakenTest === false && englishLevel !== "");
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>English</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>English</Text>
         <View style={{ width: 44 }} /> 
       </View>
 
@@ -120,7 +122,8 @@ export default function EnglishTestSelection() {
             key={i} 
             style={[
               styles.trackerSegment, 
-              i === 5 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+              { backgroundColor: colors.border },
+              i === 5 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}
@@ -131,55 +134,67 @@ export default function EnglishTestSelection() {
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.questionText}>Have you taken an English test?</Text>
+        <Text style={[styles.questionText, { color: colors.textSecondary }]}>Have you taken an English test?</Text>
 
         {/* Yes/No Toggle */}
         <View style={styles.toggleRow}>
           <TouchableOpacity
-            style={[styles.toggleBtn, hasTakenTest === true && styles.activeToggle]}
+            style={[
+              styles.toggleBtn, 
+              { backgroundColor: colors.card, borderColor: colors.border },
+              hasTakenTest === true && { borderColor: colors.primary, backgroundColor: colors.primary + "15" }
+            ]}
             onPress={() => handleToggle(true)}
           >
-            <Text style={[styles.toggleText, hasTakenTest === true && styles.activeToggleText]}>Yes, I have</Text>
+            <Text style={[styles.toggleText, { color: colors.textSecondary }, hasTakenTest === true && { color: colors.primary, fontWeight: "800" }]}>Yes, I have</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.toggleBtn, hasTakenTest === false && styles.activeToggle]}
+            style={[
+              styles.toggleBtn, 
+              { backgroundColor: colors.card, borderColor: colors.border },
+              hasTakenTest === false && { borderColor: colors.primary, backgroundColor: colors.primary + "15" }
+            ]}
             onPress={() => handleToggle(false)}
           >
-            <Text style={[styles.toggleText, hasTakenTest === false && styles.activeToggleText]}>No, I haven't</Text>
+            <Text style={[styles.toggleText, { color: colors.textSecondary }, hasTakenTest === false && { color: colors.primary, fontWeight: "800" }]}>No, I haven't</Text>
           </TouchableOpacity>
         </View>
 
         {/* Dynamic Content based on selection */}
         {hasTakenTest === true && (
           <View style={styles.formSection}>
-            <Text style={styles.sectionTitle}>Select your test type</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select your test type</Text>
             
             <View style={styles.badgeGrid}>
               {TEST_TYPES.map((type) => (
                 <TouchableOpacity
                   key={type}
-                  style={[styles.badge, testType === type && styles.activeBadge]}
+                  style={[
+                    styles.badge, 
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    testType === type && { borderColor: colors.primary, backgroundColor: colors.primary }
+                  ]}
                   onPress={() => { setTestType(type); setScore(""); setScoreError(""); }}
                 >
-                  <Text style={[styles.badgeText, testType === type && styles.activeBadgeText]}>{type}</Text>
+                  <Text style={[styles.badgeText, { color: colors.textSecondary }, testType === type && { color: "white", fontWeight: "800" }]}>{type}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             {testType !== "" && (
               <View style={styles.form}>
-                <View style={styles.inputCard}>
-                  <Text style={styles.inputLabel}>Overall {testType} Score</Text>
+                <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Overall {testType} Score</Text>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, { color: colors.text, borderBottomColor: colors.border }]}
                     placeholder={
                       testType === "IELTS" ? "e.g. 7.5" :
                       testType === "PTE" ? "e.g. 65" :
                       testType === "TOEFL" ? "e.g. 100" :
                       "e.g. 120"
                     }
-                    placeholderTextColor={COLORS.textGray}
+                    placeholderTextColor={colors.textSecondary}
                     value={score}
                     onChangeText={handleScoreChange}
                     keyboardType="numeric"
@@ -188,9 +203,9 @@ export default function EnglishTestSelection() {
                 </View>
 
                 {/* Recommendation Tip Banner */}
-                <View style={styles.infoCard}>
-                  <Ionicons name="sparkles" size={20} color="#3B82F6" />
-                  <Text style={styles.infoText}>
+                <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF3C7", borderColor: "#FDE68A" }]}>
+                  <Ionicons name="sparkles" size={20} color={isDark ? colors.primary : "#3B82F6"} />
+                  <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#92400E" }]}>
                     {TEST_TIPS[testType as TestType]}
                   </Text>
                 </View>
@@ -201,23 +216,27 @@ export default function EnglishTestSelection() {
 
         {hasTakenTest === false && (
           <View style={styles.formSection}>
-            <Text style={styles.sectionTitle}>Select your proficiency level</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select your proficiency level</Text>
             <View style={styles.badgeGrid}>
               {ENGLISH_LEVELS.map((level) => (
                 <TouchableOpacity
                   key={level}
-                  style={[styles.badge, englishLevel === level && styles.activeBadge]}
+                  style={[
+                    styles.badge, 
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    englishLevel === level && { borderColor: colors.primary, backgroundColor: colors.primary }
+                  ]}
                   onPress={() => setEnglishLevel(level)}
                 >
-                  <Text style={[styles.badgeText, englishLevel === level && styles.activeBadgeText]}>{level}</Text>
+                  <Text style={[styles.badgeText, { color: colors.textSecondary }, englishLevel === level && { color: "white", fontWeight: "800" }]}>{level}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             {englishLevel !== "" && (
-              <View style={styles.infoCard}>
-                <Ionicons name="information-circle-outline" size={22} color="#059669" />
-                <Text style={styles.infoTextEmerald}>
+              <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" }]}>
+                <Ionicons name="information-circle-outline" size={22} color={isDark ? colors.primary : "#059669"} />
+                <Text style={[styles.infoTextEmerald, { color: isDark ? colors.textSecondary : "#065F46" }]}>
                   Many universities accept Medium of Instruction (MOI) certificates from your previous college, or offer English pathway courses (ESL) if your scores are pending.
                 </Text>
               </View>
@@ -227,10 +246,11 @@ export default function EnglishTestSelection() {
       </ScrollView>
 
       {/* Sticky Bottom Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
           style={[
             styles.continueButton, 
+            { backgroundColor: colors.primary, shadowColor: colors.primary },
             !isFormValid && { opacity: 0.5 }
           ]}
           disabled={!isFormValid}

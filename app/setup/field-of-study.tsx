@@ -15,6 +15,7 @@ import { Stack, router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -49,6 +50,7 @@ const POPULAR_BADGES = [
 export default function FieldOfStudySelection() {
   const { userData, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [selectedField, setSelectedField] = useState<string | null>(
     FIELDS.find(f => f.name === userData.fieldOfStudy)?.id || null
   );
@@ -84,15 +86,15 @@ export default function FieldOfStudySelection() {
   const isFormValid = selectedField !== null || customField.trim().length > 0;
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Field Of Study</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Field Of Study</Text>
         <View style={{ width: 44 }} /> 
       </View>
 
@@ -102,7 +104,8 @@ export default function FieldOfStudySelection() {
             key={i} 
             style={[
               styles.trackerSegment, 
-              i === 3 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+              { backgroundColor: colors.border },
+              i === 3 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}
@@ -113,15 +116,15 @@ export default function FieldOfStudySelection() {
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.questionText}>What do you want to study?</Text>
+        <Text style={[styles.questionText, { color: colors.textSecondary }]}>What do you want to study?</Text>
 
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Feather name="search" size={20} color={COLORS.textGray} style={styles.searchIcon} />
+        <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Feather name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search or type custom study course"
-            placeholderTextColor={COLORS.textGray}
+            placeholderTextColor={colors.textSecondary}
             value={search}
             onChangeText={handleCustomFieldChange}
           />
@@ -129,17 +132,21 @@ export default function FieldOfStudySelection() {
 
         {/* Popular Badges Recommendations */}
         <View style={styles.badgesWrapper}>
-          <Text style={styles.sectionTitle}>Popular Recommendations</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Recommendations</Text>
           <View style={styles.badgeGrid}>
             {POPULAR_BADGES.map((badge) => {
               const isSelected = customField === badge;
               return (
                 <TouchableOpacity
                   key={badge}
-                  style={[styles.badgeItem, isSelected && styles.badgeItemActive]}
+                  style={[
+                    styles.badgeItem, 
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }
+                  ]}
                   onPress={() => handleBadgePress(badge)}
                 >
-                  <Text style={[styles.badgeText, isSelected && styles.badgeTextActive]}>
+                  <Text style={[styles.badgeText, { color: colors.textSecondary }, isSelected && { color: "white", fontWeight: "800" }]}>
                     {badge}
                   </Text>
                 </TouchableOpacity>
@@ -150,7 +157,7 @@ export default function FieldOfStudySelection() {
 
         {/* Standard Fields List */}
         <View style={styles.listWrapper}>
-          <Text style={styles.sectionTitle}>Broad Categories</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Broad Categories</Text>
           <View style={styles.list}>
             {filteredFields.map((field) => {
               const isSelected = selectedField === field.id;
@@ -160,21 +167,22 @@ export default function FieldOfStudySelection() {
                   activeOpacity={0.8}
                   style={[
                     styles.levelItem,
-                    isSelected && styles.selectedItem,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + "15" },
                   ]}
                   onPress={() => handleSelect(field.id, field.name)}
                 >
-                  <Text style={[styles.fieldName, isSelected && styles.selectedFieldName]}>
+                  <Text style={[styles.fieldName, { color: colors.text }, isSelected && { color: colors.primary, fontWeight: "800" }]}>
                     {field.name}
                   </Text>
-                  {isSelected && <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />}
+                  {isSelected && <Ionicons name="checkmark-circle" size={20} color={colors.primary} />}
                 </TouchableOpacity>
               );
             })}
             {filteredFields.length === 0 && search.trim().length > 0 && (
-              <View style={styles.customSelectionCard}>
-                <Ionicons name="sparkles-outline" size={20} color={COLORS.primary} />
-                <Text style={styles.customSelectionText}>
+              <View style={[styles.customSelectionCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+                <Ionicons name="sparkles-outline" size={20} color={colors.primary} />
+                <Text style={[styles.customSelectionText, { color: colors.text }]}>
                   Use custom field: <Text style={{ fontWeight: "800" }}>"{search}"</Text>
                 </Text>
               </View>
@@ -184,10 +192,11 @@ export default function FieldOfStudySelection() {
       </ScrollView>
 
       {/* Sticky Bottom Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
           style={[
             styles.continueButton,
+            { backgroundColor: colors.primary, shadowColor: colors.primary },
             !isFormValid && { opacity: 0.5 }
           ]}
           disabled={!isFormValid}

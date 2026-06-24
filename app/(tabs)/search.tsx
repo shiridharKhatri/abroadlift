@@ -22,6 +22,7 @@ import { BlurView } from "expo-blur";
 import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { searchUniversities, calculateAcceptanceChance, UniversityResult } from "../../lib/api";
+import { useTheme } from "../context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -150,6 +151,7 @@ const ProgressTracker = ({ percentage }: { percentage: number }) => {
 export default function UniversitySelection() {
   const insets = useSafeAreaInsets();
   const { userData, setUserData, selectUniversity } = useUser();
+  const { colors, isDark } = useTheme();
   const { pendingCountry, pendingFlag } = useLocalSearchParams();
   const [filterVisible, setFilterVisible] = useState(false);
   
@@ -257,9 +259,11 @@ export default function UniversitySelection() {
     setSelectedCountry("All");
   };
 
+  const hasActiveFilters = (admissionChance !== "All" || matchRating !== "All" || feeRange < 100000 || selectedCountry !== "All");
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
       
       <ScrollView 
@@ -268,11 +272,11 @@ export default function UniversitySelection() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Search and Header Section Moved Inside ScrollView */}
-        <View style={[styles.header, { paddingHorizontal: 0, paddingTop: 10 }]}>
+        <View style={[styles.header, { backgroundColor: colors.background, paddingHorizontal: 0, paddingTop: 10 }]}>
           <View style={styles.headerTopRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>Find Universities That Match Your Profile</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: colors.text }]}>Find Universities That Match Your Profile</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                 Compare costs, admission chances, and visa success — all in one place
               </Text>
             </View>
@@ -280,16 +284,16 @@ export default function UniversitySelection() {
               style={styles.profileBtn}
               onPress={() => router.push("/(tabs)/profile")}
             >
-              <ProfileAvatar size={48} color="#CBD5E1" />
+              <ProfileAvatar size={48} color={colors.border} />
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.searchBar, isSearchFocused && styles.searchBarActive]}>
-            <Feather name="search" size={20} color={isSearchFocused ? THEME.primary : "#94A3B8"} />
+          <View style={[styles.searchBar, { borderBottomColor: colors.border }, isSearchFocused && { borderBottomColor: colors.primary }]}>
+            <Feather name="search" size={20} color={isSearchFocused ? colors.primary : colors.textSecondary} />
             <TextInput 
               placeholder="Search universities, courses..." 
-              style={styles.searchInput}
-              placeholderTextColor="#94A3B8"
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholderTextColor={colors.textSecondary}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onFocus={() => setIsSearchFocused(true)}
@@ -298,28 +302,32 @@ export default function UniversitySelection() {
           </View>
 
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionButton}>
-              <MaterialIcons name="swap-vert" size={20} color={THEME.textDark} />
-              <Text style={styles.actionButtonText}>Sort</Text>
+            <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <MaterialIcons name="swap-vert" size={20} color={colors.text} />
+              <Text style={[styles.actionButtonText, { color: colors.text }]}>Sort</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.actionButton, (admissionChance !== "All" || matchRating !== "All" || feeRange < 100000 || selectedCountry !== "All") && { borderColor: THEME.primary, backgroundColor: "#F0F9FF" }]} 
+              style={[
+                styles.actionButton, 
+                { backgroundColor: colors.card, borderColor: colors.border },
+                hasActiveFilters && { borderColor: colors.primary, backgroundColor: colors.primary + "15" }
+              ]} 
               onPress={() => setFilterVisible(true)}
             >
-              <Ionicons name="options-outline" size={20} color={THEME.textDark} />
-              <Text style={styles.actionButtonText}>Filters</Text>
+              <Ionicons name="options-outline" size={20} color={hasActiveFilters ? colors.primary : colors.text} />
+              <Text style={[styles.actionButtonText, { color: hasActiveFilters ? colors.primary : colors.text }]}>Filters</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {isLoading ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 40 }}>
-            <ActivityIndicator size="large" color={THEME.primary} />
-            <Text style={{ marginTop: 12, color: THEME.textGray }}>Searching Universities...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={{ marginTop: 12, color: colors.textSecondary }}>Searching Universities...</Text>
           </View>
         ) : filteredUniversities.length > 0 ? (
           filteredUniversities.map((uni) => (
-            <View key={uni.id} style={styles.card}>
+            <View key={uni.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {/* Top part is clickable for details navigation */}
               <TouchableOpacity 
                 activeOpacity={0.9} 
@@ -341,53 +349,53 @@ export default function UniversitySelection() {
                 <View style={styles.cardInfo}>
                   <View style={styles.locationRow}>
                     <View style={styles.locationLeft}>
-                        <Ionicons name="location-outline" size={14} color="#64748B" />
-                        <Text style={styles.locationText}>{uni.location}</Text>
+                        <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+                        <Text style={[styles.locationText, { color: colors.textSecondary }]}>{uni.location}</Text>
                     </View>
                     {uni.recommended && (
-                      <View style={styles.recommendedBadge}>
-                        <Text style={styles.recommendedText}>Matched</Text>
+                      <View style={[styles.recommendedBadge, { backgroundColor: colors.primary + "20" }]}>
+                        <Text style={[styles.recommendedText, { color: colors.primary }]}>Matched</Text>
                       </View>
                     )}
                   </View>
 
                   <View style={styles.nameRow}>
-                    <View style={styles.uniIconBox}>
+                    <View style={[styles.uniIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC" }]}>
                       {uni.logo ? (
                         <Image source={{ uri: uni.logo }} style={styles.uniLogoImage} resizeMode="contain" />
                       ) : (
-                        <Ionicons name="school" size={20} color={THEME.secondary} />
+                        <Ionicons name="school" size={20} color={colors.primary} />
                       )}
                     </View>
                     <View style={styles.nameTexts}>
-                        <Text style={styles.uniName}>{uni.name}</Text>
-                        <Text style={styles.courseName}>{uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters Program")}</Text>
+                        <Text style={[styles.uniName, { color: colors.text }]}>{uni.name}</Text>
+                        <Text style={[styles.courseName, { color: colors.textSecondary }]}>{uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters Program")}</Text>
                     </View>
                   </View>
 
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                   <View style={styles.detailsGrid}>
                     <View style={styles.detailItem}>
-                        <Feather name="calendar" size={14} color="#64748B" />
+                        <Feather name="calendar" size={14} color={colors.textSecondary} />
                         <View style={styles.detailTextWrapper}>
-                            <Text style={styles.detailLabel}>Duration</Text>
-                            <Text style={styles.detailValue}>{uni.duration || "2 - 4 Years"}</Text>
+                            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Duration</Text>
+                            <Text style={[styles.detailValue, { color: colors.text }]}>{uni.duration || "2 - 4 Years"}</Text>
                         </View>
                     </View>
                     <View style={styles.detailItem}>
-                        <Feather name="briefcase" size={14} color="#64748B" />
+                        <Feather name="briefcase" size={14} color={colors.textSecondary} />
                         <View style={styles.detailTextWrapper}>
-                            <Text style={styles.detailLabel}>Tuition</Text>
-                            <Text style={styles.detailValue}>{uni.tuition}</Text>
+                            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Tuition</Text>
+                            <Text style={[styles.detailValue, { color: colors.text }]}>{uni.tuition}</Text>
                         </View>
                     </View>
                   </View>
 
                   <View style={styles.acceptanceRow}>
                     <View style={styles.acceptanceLabelBox}>
-                        <Ionicons name="stats-chart" size={14} color="#64748B" />
-                        <Text style={styles.acceptanceLabel}>Acceptance</Text>
+                        <Ionicons name="stats-chart" size={14} color={colors.textSecondary} />
+                        <Text style={[styles.acceptanceLabel, { color: colors.textSecondary }]}>Acceptance</Text>
                     </View>
                     <ProgressTracker percentage={calculateAcceptanceChance(userData, uni).score} />
                   </View>
@@ -398,7 +406,7 @@ export default function UniversitySelection() {
               <View style={[styles.cardInfo, { paddingTop: 0, paddingBottom: 24 }]}>
                 <View style={styles.actionButtons}>
                   <TouchableOpacity 
-                    style={styles.selectButton}
+                    style={[styles.selectButton, { backgroundColor: colors.primary }]}
                     onPress={() => {
                       if (pendingCountry) {
                         setUserData({ 
@@ -418,10 +426,10 @@ export default function UniversitySelection() {
                   </TouchableOpacity>
 
                   <TouchableOpacity 
-                    style={styles.detailsButton}
+                    style={[styles.detailsButton, { borderColor: colors.border }]}
                     onPress={() => router.push(`/university/${uni.id}`)}
                   >
-                    <Text style={styles.detailsButtonText}>View Details</Text>
+                    <Text style={[styles.detailsButtonText, { color: colors.text }]}>View Details</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -429,11 +437,11 @@ export default function UniversitySelection() {
           ))
         ) : (
           <View style={styles.noResults}>
-            <Ionicons name="search-outline" size={64} color="#CBD5E1" />
-            <Text style={styles.noResultsTitle}>No Universities Found</Text>
-            <Text style={styles.noResultsText}>Try adjusting your search query or filters.</Text>
-            <TouchableOpacity style={styles.clearFiltersBtn} onPress={resetFilters}>
-                <Text style={styles.clearFiltersBtnText}>Clear All Filters</Text>
+            <Ionicons name="search-outline" size={64} color={colors.border} />
+            <Text style={[styles.noResultsTitle, { color: colors.text }]}>No Universities Found</Text>
+            <Text style={[styles.noResultsText, { color: colors.textSecondary }]}>Try adjusting your search query or filters.</Text>
+            <TouchableOpacity style={[styles.clearFiltersBtn, { backgroundColor: colors.card }]} onPress={resetFilters}>
+                <Text style={[styles.clearFiltersBtnText, { color: colors.text }]}>Clear All Filters</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -452,34 +460,36 @@ export default function UniversitySelection() {
             activeOpacity={1} 
             onPress={() => setFilterVisible(false)} 
           />
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filters</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Filters</Text>
               <TouchableOpacity onPress={() => setFilterVisible(false)}>
-                <Ionicons name="close" size={24} color={THEME.textGray} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
               
               {/* Admission Chances */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Admission Chances</Text>
+              <View style={[styles.filterSection, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Admission Chances</Text>
                 <View style={styles.chipRow}>
                   {["All", "High", "Moderate", "Low"].map((level) => (
                     <TouchableOpacity 
                       key={level} 
                       style={[
                         styles.filterChip, 
-                        admissionChance === level && styles.activeChip,
-                        level === "High" && admissionChance === level && { backgroundColor: "#DCFCE7", borderColor: THEME.green }
+                        { borderColor: colors.border },
+                        admissionChance === level && { borderColor: colors.primary, backgroundColor: colors.primary + "15" },
+                        level === "High" && admissionChance === level && { backgroundColor: "#DCFCE7", borderColor: "#10B981" }
                       ]}
                       onPress={() => setAdmissionChance(level)}
                     >
                       <Text style={[
                         styles.chipText, 
-                        admissionChance === level && styles.activeChipText,
-                        level === "High" && admissionChance === level && { color: THEME.green }
+                        { color: colors.textSecondary },
+                        admissionChance === level && { color: colors.primary },
+                        level === "High" && admissionChance === level && { color: "#10B981" }
                       ]}>{level}</Text>
                     </TouchableOpacity>
                   ))}
@@ -487,8 +497,8 @@ export default function UniversitySelection() {
               </View>
 
               {/* Match Rating */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Match Rating</Text>
+              <View style={[styles.filterSection, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Match Rating</Text>
                 {[
                   { id: "All", label: "All Ratings", stars: 0 },
                   { id: "4.5", label: "4.5 & above", stars: 4 },
@@ -497,7 +507,11 @@ export default function UniversitySelection() {
                 ].map((item) => (
                   <TouchableOpacity 
                     key={item.id} 
-                    style={[styles.ratingRow, matchRating === item.id && styles.activeRatingRow]}
+                    style={[
+                      styles.ratingRow, 
+                      { backgroundColor: colors.background, borderColor: colors.border },
+                      matchRating === item.id && { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }
+                    ]}
                     onPress={() => setMatchRating(item.id)}
                   >
                     <View style={styles.ratingStars}>
@@ -506,26 +520,26 @@ export default function UniversitySelection() {
                           key={s} 
                           name={s <= item.stars ? "star" : "star-outline"} 
                           size={16} 
-                          color={s <= item.stars ? "#FBBF24" : "#E2E8F0"} 
+                          color={s <= item.stars ? "#FBBF24" : colors.border} 
                           style={{ marginRight: 2 }}
                         />
                       ))}
-                      <Text style={[styles.ratingText, matchRating === item.id && styles.activeRatingText]}>{item.label}</Text>
+                      <Text style={[styles.ratingText, { color: colors.text }, matchRating === item.id && { color: colors.primary }]}>{item.label}</Text>
                     </View>
                     <Ionicons 
                       name={matchRating === item.id ? "checkmark-circle" : "ellipse-outline"} 
                       size={24} 
-                      color={matchRating === item.id ? THEME.primary : "#E2E8F0"} 
+                      color={matchRating === item.id ? colors.primary : colors.border} 
                     />
                   </TouchableOpacity>
                 ))}
               </View>
 
               {/* Estimated Fee */}
-              <View style={styles.filterSection}>
+              <View style={[styles.filterSection, { borderBottomColor: colors.border }]}>
                 <View style={styles.feeHeader}>
-                  <Text style={styles.filterLabel}>Max Tuition Fee / yr</Text>
-                  <Text style={styles.feeValue}>${Math.round(feeRange / 1000)}k</Text>
+                  <Text style={[styles.filterLabel, { color: colors.text }]}>Max Tuition Fee / yr</Text>
+                  <Text style={[styles.feeValue, { color: colors.primary }]}>${Math.round(feeRange / 1000)}k</Text>
                 </View>
                 {/* Simplified Slider using TouchableOpacity for demo */}
                 <View style={styles.sliderMock}>
@@ -538,28 +552,36 @@ export default function UniversitySelection() {
                             setFeeRange(Math.max(20000, Math.min(100000, newFee)));
                         }}
                     >
-                        <View style={styles.sliderTrack} />
-                        <View style={[styles.sliderFill, { width: `${(feeRange / 100000) * 100}%` }]} />
-                        <View style={[styles.sliderThumb, { left: `${(feeRange / 100000) * 100}%` }]} />
+                        <View style={[styles.sliderTrack, { backgroundColor: colors.border }]} />
+                        <View style={[styles.sliderFill, { backgroundColor: colors.primary, width: `${(feeRange / 100000) * 100}%` }]} />
+                        <View style={[styles.sliderThumb, { borderColor: colors.card, backgroundColor: colors.primary, left: `${(feeRange / 100000) * 100}%` }]} />
                     </TouchableOpacity>
                 </View>
                 <View style={styles.feeRange}>
-                  <Text style={styles.rangeText}>$20k</Text>
-                  <Text style={styles.rangeText}>$100k+</Text>
+                  <Text style={[styles.rangeText, { color: colors.textSecondary }]}>$20k</Text>
+                  <Text style={[styles.rangeText, { color: colors.textSecondary }]}>$100k+</Text>
                 </View>
               </View>
 
               {/* Country Dropdown */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Country</Text>
+              <View style={[styles.filterSection, { borderBottomColor: colors.border, borderBottomWidth: 0 }]}>
+                <Text style={[styles.filterLabel, { color: colors.text }]}>Country</Text>
                 <View style={styles.chipRow}>
                     {["All", "UK", "USA", "Canada", "Australia", "Germany", "Ireland", "Netherlands"].map((c) => (
                         <TouchableOpacity 
                             key={c}
-                            style={[styles.filterChip, selectedCountry === c && styles.activeChip]}
+                            style={[
+                              styles.filterChip, 
+                              { borderColor: colors.border },
+                              selectedCountry === c && { borderColor: colors.primary, backgroundColor: colors.primary + "15" }
+                            ]}
                             onPress={() => setSelectedCountry(c)}
                         >
-                            <Text style={[styles.chipText, selectedCountry === c && styles.activeChipText]}>{c}</Text>
+                            <Text style={[
+                              styles.chipText, 
+                              { color: colors.textSecondary },
+                              selectedCountry === c && { color: colors.primary }
+                            ]}>{c}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -567,11 +589,11 @@ export default function UniversitySelection() {
 
             </ScrollView>
 
-            <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
-                <Text style={styles.resetBtnText}>Reset</Text>
+            <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
+              <TouchableOpacity style={[styles.resetBtn, { borderColor: colors.border }]} onPress={resetFilters}>
+                <Text style={[styles.resetBtnText, { color: colors.textSecondary }]}>Reset</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.applyBtn} onPress={() => setFilterVisible(false)}>
+              <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => setFilterVisible(false)}>
                 <Text style={styles.applyBtnText}>Apply Filters</Text>
               </TouchableOpacity>
             </View>

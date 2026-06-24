@@ -17,6 +17,7 @@ import { Stack, router } from "expo-router";
 import { AntDesign, FontAwesome, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUser } from "./context/UserContext";
+import { useTheme } from "./context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,6 +33,7 @@ const COLORS = {
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { login } = useUser();
+  const { colors, isDark } = useTheme();
   
   const [countryCode, setCountryCode] = useState("+977");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -70,9 +72,9 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.mainContent}>
@@ -85,30 +87,30 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <View style={styles.headerRow}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+            <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+              <Feather name="chevron-left" size={28} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.welcomeSection}>
-            <Text style={styles.title}>Welcome Back!</Text>
-            <Text style={styles.subtitle}>Sign in to continue your global journey.</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Welcome Back!</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign in to continue your global journey.</Text>
           </View>
 
           {/* Form Container */}
           <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
-              <View style={[styles.phoneInputWrapper, isFocused && styles.inputActive]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Phone Number</Text>
+              <View style={[styles.phoneInputWrapper, { borderBottomColor: colors.border }, isFocused && { borderBottomColor: colors.primary }]}>
                 <TouchableOpacity style={styles.countryCodeBox}>
-                   <Text style={styles.countryCodeText}>{countryCode}</Text>
-                   <Feather name="chevron-down" size={14} color={COLORS.textDark} style={styles.chevronIcon} />
+                   <Text style={[styles.countryCodeText, { color: colors.text }]}>{countryCode}</Text>
+                   <Feather name="chevron-down" size={14} color={colors.text} style={styles.chevronIcon} />
                 </TouchableOpacity>
-                <View style={styles.verticalDivider} />
+                <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
                 <TextInput
                   placeholder="Enter phone number"
-                  placeholderTextColor="rgba(15, 23, 42, 0.3)"
-                  style={styles.input}
+                  placeholderTextColor={colors.textSecondary}
+                  style={[styles.input, { color: colors.text }]}
                   keyboardType="phone-pad"
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
@@ -119,11 +121,11 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity style={styles.forgotButton}>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
+              <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot Password?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.signInButton, isSubmitting && { opacity: 0.7 }]}
+              style={[styles.signInButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, isSubmitting && { opacity: 0.7 }]}
               onPress={handleLogin}
               disabled={isSubmitting}
             >
@@ -138,19 +140,19 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR LOGIN WITH</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.textSecondary }]}>OR LOGIN WITH</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
             <View style={styles.socialRow}>
-              <TouchableOpacity style={styles.socialIcon}>
+              <TouchableOpacity style={[styles.socialIcon, { backgroundColor: colors.card }]}>
                 <AntDesign name="google" size={22} color="#EA4335" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialIcon}>
-                <FontAwesome name="apple" size={24} color="#000000" />
+              <TouchableOpacity style={[styles.socialIcon, { backgroundColor: colors.card }]}>
+                <FontAwesome name="apple" size={24} color={isDark ? "white" : "#000000"} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialIcon}>
+              <TouchableOpacity style={[styles.socialIcon, { backgroundColor: colors.card }]}>
                 <FontAwesome name="facebook" size={24} color="#1877F2" />
               </TouchableOpacity>
             </View>
@@ -158,9 +160,9 @@ export default function LoginScreen() {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push("/register")}>
-              <Text style={styles.footerLink}>Sign Up</Text>
+              <Text style={[styles.footerLink, { color: colors.primary }]}>Sign Up</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

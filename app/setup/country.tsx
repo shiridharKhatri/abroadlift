@@ -14,6 +14,7 @@ import { Stack, router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -44,6 +45,7 @@ const COUNTRIES = [
 export default function CountrySelection() {
   const { userData, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [selectedCountryId, setSelectedCountryId] = useState<string | null>(
     COUNTRIES.find(c => c.name === userData.country)?.id || null
   );
@@ -54,15 +56,15 @@ export default function CountrySelection() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Country</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Country</Text>
         <View style={{ width: 44 }} /> 
       </View>
 
@@ -72,7 +74,8 @@ export default function CountrySelection() {
             key={i} 
             style={[
               styles.trackerSegment, 
-              i === 1 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+              { backgroundColor: colors.border },
+              i === 1 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}
@@ -83,12 +86,12 @@ export default function CountrySelection() {
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.questionText}>Which country are you interested in?</Text>
+        <Text style={[styles.questionText, { color: colors.text }]}>Which country are you interested in?</Text>
 
         {/* Information Banner */}
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle-outline" size={22} color="#0388C7" />
-          <Text style={styles.infoText}>
+        <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#F0F9FF", borderColor: "#E0F2FE" }]}>
+          <Ionicons name="information-circle-outline" size={22} color={isDark ? colors.primary : "#0388C7"} />
+          <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#0369A1" }]}>
             Selecting your destination automatically configures local cost of living estimates, visa readiness tracks, and tailored university match criteria.
           </Text>
         </View>
@@ -107,7 +110,8 @@ export default function CountrySelection() {
               <View style={styles.flagWrapper}>
                 <View style={[
                   styles.flagContainer,
-                  selectedCountryId === country.id && styles.selectedFlagContainer
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  selectedCountryId === country.id && { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.primary + "15" }
                 ]}>
                   <Image
                     source={{ uri: `https://flagcdn.com/w160/${country.code}.png` }}
@@ -116,14 +120,15 @@ export default function CountrySelection() {
                   />
                 </View>
                 {selectedCountryId === country.id && (
-                  <View style={styles.checkBadge}>
-                    <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                  <View style={[styles.checkBadge, { backgroundColor: colors.background }]}>
+                    <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
                   </View>
                 )}
               </View>
               <Text style={[
                 styles.countryName,
-                selectedCountryId === country.id && styles.selectedCountryName
+                { color: colors.textSecondary },
+                selectedCountryId === country.id && { color: colors.primary, fontWeight: "800" }
               ]}>{country.name}</Text>
             </TouchableOpacity>
           ))}
@@ -131,10 +136,11 @@ export default function CountrySelection() {
       </ScrollView>
 
       {/* Sticky Bottom Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
           style={[
             styles.continueButton,
+            { backgroundColor: colors.primary, shadowColor: colors.primary },
             !selectedCountryId && { opacity: 0.5 }
           ]}
           disabled={!selectedCountryId}

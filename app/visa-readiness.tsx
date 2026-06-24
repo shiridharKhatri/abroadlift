@@ -14,6 +14,7 @@ import { router, Stack } from "expo-router";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProfileAvatar } from "../components/ProfileAvatar";
+import { useTheme } from "./context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -33,6 +34,7 @@ const COLORS = {
 
 export default function VisaReadinessPage() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [expandedSections, setExpandedSections] = React.useState<string[]>(["profile-1", "risks", "profile-2"]);
 
   const toggleSection = (id: string) => {
@@ -44,19 +46,19 @@ export default function VisaReadinessPage() {
   const isExpanded = (id: string) => expandedSections.includes(id);
 
   const SectionHeader = ({ title, icon, color, iconBg, onToggle, expanded }: { title: string; icon: any; color: string; iconBg: string; onToggle: () => void; expanded: boolean }) => (
-    <TouchableOpacity style={styles.sectionHeader} onPress={onToggle} activeOpacity={0.7}>
+    <TouchableOpacity style={[styles.sectionHeader, { backgroundColor: colors.card }]} onPress={onToggle} activeOpacity={0.7}>
       <View style={styles.sectionTitleRow}>
         <View style={[styles.sectionIconBox, { backgroundColor: iconBg }]}>
           <Ionicons name={icon} size={18} color={color} />
         </View>
-        <Text style={styles.sectionTitleText}>{title}</Text>
+        <Text style={[styles.sectionTitleText, { color: colors.text }]}>{title}</Text>
       </View>
-      <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={20} color="#CBD5E1" />
+      <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 
   const AnalysisItem = ({ label, type }: { label: string; type: 'success' | 'warning' }) => (
-    <View style={styles.analysisItemRow}>
+    <View style={[styles.analysisItemRow, { borderBottomColor: colors.border }]}>
       <View style={styles.analysisIconWrap}>
         {type === 'success' ? (
           <View style={[styles.statusIcon, { backgroundColor: COLORS.green }]}>
@@ -66,26 +68,26 @@ export default function VisaReadinessPage() {
           <MaterialCommunityIcons name="alert" size={20} color="#F59E0B" />
         )}
       </View>
-      <Text style={styles.analysisItemText}>{label}</Text>
+      <Text style={[styles.analysisItemText, { color: colors.text }]}>{label}</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
-      <Stack.Screen options={{ headerShown: false }} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+      <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 30) + 10 : insets.top + 10 }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border, borderBottomWidth: 1, backgroundColor: colors.background, paddingTop: Platform.OS === 'android' ? (insets.top || 30) + 10 : insets.top + 10 }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={26} color={COLORS.textDark} />
+          <Feather name="chevron-left" size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Visa Readiness</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Visa Readiness</Text>
         <TouchableOpacity
           style={styles.profileButton}
           onPress={() => router.push("/(tabs)/profile")}
         >
-          <ProfileAvatar size={44} color="#CBD5E1" />
+          <ProfileAvatar size={44} color={colors.border} />
         </TouchableOpacity>
       </View>
 
@@ -95,37 +97,37 @@ export default function VisaReadinessPage() {
       >
         
         {/* Readiness Summary Card */}
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF9F2", borderColor: "#FDEED7" }]}>
           <View style={styles.summaryContent}>
             <View style={styles.summaryLeft}>
-              <Text style={styles.summaryTitle}>Visa Readiness Score</Text>
-              <Text style={styles.summaryValue}>60% - Needs Work</Text>
-              <View style={styles.averageBadge}>
+              <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>Visa Readiness Score</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>60% - Needs Work</Text>
+              <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
                 <View style={styles.orangeDot} />
                 <Text style={styles.averageBadgeText}>Average Cost</Text>
               </View>
             </View>
             <View style={styles.chartContainer}>
-               <View style={styles.donutBase}>
-                  <View style={[styles.donutSegment, { borderColor: COLORS.primary, borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '45deg' }] }]} />
+               <View style={[styles.donutBase, { borderColor: isDark ? colors.border : "#E2E8F0" }]}>
+                  <View style={[styles.donutSegment, { borderColor: colors.primary, borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '45deg' }] }]} />
                   <View style={[styles.donutSegment, { borderColor: COLORS.orange, borderBottomColor: 'transparent', borderRightColor: 'transparent', transform: [{ rotate: '-45deg' }] }]} />
                   <View style={[styles.donutSegment, { borderColor: '#14B8A6', borderTopColor: 'transparent', borderRightColor: 'transparent', width: 66, height: 66, top: -10, left: -10, transform: [{ rotate: '120deg' }] }]} />
                </View>
             </View>
           </View>
-          <View style={styles.summaryDivider} />
+          <View style={[styles.summaryDivider, { backgroundColor: isDark ? colors.border : "#FDEED7" }]} />
           <View style={styles.summaryFooter}>
              <View style={styles.footerIconItem}>
-                <Ionicons name="information-circle-outline" size={14} color="#64748B" />
-                <Text style={styles.footerIconText}>Financial Strength</Text>
+                <Ionicons name="information-circle-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>Financial Strength</Text>
              </View>
              <View style={styles.footerIconItem}>
-                <Ionicons name="information-circle-outline" size={14} color="#64748B" />
-                <Text style={styles.footerIconText}>Documents</Text>
+                <Ionicons name="information-circle-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>Documents</Text>
              </View>
              <View style={styles.footerIconItem}>
-                <Ionicons name="information-circle-outline" size={14} color="#64748B" />
-                <Text style={styles.footerIconText}>Country Rules</Text>
+                <Ionicons name="information-circle-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>Country Rules</Text>
              </View>
           </View>
         </View>
@@ -134,17 +136,17 @@ export default function VisaReadinessPage() {
         <View style={styles.breakdownContainer}>
 
            {/* Profile Analysis (Blue) */}
-           <View style={styles.sectionBox}>
+           <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
              <SectionHeader 
                 title="Profile Analysis" 
                 icon="person-outline" 
                 color="#3B82F6" 
-                iconBg="#DBEAFE" 
+                iconBg={isDark ? "rgba(59, 130, 246, 0.15)" : "#DBEAFE"} 
                 onToggle={() => toggleSection("profile-1")}
                 expanded={isExpanded("profile-1")}
              />
              {isExpanded("profile-1") && (
-               <View style={styles.sectionBody}>
+               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                  <AnalysisItem label="Strong Academics" type="success" />
                  <AnalysisItem label="Good Study Plan" type="success" />
                  <AnalysisItem label="Financial Proof Weak" type="warning" />
@@ -154,17 +156,17 @@ export default function VisaReadinessPage() {
            </View>
 
            {/* Risk Factors (Orange) */}
-           <View style={styles.sectionBox}>
+           <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
              <SectionHeader 
                 title="Risk Factors" 
                 icon="warning-outline" 
                 color="#D97706" 
-                iconBg="#FEF3C7" 
+                iconBg={isDark ? "rgba(217, 119, 6, 0.15)" : "#FEF3C7"} 
                 onToggle={() => toggleSection("risks")}
                 expanded={isExpanded("risks")}
              />
              {isExpanded("risks") && (
-               <View style={styles.sectionBody}>
+               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                  <AnalysisItem label="Insufficient Bank Balance" type="warning" />
                  <AnalysisItem label="Weak Financial Document" type="warning" />
                  <AnalysisItem label="No Sponsor Proof" type="warning" />
@@ -173,17 +175,17 @@ export default function VisaReadinessPage() {
            </View>
 
            {/* Profile Analysis (Green) */}
-           <View style={styles.sectionBox}>
+           <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
              <SectionHeader 
                 title="Profile Analysis" 
                 icon="checkmark-circle-outline" 
                 color="#059669" 
-                iconBg="#D1FAE5" 
+                iconBg={isDark ? "rgba(5, 150, 105, 0.15)" : "#D1FAE5"} 
                 onToggle={() => toggleSection("profile-2")}
                 expanded={isExpanded("profile-2")}
              />
              {isExpanded("profile-2") && (
-               <View style={styles.sectionBody}>
+               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                  <AnalysisItem label="Financial Proof" type="success" />
                  <AnalysisItem label="Academics" type="success" />
                  <AnalysisItem label="Country Rules" type="success" />

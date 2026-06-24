@@ -17,6 +17,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUser } from "./context/UserContext";
 import { verifySignupOtp, requestOtp } from "../lib/api";
+import { useTheme } from "./context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -33,6 +34,7 @@ export default function VerifyOtpScreen() {
   const insets = useSafeAreaInsets();
   const { phoneE164, purpose } = useLocalSearchParams<{ phoneE164: string; purpose: string }>();
   const { login } = useUser();
+  const { colors, isDark } = useTheme();
   
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,21 +116,21 @@ export default function VerifyOtpScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.mainContent, { paddingTop: 20 + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Verify Phone</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Verify Phone</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Enter the 6-digit code sent to{"\n"}
-            <Text style={styles.phoneNumber}>{phoneE164}</Text>
+            <Text style={[styles.phoneNumber, { color: colors.text }]}>{phoneE164}</Text>
           </Text>
         </View>
 
@@ -137,7 +139,7 @@ export default function VerifyOtpScreen() {
             <TextInput
               key={index}
               ref={(ref) => { inputs.current[index] = ref as TextInput; }}
-              style={styles.otpInput}
+              style={[styles.otpInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
               maxLength={1}
               keyboardType="number-pad"
               value={digit}
@@ -149,7 +151,7 @@ export default function VerifyOtpScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.verifyButton, isSubmitting && { opacity: 0.7 }]}
+          style={[styles.verifyButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, isSubmitting && { opacity: 0.7 }]}
           onPress={handleVerify}
           disabled={isSubmitting}
         >
@@ -161,9 +163,9 @@ export default function VerifyOtpScreen() {
         </TouchableOpacity>
 
         <View style={styles.resendContainer}>
-          <Text style={styles.resendText}>Didn't receive code? </Text>
+          <Text style={[styles.resendText, { color: colors.textSecondary }]}>Didn't receive code? </Text>
           <TouchableOpacity onPress={handleResend} disabled={timer > 0}>
-            <Text style={[styles.resendLink, timer > 0 && { color: "#CBD5E1" }]}>
+            <Text style={[styles.resendLink, { color: colors.primary }, timer > 0 && { color: colors.border }]}>
               {timer > 0 ? `Resend in ${timer}s` : "Resend Code"}
             </Text>
           </TouchableOpacity>

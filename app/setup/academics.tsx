@@ -16,6 +16,7 @@ import { Stack, router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ const COLORS = {
 export default function AcademicsSetup() {
   const { userData, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [recentField, setRecentField] = useState(userData.recentAcademicField || "");
   const [cgpa, setCgpa] = useState(userData.cgpa || "");
   const [passoutYear, setPassoutYear] = useState(userData.passoutYear || "");
@@ -90,16 +92,16 @@ export default function AcademicsSetup() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Academics</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Academics</Text>
         <View style={{ width: 44 }} /> 
       </View>
 
@@ -109,27 +111,28 @@ export default function AcademicsSetup() {
             key={i} 
             style={[
               styles.trackerSegment, 
-              i === 4 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+              { backgroundColor: colors.border },
+              i === 4 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.questionText}>Tell us about your education</Text>
+        <Text style={[styles.questionText, { color: colors.textSecondary }]}>Tell us about your education</Text>
 
         {/* Input Cards */}
         <View style={styles.form}>
           
           {/* Field of Study Card */}
-          <View style={styles.inputCard}>
-            <Text style={styles.inputLabel}>Recent Field of Study</Text>
+          <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Recent Field of Study</Text>
             <View style={styles.textInputWrapper}>
-              <Feather name="book-open" size={18} color={COLORS.textGray} style={styles.inputIcon} />
+              <Feather name="book-open" size={18} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { color: colors.text }]}
                 placeholder="e.g. Computer Science, High School (Science)"
-                placeholderTextColor={COLORS.textGray}
+                placeholderTextColor={colors.textSecondary}
                 value={recentField}
                 onChangeText={setRecentField}
               />
@@ -137,14 +140,14 @@ export default function AcademicsSetup() {
           </View>
 
           {/* CGPA Card */}
-          <View style={styles.inputCard}>
-            <Text style={styles.inputLabel}>CGPA / Percentage</Text>
+          <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>CGPA / Percentage</Text>
             <View style={styles.textInputWrapper}>
-              <Feather name="trending-up" size={18} color={COLORS.textGray} style={styles.inputIcon} />
+              <Feather name="trending-up" size={18} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { color: colors.text }]}
                 placeholder="e.g. 3.8 (out of 4.0), 8.5 (out of 10), 85%"
-                placeholderTextColor={COLORS.textGray}
+                placeholderTextColor={colors.textSecondary}
                 value={cgpa}
                 onChangeText={handleCgpaChange}
                 keyboardType="numeric"
@@ -154,14 +157,14 @@ export default function AcademicsSetup() {
           </View>
 
           {/* Passout Year Card */}
-          <View style={styles.inputCard}>
-            <Text style={styles.inputLabel}>Passout Year</Text>
+          <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Passout Year</Text>
             <View style={styles.textInputWrapper}>
-              <Feather name="calendar" size={18} color={COLORS.textGray} style={styles.inputIcon} />
+              <Feather name="calendar" size={18} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { color: colors.text }]}
                 placeholder="e.g. 2024"
-                placeholderTextColor={COLORS.textGray}
+                placeholderTextColor={colors.textSecondary}
                 value={passoutYear}
                 onChangeText={handleYearChange}
                 keyboardType="numeric"
@@ -172,9 +175,9 @@ export default function AcademicsSetup() {
           </View>
 
           {/* Dynamic Suggestion/Tip Box */}
-          <View style={styles.infoCard}>
-            <Ionicons name="sparkles" size={20} color="#10B981" />
-            <Text style={styles.infoText}>
+          <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" }]}>
+            <Ionicons name="sparkles" size={20} color={isDark ? colors.primary : "#10B981"} />
+            <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#065F46" }]}>
               A CGPA above 3.0/4.0 or 75% unlocks access to top tier schools and increases scholarship funding opportunities by up to 50%.
             </Text>
           </View>
@@ -183,10 +186,11 @@ export default function AcademicsSetup() {
       </ScrollView>
 
       {/* Sticky Bottom Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
           style={[
             styles.continueButton, 
+            { backgroundColor: colors.primary, shadowColor: colors.primary },
             !isFormValid && { opacity: 0.5 }
           ]}
           onPress={handleContinue}

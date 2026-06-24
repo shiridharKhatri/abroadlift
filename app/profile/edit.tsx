@@ -16,6 +16,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 const COLORS = {
   primary: "#33BFFF", 
@@ -29,6 +30,7 @@ const COLORS = {
 export default function EditProfile() {
   const { userData, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   
   const [formData, setFormData] = useState({
     name: userData.name,
@@ -66,20 +68,20 @@ export default function EditProfile() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         {/* Header */}
-        <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 30) + 10 : insets.top + 10 }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border, paddingTop: Platform.OS === 'android' ? (insets.top || 30) + 10 : insets.top + 10 }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+            <Feather name="chevron-left" size={28} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-             <Text style={styles.saveButtonText}>Save</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
+          <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary + "15" }]} onPress={handleSave}>
+             <Text style={[styles.saveButtonText, { color: colors.primary }]}>Save</Text>
           </TouchableOpacity>
         </View>
 
@@ -92,71 +94,76 @@ export default function EditProfile() {
             activeOpacity={0.8}
           >
             <View style={styles.avatarWrapper}>
-              <View style={styles.avatarBox}>
+              <View style={[styles.avatarBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
                  {formData.profileImage ? (
                    <Image source={{ uri: formData.profileImage }} style={styles.avatarImage} />
                  ) : (
-                   <Ionicons name="person" size={50} color={COLORS.textGray} />
+                   <Ionicons name="person" size={50} color={colors.textSecondary} />
                  )}
               </View>
-              <View style={styles.cameraIcon}>
-                 <Feather name="camera" size={16} color="white" />
+              <View style={[styles.cameraIcon, { backgroundColor: colors.primary, borderColor: colors.background }]}>
+                  <Feather name="camera" size={16} color="white" />
               </View>
             </View>
-            <Text style={styles.changePhotoText}>Change Profile Photo</Text>
+            <Text style={[styles.changePhotoText, { color: colors.primary }]}>Change Profile Photo</Text>
           </TouchableOpacity>
 
           {/* Form Fields */}
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Full Name</Text>
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.name}
                 onChangeText={(val) => setFormData({...formData, name: val})}
                 placeholder="Full Name"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Username</Text>
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.username}
                 onChangeText={(val) => setFormData({...formData, username: val})}
                 placeholder="Username"
+                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="none"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Recent Field of Study</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Recent Field of Study</Text>
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.recentAcademicField}
                 onChangeText={(val) => setFormData({...formData, recentAcademicField: val})}
                 placeholder="e.g. Science"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>CGPA / Percentage</Text>
+              <Text style={[styles.label, { color: colors.text }]}>CGPA / Percentage</Text>
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.cgpa}
                 onChangeText={(val) => setFormData({...formData, cgpa: val})}
                 placeholder="e.g. 3.8"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Passout Year</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Passout Year</Text>
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.passoutYear}
                 onChangeText={(val) => setFormData({...formData, passoutYear: val})}
                 placeholder="e.g. 2024"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 maxLength={4}
               />
@@ -164,8 +171,8 @@ export default function EditProfile() {
           </View>
 
           {/* Additional Settings */}
-          <View style={styles.footerInfo}>
-             <Text style={styles.footerText}>
+          <View style={[styles.footerInfo, { backgroundColor: colors.card }]}>
+             <Text style={[styles.footerText, { color: colors.textSecondary }]}>
                 Your profile information is used to personalize your university recommendations and study journey.
              </Text>
           </View>

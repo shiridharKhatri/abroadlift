@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { getCostOfLiving, getUniversityDetails, UniversityDetail } from "../../lib/api";
 import { useUser } from "../context/UserContext";
+import { useTheme } from "../context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -76,6 +77,7 @@ export default function UniversityDetails() {
   const { id, country: countryParam, name } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { userData, selectUniversity, setUserData } = useUser();
+  const { colors, isDark } = useTheme();
 
   // Resolve the actual country to use for API and display
   const currentCountry = (countryParam && countryParam !== "undefined")
@@ -180,13 +182,13 @@ export default function UniversityDetails() {
 
     return (
       <View style={styles.tabContent}>
-        <View style={styles.estimateCard}>
-          <Text style={styles.estimateLabel}>ESTIMATED TOTAL COST / YR</Text>
-          <Text style={styles.estimateValue}>{fmtNpr(totalNpr)}</Text>
-          <Text style={{ fontSize: 13, color: THEME.textGray, marginBottom: 16, fontWeight: "600" }}>
+        <View style={[styles.estimateCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.estimateLabel, { color: colors.textSecondary }]}>ESTIMATED TOTAL COST / YR</Text>
+          <Text style={[styles.estimateValue, { color: colors.text }]}>{fmtNpr(totalNpr)}</Text>
+          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16, fontWeight: "600" }}>
             Approx. ${(tuitionUsd + livingUsd).toLocaleString()} USD
           </Text>
-          <View style={styles.costBar}>
+          <View style={[styles.costBar, { backgroundColor: colors.border }]}>
             <View style={[styles.costSegment, { width: `${(tuitionUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#6366F1' }]} />
             <View style={[styles.costSegment, { width: `${(livingUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#FBBF24' }]} />
             <View style={[styles.costSegment, { width: '5%', backgroundColor: '#10B981' }]} />
@@ -194,41 +196,41 @@ export default function UniversityDetails() {
           <View style={styles.costLegend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#6366F1' }]} />
-              <Text style={styles.legendText}>Tuition</Text>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]}>Tuition</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
-              <Text style={styles.legendText}>Living</Text>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]}>Living</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
-              <Text style={styles.legendText}>Other</Text>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]}>Other</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.chancesCard}>
-          <Text style={styles.chancesTitle}>Your Chances</Text>
+        <View style={[styles.chancesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.chancesTitle, { color: colors.text }]}>Your Chances</Text>
           <View style={styles.chancesVisual}>
-            <View style={styles.circularProgress}>
+            <View style={[styles.circularProgress, { borderColor: colors.border }]}>
               <View style={[styles.circularFill, { transform: [{ rotate: '45deg' }] }]} />
-              <View style={styles.circularInner}>
-                <Text style={styles.percentageText}>12%</Text>
+              <View style={[styles.circularInner, { backgroundColor: colors.background }]}>
+                <Text style={[styles.percentageText, { color: colors.text }]}>12%</Text>
               </View>
             </View>
-            <Text style={styles.admissionLabel}>Admission</Text>
+            <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Admission</Text>
           </View>
-          <Text style={styles.chancesDescription}>
-            Based on your profile, you have a <Text style={{ fontWeight: '800' }}>low chance</Text> of admission. Improve your test scores to increase odds.
+          <Text style={[styles.chancesDescription, { color: colors.textSecondary }]}>
+            Based on your profile, you have a <Text style={{ fontWeight: '800', color: colors.text }}>low chance</Text> of admission. Improve your test scores to increase odds.
           </Text>
           <TouchableOpacity
-            style={styles.completeEstimateBtn}
+            style={[styles.completeEstimateBtn, { backgroundColor: colors.primary + "15" }]}
             onPress={() => router.push({
               pathname: "/university/cost-breakdown",
               params: { id: id, country: currentCountry }
             })}
           >
-            <Text style={styles.completeEstimateBtnText}>Get Complete Cost Breakdown</Text>
+            <Text style={[styles.completeEstimateBtnText, { color: colors.primary }]}>Get Complete Cost Breakdown</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -244,76 +246,76 @@ export default function UniversityDetails() {
     return (
       <View style={styles.tabContent}>
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionIconBox}>
-            <Ionicons name="book-outline" size={18} color={THEME.purple} />
+          <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
+            <Ionicons name="book-outline" size={18} color={colors.primary} />
           </View>
-          <Text style={styles.contentSectionTitle}>About University</Text>
+          <Text style={[styles.contentSectionTitle, { color: colors.text }]}>About University</Text>
         </View>
-        <View style={styles.overviewTextCard}>
-          <Text style={styles.overviewText}>{displayedDescription}</Text>
+        <View style={[styles.overviewTextCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.overviewText, { color: colors.text }]}>{displayedDescription}</Text>
           {isLongDescription && (
             <TouchableOpacity
               onPress={() => setIsUniDescriptionExpanded(!isUniDescriptionExpanded)}
               style={{ marginTop: 12, alignSelf: "flex-start", flexDirection: "row", alignItems: "center" }}
             >
-              <Text style={{ color: THEME.blue, fontWeight: "700", fontSize: 13 }}>
+              <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>
                 {isUniDescriptionExpanded ? "Read Less" : "Read More"}
               </Text>
               <Ionicons 
                 name={isUniDescriptionExpanded ? "chevron-up" : "chevron-down"} 
                 size={16} 
-                color={THEME.blue} 
+                color={colors.primary} 
                 style={{ marginLeft: 4 }} 
               />
             </TouchableOpacity>
           )}
           {uniData?.notes && (
-            <View style={styles.notesBox}>
-              <Text style={styles.notesLabel}>ADMISSION NOTES</Text>
-              <Text style={styles.notesText}>{uniData.notes}</Text>
+            <View style={[styles.notesBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.notesLabel, { color: colors.textSecondary }]}>ADMISSION NOTES</Text>
+              <Text style={[styles.notesText, { color: colors.text }]}>{uniData.notes}</Text>
             </View>
           )}
         </View>
 
       <View style={styles.sectionHeader}>
-        <View style={styles.sectionIconBox}>
-          <Ionicons name="star-outline" size={18} color={THEME.orange} />
+        <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
+          <Ionicons name="star-outline" size={18} color="#FBBF24" />
         </View>
-        <Text style={styles.contentSectionTitle}>Highlights</Text>
+        <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Highlights</Text>
       </View>
       {details.ranking_world && details.ranking_world !== "N/A" && details.ranking_world !== "0" && (
         <View style={styles.highlightItem}>
-          <View style={styles.checkCircle}>
-            <Ionicons name="ribbon-outline" size={12} color={THEME.orange} />
+          <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
+            <Ionicons name="ribbon-outline" size={12} color="#FBBF24" />
           </View>
-          <Text style={styles.highlightText}>QS World Ranking: #{details.ranking_world}</Text>
+          <Text style={[styles.highlightText, { color: colors.text }]}>QS World Ranking: #{details.ranking_world}</Text>
         </View>
       )}
       {details.ranking_national && details.ranking_national !== "N/A" && details.ranking_national !== "0" && (
         <View style={styles.highlightItem}>
-          <View style={styles.checkCircle}>
-            <Ionicons name="ribbon-outline" size={12} color={THEME.orange} />
+          <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
+            <Ionicons name="ribbon-outline" size={12} color="#FBBF24" />
           </View>
-          <Text style={styles.highlightText}>National Ranking: #{details.ranking_national}</Text>
+          <Text style={[styles.highlightText, { color: colors.text }]}>National Ranking: #{details.ranking_national}</Text>
         </View>
       )}
       <View style={styles.highlightItem}>
-        <View style={styles.checkCircle}>
-          <Ionicons name="school-outline" size={12} color={THEME.blue} />
+        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
+          <Ionicons name="school-outline" size={12} color={colors.primary} />
         </View>
-        <Text style={styles.highlightText}>{details.type || "Higher Education Institution"}</Text>
+        <Text style={[styles.highlightText, { color: colors.text }]}>{details.type || "Higher Education Institution"}</Text>
       </View>
       <View style={styles.highlightItem}>
-        <View style={styles.checkCircle}>
-          <Ionicons name="calendar-outline" size={12} color={THEME.blue} />
+        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
+          <Ionicons name="calendar-outline" size={12} color={colors.primary} />
         </View>
-        <Text style={styles.highlightText}>Established in {details.established !== "N/A" ? details.established : "N/A"}</Text>
+        <Text style={[styles.highlightText, { color: colors.text }]}>Established in {details.established !== "N/A" ? details.established : "N/A"}</Text>
       </View>
       <View style={styles.highlightItem}>
-        <View style={styles.checkCircle}>
-          <Ionicons name="people-outline" size={12} color={THEME.blue} />
+        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
+          <Ionicons name="people-outline" size={12} color={colors.primary} />
         </View>
-        <Text style={styles.highlightText}>
+        <Text style={[styles.highlightText, { color: colors.text }]}>
           {(() => {
             const count = details.students;
             if (!count) return "10,000+ Students";
@@ -326,34 +328,34 @@ export default function UniversityDetails() {
       </View>
       {uniData?.address && (
         <View style={styles.highlightItem}>
-          <View style={styles.checkCircle}>
-            <Ionicons name="location-outline" size={12} color={THEME.blue} />
+          <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
+            <Ionicons name="location-outline" size={12} color={colors.primary} />
           </View>
-          <Text style={styles.highlightText}>Address: {uniData.address}</Text>
+          <Text style={[styles.highlightText, { color: colors.text }]}>Address: {uniData.address}</Text>
         </View>
       )}
 
       <View style={styles.sectionHeader}>
-        <View style={styles.sectionIconBox}>
-          <Ionicons name="gift-outline" size={18} color={THEME.orange} />
+        <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
+          <Ionicons name="gift-outline" size={18} color="#FBBF24" />
         </View>
-        <Text style={styles.contentSectionTitle}>Scholarships</Text>
+        <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Scholarships</Text>
       </View>
 
       {uniData?.scholarships && uniData.scholarships.length > 0 ? (
         uniData.scholarships.map((s, idx) => (
-          <View key={idx} style={styles.scholarshipCard}>
+          <View key={idx} style={[styles.scholarshipCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.scholarshipHeader}>
-              <Text style={styles.scholarshipName}>{s.name}</Text>
-              <Text style={styles.scholarshipValue}>{s.value}</Text>
+              <Text style={[styles.scholarshipName, { color: colors.text }]}>{s.name}</Text>
+              <Text style={[styles.scholarshipValue, { color: colors.primary }]}>{s.value}</Text>
             </View>
             {s.eligibility && (
-              <Text style={styles.scholarshipElig}>
-                <Text style={{ fontWeight: '700' }}>Eligibility: </Text>{s.eligibility}
+              <Text style={[styles.scholarshipElig, { color: colors.textSecondary }]}>
+                <Text style={{ fontWeight: '700', color: colors.text }}>Eligibility: </Text>{s.eligibility}
               </Text>
             )}
             {s.notes && (
-              <Text style={styles.scholarshipNotes}>{s.notes}</Text>
+              <Text style={[styles.scholarshipNotes, { color: colors.textSecondary }]}>{s.notes}</Text>
             )}
             {s.type && (
               <View style={[styles.typeBadge, { backgroundColor: s.type === 'merit' ? '#FEF3C7' : '#DCFCE7' }]}>
@@ -363,45 +365,45 @@ export default function UniversityDetails() {
           </View>
         ))
       ) : (
-        <View style={styles.noScholarshipBox}>
-          <Text style={styles.noScholarshipText}>Check university website for latest scholarships.</Text>
+        <View style={[styles.noScholarshipBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.noScholarshipText, { color: colors.textSecondary }]}>Check university website for latest scholarships.</Text>
         </View>
       )}
 
       <View style={styles.sectionHeader}>
-        <View style={styles.sectionIconBox}>
-          <Ionicons name="business-outline" size={18} color={THEME.blue} />
+        <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
+          <Ionicons name="business-outline" size={18} color={colors.primary} />
         </View>
-        <Text style={styles.contentSectionTitle}>Key Facts</Text>
+        <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Key Facts</Text>
       </View>
       <View style={styles.keyFactsGrid}>
-        <View style={styles.factCard}>
-          <View style={styles.factIconBox}>
+        <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
             <MaterialCommunityIcons name="office-building" size={20} color="#BF90FF" />
           </View>
-          <Text style={styles.factLabel}>TYPE</Text>
-          <Text style={styles.factValue}>{details.type}</Text>
+          <Text style={[styles.factLabel, { color: colors.textSecondary }]}>TYPE</Text>
+          <Text style={[styles.factValue, { color: colors.text }]}>{details.type}</Text>
         </View>
-        <View style={styles.factCard}>
-          <View style={styles.factIconBox}>
+        <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
             <Ionicons name="time-outline" size={20} color="#F59E0B" />
           </View>
-          <Text style={styles.factLabel}>ESTABLISHED</Text>
-          <Text style={styles.factValue}>{details.established}</Text>
+          <Text style={[styles.factLabel, { color: colors.textSecondary }]}>ESTABLISHED</Text>
+          <Text style={[styles.factValue, { color: colors.text }]}>{details.established}</Text>
         </View>
-        <View style={styles.factCard}>
-          <View style={styles.factIconBox}>
+        <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
             <Ionicons name="location-outline" size={20} color="#F43F5E" />
           </View>
-          <Text style={styles.factLabel}>CAMPUS</Text>
-          <Text style={styles.factValue}>{details.campus}</Text>
+          <Text style={[styles.factLabel, { color: colors.textSecondary }]}>CAMPUS</Text>
+          <Text style={[styles.factValue, { color: colors.text }]}>{details.campus}</Text>
         </View>
-        <View style={styles.factCard}>
-          <View style={styles.factIconBox}>
+        <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
             <Ionicons name="people-outline" size={20} color="#10B981" />
           </View>
-          <Text style={styles.factLabel}>STUDENTS</Text>
-          <Text style={styles.factValue}>{details.students}</Text>
+          <Text style={[styles.factLabel, { color: colors.textSecondary }]}>STUDENTS</Text>
+          <Text style={[styles.factValue, { color: colors.text }]}>{details.students}</Text>
         </View>
       </View>
     </View>
@@ -416,29 +418,29 @@ export default function UniversityDetails() {
       <View style={styles.tabContent}>
         {hasRank ? (
           <>
-            <View style={styles.rankingGlobalCard}>
+            <View style={[styles.rankingGlobalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.globalHeader}>
                 <View style={styles.medalIcon}>
                   <Ionicons name="ribbon" size={24} color="#FBBF24" />
                 </View>
                 <View>
-                  <Text style={styles.globalRatingTitle}>Global Excellence</Text>
-                  <Text style={styles.globalRatingSub}>University Rankings</Text>
+                  <Text style={[styles.globalRatingTitle, { color: colors.text }]}>Global Excellence</Text>
+                  <Text style={[styles.globalRatingSub, { color: colors.textSecondary }]}>University Rankings</Text>
                 </View>
               </View>
               <View style={styles.globalRanksRow}>
                 {details.ranking_world !== "N/A" && details.ranking_world !== "0" && (
-                  <View style={styles.rankSubCard}>
-                    <Text style={styles.rankAgency}>QS WORLD</Text>
-                    <Text style={styles.rankNumber}>#{details.ranking_world}</Text>
-                    <Text style={styles.rankScope}>Global</Text>
+                  <View style={[styles.rankSubCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <Text style={[styles.rankAgency, { color: colors.textSecondary }]}>QS WORLD</Text>
+                    <Text style={[styles.rankNumber, { color: colors.text }]}>#{details.ranking_world}</Text>
+                    <Text style={[styles.rankScope, { color: colors.textSecondary }]}>Global</Text>
                   </View>
                 )}
                 {details.ranking_national !== "N/A" && details.ranking_national !== "0" && (
-                  <View style={styles.rankSubCard}>
-                    <Text style={styles.rankAgency}>NATIONAL</Text>
-                    <Text style={styles.rankNumber}>#{details.ranking_national}</Text>
-                    <Text style={styles.rankScope}>National</Text>
+                  <View style={[styles.rankSubCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <Text style={[styles.rankAgency, { color: colors.textSecondary }]}>NATIONAL</Text>
+                    <Text style={[styles.rankNumber, { color: colors.text }]}>#{details.ranking_national}</Text>
+                    <Text style={[styles.rankScope, { color: colors.textSecondary }]}>National</Text>
                   </View>
                 )}
               </View>
@@ -446,8 +448,8 @@ export default function UniversityDetails() {
           </>
         ) : (
           <View style={styles.noPhotosBox}>
-            <Ionicons name="ribbon-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
-            <Text style={styles.noPhotosText}>Rankings data not available. Visit official website.</Text>
+            <Ionicons name="ribbon-outline" size={48} color={colors.textSecondary} style={{ marginBottom: 12 }} />
+            <Text style={[styles.noPhotosText, { color: colors.textSecondary }]}>Rankings data not available. Visit official website.</Text>
           </View>
         )}
       </View>
@@ -465,12 +467,12 @@ export default function UniversityDetails() {
 
     return (
       <View style={styles.tabContent}>
-        <View style={styles.courseSearchWrapper}>
-          <Ionicons name="search" size={20} color="#94A3B8" />
+        <View style={[styles.courseSearchWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
           <TextInput
             placeholder="Search Courses..."
-            style={styles.courseInput}
-            placeholderTextColor="#94A3B8"
+            style={[styles.courseInput, { color: colors.text }]}
+            placeholderTextColor={colors.textSecondary}
             value={courseSearch}
             onChangeText={setCourseSearch}
           />
@@ -480,7 +482,7 @@ export default function UniversityDetails() {
           filtered.map((course: any, idx) => (
             <TouchableOpacity
               key={idx}
-              style={styles.courseCard}
+              style={[styles.courseCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               activeOpacity={0.7}
               onPress={() => {
                 router.push({
@@ -507,43 +509,43 @@ export default function UniversityDetails() {
             >
               {/* Category Badge at the top left */}
               <View style={styles.courseTopRow}>
-                <View style={styles.categoryTag}>
-                  <Text style={styles.categoryTagText}>
+                <View style={[styles.categoryTag, { backgroundColor: colors.primary + "15" }]}>
+                  <Text style={[styles.categoryTagText, { color: colors.primary }]}>
                     {(course.category || "General").toUpperCase()}
                   </Text>
                 </View>
               </View>
 
               {/* Course Title taking full width */}
-              <Text style={styles.courseName}>{course.name}</Text>
+              <Text style={[styles.courseName, { color: colors.text }]}>{course.name}</Text>
 
               {/* Course Details */}
               <View style={styles.courseDetails}>
                 <View style={styles.courseDetailItem}>
-                  <Ionicons name="time-outline" size={15} color="#64748B" />
-                  <Text style={styles.courseDetailText}>{course.level?.join(", ") || "2 - 4 Years"}</Text>
+                  <Ionicons name="time-outline" size={15} color={colors.textSecondary} />
+                  <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>{course.level?.join(", ") || "2 - 4 Years"}</Text>
                 </View>
                 <View style={styles.courseDetailItem}>
-                  <Ionicons name="briefcase-outline" size={15} color="#64748B" />
-                  <Text style={styles.courseDetailText}>Full-time</Text>
+                  <Ionicons name="briefcase-outline" size={15} color={colors.textSecondary} />
+                  <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>Full-time</Text>
                 </View>
               </View>
 
-              <View style={styles.courseDivider} />
+              <View style={[styles.courseDivider, { backgroundColor: colors.border }]} />
 
               {/* Tuition Row */}
               <View style={styles.tuitionRowCompact}>
                 <View>
-                  <Text style={styles.tuitionLabelCompact}>Annual Tuition</Text>
-                  <Text style={styles.tuitionValueCompact}>{course.fee || "Varies"}</Text>
+                  <Text style={[styles.tuitionLabelCompact, { color: colors.textSecondary }]}>Annual Tuition</Text>
+                  <Text style={[styles.tuitionValueCompact, { color: colors.primary }]}>{course.fee || "Varies"}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={THEME.secondary} />
+                <Ionicons name="chevron-forward" size={18} color={colors.primary} />
               </View>
             </TouchableOpacity>
           ))
         ) : (
-          <View style={styles.noPhotosBox}>
-            <Text style={styles.noPhotosText}>
+          <View style={[styles.noPhotosBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.noPhotosText, { color: colors.textSecondary }]}>
               {courseSearch === "" ? "No courses listed. Check university website." : "No matching courses found"}
             </Text>
           </View>
@@ -556,9 +558,9 @@ export default function UniversityDetails() {
     const photos = uniData?.photos || [];
     if (photos.length === 0) {
       return (
-        <View style={styles.noPhotosBox}>
-          <Ionicons name="images-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
-          <Text style={styles.noPhotosText}>No campus photos available</Text>
+        <View style={[styles.noPhotosBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Ionicons name="images-outline" size={48} color={colors.textSecondary} style={{ marginBottom: 12 }} />
+          <Text style={[styles.noPhotosText, { color: colors.textSecondary }]}>No campus photos available</Text>
         </View>
       );
     }
@@ -587,17 +589,17 @@ export default function UniversityDetails() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-        <ActivityIndicator size="large" color={THEME.primary} />
-        <Text style={{ marginTop: 12, color: THEME.textGray, fontWeight: "600" }}>Loading University Details...</Text>
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center", backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 12, color: colors.textSecondary, fontWeight: "600" }}>Loading University Details...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: '#fff' } }} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+      <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -646,15 +648,22 @@ export default function UniversityDetails() {
         </View>
 
         {/* Sticky Tab Bar */}
-        <View style={styles.tabBarWrapper}>
+        <View style={[styles.tabBarWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
             {TABS.map((tab) => (
               <TouchableOpacity
                 key={tab}
-                style={[styles.tabItem, selectedTab === tab && styles.activeTabItem]}
+                style={[
+                  styles.tabItem, 
+                  selectedTab === tab && { borderBottomColor: colors.primary }
+                ]}
                 onPress={() => setSelectedTab(tab)}
               >
-                <Text style={[styles.tabText, selectedTab === tab && styles.activeTabText]}>{tab}</Text>
+                <Text style={[
+                  styles.tabText, 
+                  { color: colors.textSecondary },
+                  selectedTab === tab && { color: colors.primary }
+                ]}>{tab}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>

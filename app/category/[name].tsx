@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -60,31 +61,32 @@ const UNIVERSITIES = [
 
 export default function CategoryList() {
   const { name } = useLocalSearchParams();
+  const { colors, isDark } = useTheme();
   const categoryTitle = typeof name === "string" ? name : "Category";
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.bgLight} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
-          <Feather name="chevron-left" size={24} color={THEME.textDark} />
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: colors.border }]}>
+          <Feather name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{categoryTitle}</Text>
-        <TouchableOpacity style={styles.iconButton}>
-           <Feather name="filter" size={20} color={THEME.textDark} />
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{categoryTitle}</Text>
+        <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.border }]}>
+           <Feather name="filter" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContent}>
-        <Text style={styles.resultsText}>Showing matching results</Text>
+        <Text style={[styles.resultsText, { color: colors.textSecondary }]}>Showing matching results</Text>
 
         <View style={styles.listContainer}>
           {UNIVERSITIES.map((u) => (
             <TouchableOpacity 
               key={u.id} 
-              style={styles.cardContainer} 
+              style={[styles.cardContainer, { backgroundColor: colors.card, borderColor: colors.border }]} 
               activeOpacity={0.9}
               onPress={() => router.push(("/university/" + u.id) as any)}
             >
@@ -92,21 +94,21 @@ export default function CategoryList() {
               
               <View style={styles.cardContent}>
                 <View style={styles.titleRow}>
-                   <Text style={styles.cardTitle} numberOfLines={1}>{u.title}</Text>
-                   <View style={styles.rankBadge}>
-                      <Text style={styles.rankText}>{u.ranking}</Text>
+                   <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>{u.title}</Text>
+                   <View style={[styles.rankBadge, { backgroundColor: colors.primary }]}>
+                      <Text style={[styles.rankText, { color: "#ffffff" }]}>{u.ranking}</Text>
                    </View>
                 </View>
                 
                 <View style={styles.locationContainer}>
-                  <Ionicons name="location" size={14} color={THEME.orange} />
-                  <Text style={styles.locationText}>{u.location}</Text>
+                  <Ionicons name="location" size={14} color={colors.primary} />
+                  <Text style={[styles.locationText, { color: colors.textSecondary }]}>{u.location}</Text>
                 </View>
 
                 <View style={styles.cardTags}>
-                   <Text style={styles.tagText}>Public</Text>
-                   <Text style={styles.tagText}>Research</Text>
-                   <Text style={styles.tagText}>Top 50</Text>
+                   <Text style={[styles.tagText, { backgroundColor: colors.border, color: colors.text }]}>Public</Text>
+                   <Text style={[styles.tagText, { backgroundColor: colors.border, color: colors.text }]}>Research</Text>
+                   <Text style={[styles.tagText, { backgroundColor: colors.border, color: colors.text }]}>Top 50</Text>
                 </View>
               </View>
             </TouchableOpacity>

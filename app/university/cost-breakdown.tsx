@@ -16,6 +16,7 @@ import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { getCostOfLiving, getRelocationIndex, getUniversityDetails } from "../../lib/api";
 import { ActivityIndicator } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -32,34 +33,41 @@ const THEME = {
   divider: "#F1F5F9",
 };
 
-const SectionHeader = ({ title, icon, color, expanded = false, onToggle }: { title: string; icon: any; color: string; expanded?: boolean; onToggle?: () => void }) => (
-  <TouchableOpacity style={styles.sectionHeader} onPress={onToggle} activeOpacity={0.7}>
-    <View style={styles.sectionTitleRow}>
-      <View style={[styles.sectionIconBox, { backgroundColor: color + "20" }]}>
-        <MaterialCommunityIcons name={icon} size={18} color={color} />
+const SectionHeader = ({ title, icon, color, expanded = false, onToggle }: { title: string; icon: any; color: string; expanded?: boolean; onToggle?: () => void }) => {
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity style={[styles.sectionHeader, { backgroundColor: colors.card }]} onPress={onToggle} activeOpacity={0.7}>
+      <View style={styles.sectionTitleRow}>
+        <View style={[styles.sectionIconBox, { backgroundColor: color + "20" }]}>
+          <MaterialCommunityIcons name={icon} size={18} color={color} />
+        </View>
+        <Text style={[styles.sectionTitleText, { color: colors.text }]}>{title}</Text>
       </View>
-      <Text style={styles.sectionTitleText}>{title}</Text>
-    </View>
-    <Feather name={expanded ? "chevron-up" : "chevron-down"} size={20} color="#CBD5E1" />
-  </TouchableOpacity>
-);
+      <Feather name={expanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
+    </TouchableOpacity>
+  );
+};
 
-const CostItem = ({ label, value, subValue, footerText }: { label: string; value: string; subValue?: string; footerText?: string }) => (
-  <View style={styles.costItemWrapper}>
-    <View style={styles.costItemRow}>
-      <Text style={styles.costLabel}>{label}</Text>
-      <View style={styles.costValueWrapper}>
-        {subValue && <Text style={styles.costSubLabel}>{subValue}</Text>}
-        <Text style={styles.costValueText}>{value}</Text>
+const CostItem = ({ label, value, subValue, footerText }: { label: string; value: string; subValue?: string; footerText?: string }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.costItemWrapper, { borderBottomColor: colors.border }]}>
+      <View style={styles.costItemRow}>
+        <Text style={[styles.costLabel, { color: colors.textSecondary }]}>{label}</Text>
+        <View style={styles.costValueWrapper}>
+          {subValue && <Text style={[styles.costSubLabel, { color: colors.textSecondary }]}>{subValue}</Text>}
+          <Text style={[styles.costValueText, { color: colors.text }]}>{value}</Text>
+        </View>
       </View>
+      {footerText && <Text style={[styles.itemFooterText, { color: colors.textSecondary }]}>{footerText}</Text>}
     </View>
-    {footerText && <Text style={styles.itemFooterText}>{footerText}</Text>}
-  </View>
-);
+  );
+};
 
 export default function CostBreakdownScreen() {
   const { id, country: countryParam } = useLocalSearchParams();
   const { userData } = useUser();
+  const { colors, isDark } = useTheme();
   const [activeTab, setActiveTab] = React.useState("First year");
   const [loading, setLoading] = React.useState(true);
   const [costData, setCostData] = React.useState<any>(null);
@@ -113,9 +121,9 @@ export default function CostBreakdownScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-        <ActivityIndicator size="large" color={THEME.primary} />
-        <Text style={{ marginTop: 12, color: THEME.textGray, fontWeight: "600" }}>Calculating Estimates...</Text>
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center", backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 12, color: colors.textSecondary, fontWeight: "600" }}>Calculating Estimates...</Text>
       </View>
     );
   }
@@ -139,60 +147,60 @@ export default function CostBreakdownScreen() {
   const health = qoiData?.health_care_index || "N/A";
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={THEME.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cost Breakdown</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Cost Breakdown</Text>
         <TouchableOpacity
           style={styles.profileButton}
           onPress={() => router.push("/(tabs)/profile")}
         >
-          <ProfileAvatar size={44} color="#CBD5E1" />
+          <ProfileAvatar size={44} color={colors.border} />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* Summary Card */}
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.summaryContent}>
             <View style={styles.summaryLeft}>
-              <Text style={styles.summaryTitle}>Total Estimated Cost (Year 1)</Text>
-              <Text style={styles.summaryValue}>{fmtNpr(totalFirstYearNpr)}</Text>
-              <View style={styles.averageBadge}>
+              <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>Total Estimated Cost (Year 1)</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{fmtNpr(totalFirstYearNpr)}</Text>
+              <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
                 <View style={styles.orangeDot} />
                 <Text style={styles.averageBadgeText}>{currentCountry} Average</Text>
               </View>
             </View>
             <View style={styles.chartContainer}>
-               <View style={styles.donutBase}>
+               <View style={[styles.donutBase, { borderColor: colors.border }]}>
                   <View style={[styles.donutSegment, { borderColor: '#3B82F6', borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '45deg' }] }]} />
                   <View style={[styles.donutSegment, { borderColor: '#10B981', borderBottomColor: 'transparent', borderRightColor: 'transparent', transform: [{ rotate: '-45deg' }] }]} />
                   <View style={[styles.donutSegment, { borderColor: '#F97316', borderTopColor: 'transparent', borderRightColor: 'transparent', width: 66, height: 66, top: -10, left: -10, transform: [{ rotate: '120deg' }] }]} />
                </View>
             </View>
           </View>
-          <View style={styles.summaryDivider} />
+          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
           <View style={styles.summaryFooter}>
-            <Ionicons name="information-circle-outline" size={16} color="#64748B" />
-            <Text style={styles.summaryFooterText}>Cost based on country, lifestyle, university.</Text>
+            <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+            <Text style={[styles.summaryFooterText, { color: colors.textSecondary }]}>Cost based on country, lifestyle, university.</Text>
           </View>
         </View>
 
         {/* Category Tabs */}
-        <View style={styles.tabsContainer}>
+        <View style={[styles.tabsContainer, { borderColor: colors.border }]}>
           {["First year", "Year on year", "Month on month"].map((tab) => (
             <TouchableOpacity 
               key={tab} 
               onPress={() => setActiveTab(tab)}
-              style={[styles.tabItem, activeTab === tab && styles.activeTabItem]}
+              style={[styles.tabItem, activeTab === tab && { backgroundColor: colors.primary }]}
             >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+              <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === tab && { color: "#ffffff" }]}>{tab}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -201,7 +209,7 @@ export default function CostBreakdownScreen() {
         <View style={styles.breakdownContainer}>
 
           {/* Year Breakdown (Tuition/Education) */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="Tuition & Fees" 
               icon="wallet-outline" 
@@ -210,20 +218,20 @@ export default function CostBreakdownScreen() {
               onToggle={() => toggleSection("year-tuition")}
             />
             {isExpanded("year-tuition") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <CostItem label="Annual Tuition" value={fmtNpr(tuitionUsd * USD_TO_NPR)} subValue={`$${tuitionUsd.toLocaleString()}`} />
                 <CostItem label="Study Level" value={uniData?.type || userData.studyLevel || "Masters"} />
-                <Text style={styles.footerInfoText}>Fees vary by course and university</Text>
+                <Text style={[styles.footerInfoText, { color: colors.text }]}>Fees vary by course and university</Text>
               </View>
             )}
           </View>
 
-          <TouchableOpacity style={styles.primaryActionButton}>
+          <TouchableOpacity style={[styles.primaryActionButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
              <Text style={styles.primaryActionText}>View All Study Cost</Text>
           </TouchableOpacity>
 
           {/* Year Breakdown (Living) */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="Living Expenses" 
               icon="information-outline" 
@@ -232,17 +240,17 @@ export default function CostBreakdownScreen() {
               onToggle={() => toggleSection("year-living")}
             />
             {isExpanded("year-living") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <CostItem label="Annual Total" value={fmtNpr(annualLivingUsd * USD_TO_NPR)} subValue={`$${annualLivingUsd.toLocaleString()}`} />
                 <CostItem label="Rent (Approx)" value={fmtNpr((monthlyUsd * 0.4) * USD_TO_NPR)} subValue="40% of budget" />
                 <CostItem label="Food & Others" value={fmtNpr((monthlyUsd * 0.6) * USD_TO_NPR)} subValue="60% of budget" />
-                <Text style={styles.footerInfoText}>Based on average {currentCountry} lifestyle</Text>
+                <Text style={[styles.footerInfoText, { color: colors.text }]}>Based on average {currentCountry} lifestyle</Text>
               </View>
             )}
           </View>
 
           {/* Total Monthly Cost */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="Total Monthly Cost" 
               icon="calendar-outline" 
@@ -251,41 +259,41 @@ export default function CostBreakdownScreen() {
               onToggle={() => toggleSection("monthly")}
             />
             {isExpanded("monthly") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <View style={styles.compactMonthlyRow}>
-                   <Text style={styles.monthlyValueText}>{fmtNpr(monthlyUsd * USD_TO_NPR)} / month</Text>
-                   <Text style={[styles.itemFooterText, { marginTop: 4 }]}>Approx. ${monthlyUsd.toLocaleString()} USD</Text>
+                   <Text style={[styles.monthlyValueText, { color: colors.text }]}>{fmtNpr(monthlyUsd * USD_TO_NPR)} / month</Text>
+                   <Text style={[styles.itemFooterText, { color: colors.textSecondary, marginTop: 4 }]}>Approx. ${monthlyUsd.toLocaleString()} USD</Text>
                 </View>
               </View>
             )}
           </View>
 
           {/* ROI & Quality of Index */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="ROI & Quality Index" 
               icon="trending-up" 
-              color={THEME.blue} 
+              color={colors.primary} 
               expanded={isExpanded("roi")}
               onToggle={() => toggleSection("roi")}
             />
             {isExpanded("roi") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <CostItem label="Quality of Life" value={String(qualityOfLife)} subValue="Index / 200" />
                 <CostItem label="Safety Index" value={String(safety)} subValue="Index / 100" />
                 <CostItem label="Health Care" value={String(health)} subValue="Index / 100" />
                 <CostItem label="Purchasing Power" value={qoiData?.purchasing_power_index || "N/A"} subValue="Index" />
-                <Text style={styles.footerInfoText}>High index indicates better return on living</Text>
+                <Text style={[styles.footerInfoText, { color: colors.text }]}>High index indicates better return on living</Text>
               </View>
             )}
           </View>
 
-          <TouchableOpacity style={styles.primaryActionButton}>
+          <TouchableOpacity style={[styles.primaryActionButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
              <Text style={styles.primaryActionText}>Save Plan</Text>
           </TouchableOpacity>
 
           {/* Pre-application Cost */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="Pre-application Cost" 
               icon="information-outline" 
@@ -294,7 +302,7 @@ export default function CostBreakdownScreen() {
               onToggle={() => toggleSection("pre-app")}
             />
             {isExpanded("pre-app") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <CostItem label="Consultancy Fee" value="NPR 0 - 50,000" />
                 <CostItem label="IELTS Test" value="NPR 27,000 - 30,000" />
                 <CostItem label="Documents" value="NPR 27,000 - 30,000" />
@@ -305,7 +313,7 @@ export default function CostBreakdownScreen() {
           </View>
 
           {/* Tuition Fees (Regional) */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="Tuition Fees" 
               icon="school-outline" 
@@ -314,7 +322,7 @@ export default function CostBreakdownScreen() {
               onToggle={() => toggleSection("regional")}
             />
             {isExpanded("regional") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <CostItem label="USA/UK" value="NPR 17-44 Lakhs" subValue="per year" />
                 <CostItem label="Canada/Australia" value="NPR 17-44 Lakhs" subValue="per year" />
                 <CostItem label="Germany/Europe" value="NPR 17-44 Lakhs" subValue="per year" />
@@ -323,7 +331,7 @@ export default function CostBreakdownScreen() {
           </View>
 
           {/* Visa & Government Costs */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="Visa & Government Costs" 
               icon="card-account-details-outline" 
@@ -332,7 +340,7 @@ export default function CostBreakdownScreen() {
               onToggle={() => toggleSection("visa")}
             />
             {isExpanded("visa") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <CostItem label="Visa Fee" value="NPR 1.5-5 Lakhs" subValue="Insurance - " />
                 <CostItem label="Biometrics" value="" />
               </View>
@@ -340,7 +348,7 @@ export default function CostBreakdownScreen() {
           </View>
 
           {/* Travel & Setup */}
-          <View style={styles.sectionBox}>
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader 
               title="Travel & Setup" 
               icon="airplane-takeoff" 
@@ -349,7 +357,7 @@ export default function CostBreakdownScreen() {
               onToggle={() => toggleSection("travel")}
             />
             {isExpanded("travel") && (
-              <View style={styles.sectionBody}>
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
                 <CostItem label="Flight Ticket" value="NPR 47,000 - 2 Lakhs" />
               </View>
             )}

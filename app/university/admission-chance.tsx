@@ -17,6 +17,7 @@ import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { searchUniversities, calculateAcceptanceChance, UniversityResult } from "../../lib/api";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -34,38 +35,45 @@ const THEME = {
   divider: "#F1F5F9",
 };
 
-const AnalysisItem = ({ label, value, status }: { label: string; value: string; status: 'success' | 'warning' }) => (
-  <View style={styles.analysisItemRow}>
-    <View style={styles.analysisLeft}>
-      {status === 'success' ? (
-        <Ionicons name="checkmark-circle" size={20} color={THEME.green} />
-      ) : (
-        <Ionicons name="warning" size={20} color={THEME.orange} />
-      )}
-      <Text style={styles.analysisLabel}>
-        {label}: <Text style={styles.analysisValueText}>{value}</Text>
-      </Text>
-    </View>
-    <Feather name="chevron-right" size={16} color={THEME.textGray} />
-  </View>
-);
-
-const FactorItem = ({ label, icon, iconType = 'feather' }: { label: string; icon: string; iconType?: 'feather' | 'material' | 'ionicons' }) => (
-  <View style={styles.factorItemRow}>
-    <View style={styles.factorLeft}>
-      <View style={styles.factorIconBox}>
-        {iconType === 'feather' && <Feather name={icon as any} size={18} color={THEME.orange} />}
-        {iconType === 'material' && <MaterialCommunityIcons name={icon as any} size={18} color={THEME.orange} />}
-        {iconType === 'ionicons' && <Ionicons name={icon as any} size={18} color={THEME.orange} />}
+const AnalysisItem = ({ label, value, status }: { label: string; value: string; status: 'success' | 'warning' }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.analysisItemRow, { borderBottomColor: colors.border }]}>
+      <View style={styles.analysisLeft}>
+        {status === 'success' ? (
+          <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+        ) : (
+          <Ionicons name="warning" size={20} color="#F97316" />
+        )}
+        <Text style={[styles.analysisLabel, { color: colors.text }]}>
+          {label}: <Text style={[styles.analysisValueText, { color: colors.textSecondary }]}>{value}</Text>
+        </Text>
       </View>
-      <Text style={styles.factorLabel}>{label}</Text>
+      <Feather name="chevron-right" size={16} color={colors.textSecondary} />
     </View>
-    <Feather name="chevron-right" size={16} color={THEME.textGray} />
-  </View>
-);
+  );
+};
+
+const FactorItem = ({ label, icon, iconType = 'feather' }: { label: string; icon: string; iconType?: 'feather' | 'material' | 'ionicons' }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.factorItemRow, { borderBottomColor: colors.border }]}>
+      <View style={styles.factorLeft}>
+        <View style={[styles.factorIconBox, { backgroundColor: colors.border }]}>
+          {iconType === 'feather' && <Feather name={icon as any} size={18} color="#F97316" />}
+          {iconType === 'material' && <MaterialCommunityIcons name={icon as any} size={18} color="#F97316" />}
+          {iconType === 'ionicons' && <Ionicons name={icon as any} size={18} color="#F97316" />}
+        </View>
+        <Text style={[styles.factorLabel, { color: colors.text }]}>{label}</Text>
+      </View>
+      <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+    </View>
+  );
+};
 
 export default function AdmissionChanceScreen() {
   const { userData } = useUser();
+  const { colors, isDark } = useTheme();
   const [unis, setUnis] = React.useState<UniversityResult[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [activeRiskLevel, setActiveRiskLevel] = React.useState<'Safe' | 'Moderate' | 'Ambitious'>('Safe');
@@ -173,64 +181,64 @@ export default function AdmissionChanceScreen() {
   const currentList = categorizedUnis[activeRiskLevel];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={THEME.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Admission Chance</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Admission Chance</Text>
         <TouchableOpacity
           style={styles.profileButton}
           onPress={() => router.push("/(tabs)/profile")}
         >
-          <ProfileAvatar size={44} color="#E2E8F0" />
+          <ProfileAvatar size={44} color={colors.border} />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* Summary Card */}
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.summaryContent}>
             <View style={styles.summaryLeft}>
-              <Text style={styles.summaryTitle}>Admission Percentage</Text>
-              <Text style={styles.summaryValue}>
-                {finalProb}% <Text style={styles.summaryStatus}>- {chanceLabel}</Text>
+              <Text style={[styles.summaryTitle, { color: isDark ? colors.text : THEME.textDark }]}>Admission Percentage</Text>
+              <Text style={[styles.summaryValue, { color: isDark ? colors.text : THEME.textDark }]}>
+                {finalProb}% <Text style={[styles.summaryStatus, { color: isDark ? colors.text : THEME.textDark }]}>- {chanceLabel}</Text>
               </Text>
-              <View style={styles.averageBadge}>
+              <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
                 <View style={styles.orangeDot} />
                 <Text style={styles.averageBadgeText}>Average Cost</Text>
               </View>
             </View>
             <View style={styles.chartContainer}>
-              <Ionicons name="pie-chart" size={60} color={THEME.primary} />
+              <Ionicons name="pie-chart" size={60} color={colors.primary} />
             </View>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryFooter}>
-            <Ionicons name="information-circle-outline" size={16} color={THEME.textGray} />
-            <Text style={styles.summaryFooterText}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+            <Text style={[styles.summaryFooterText, { color: colors.textSecondary }]}>
               Opportunity for some universities. Room for improve.
             </Text>
           </View>
         </View>
 
         {/* Profile Analysis */}
-        <View style={styles.sectionBox}>
+        <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity 
-            style={styles.sectionHeader}
+            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
             activeOpacity={0.7}
             onPress={() => setIsProfileExpanded(!isProfileExpanded)}
           >
-            <Text style={styles.sectionTitleText}>Your Profile Analysis</Text>
-            <Feather name={isProfileExpanded ? "chevron-up" : "chevron-down"} size={20} color={THEME.textGray} />
+            <Text style={[styles.sectionTitleText, { color: colors.text }]}>Your Profile Analysis</Text>
+            <Feather name={isProfileExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           
           {isProfileExpanded && (
-            <View style={styles.sectionBody}>
+            <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
               <AnalysisItem label="CGPA" value={gpaVal} status={gpaStatus} />
               <AnalysisItem label="IELTS" value={engVal} status={engStatus} />
               <AnalysisItem 
@@ -243,18 +251,18 @@ export default function AdmissionChanceScreen() {
         </View>
 
         {/* Key Admission Factors */}
-        <View style={styles.sectionBox}>
+        <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity 
-            style={styles.sectionHeader}
+            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
             activeOpacity={0.7}
             onPress={() => setIsFactorsExpanded(!isFactorsExpanded)}
           >
-            <Text style={styles.sectionTitleText}>Key Admission Factors</Text>
-            <Feather name={isFactorsExpanded ? "chevron-up" : "chevron-down"} size={20} color={THEME.textGray} />
+            <Text style={[styles.sectionTitleText, { color: colors.text }]}>Key Admission Factors</Text>
+            <Feather name={isFactorsExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           
           {isFactorsExpanded && (
-            <View style={styles.sectionBody}>
+            <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
               <FactorItem label="CGPA" icon="star" iconType="feather" />
               <FactorItem label="IELTS Score" icon="checkmark-circle-outline" iconType="ionicons" />
               <FactorItem label="Course Competitiveness" icon="target" iconType="material" />
@@ -263,15 +271,15 @@ export default function AdmissionChanceScreen() {
         </View>
 
         {/* Universities By Risk Level */}
-        <Text style={styles.riskTitle}>Universities By Risk Level</Text>
-        <View style={styles.riskTabs}>
+        <Text style={[styles.riskTitle, { color: colors.text }]}>Universities By Risk Level</Text>
+        <View style={[styles.riskTabs, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {(['Safe', 'Moderate', 'Ambitious'] as const).map((level) => (
             <TouchableOpacity 
               key={level}
-              style={[styles.riskTab, activeRiskLevel === level && styles.riskTabActive]}
+              style={[styles.riskTab, activeRiskLevel === level && { backgroundColor: colors.primary }]}
               onPress={() => setActiveRiskLevel(level)}
             >
-              <Text style={activeRiskLevel === level ? styles.riskTabTextActive : styles.riskTabText}>
+              <Text style={activeRiskLevel === level ? styles.riskTabTextActive : [styles.riskTabText, { color: colors.textSecondary }]}>
                 {level}
               </Text>
             </TouchableOpacity>
@@ -280,8 +288,8 @@ export default function AdmissionChanceScreen() {
 
         {loading ? (
           <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color={THEME.primary} />
-            <Text style={styles.loaderText}>Loading matches...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Loading matches...</Text>
           </View>
         ) : currentList.length > 0 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
@@ -290,7 +298,7 @@ export default function AdmissionChanceScreen() {
               return (
                 <TouchableOpacity 
                   key={uni.id} 
-                  style={styles.uniCard}
+                  style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => router.push({
                     pathname: "/university/[id]",
                     params: { id: uni.id, country: uni.country, name: uni.name }
@@ -298,20 +306,20 @@ export default function AdmissionChanceScreen() {
                 >
                   <View style={styles.uniImageContainer}>
                     <Image source={{ uri: uni.image || "" }} style={styles.uniImage} />
-                    <View style={styles.matchBadge}>
-                      <Text style={styles.matchText}>{match.score}% Match</Text>
+                    <View style={[styles.matchBadge, { backgroundColor: isDark ? "rgba(0,0,0,0.8)" : "rgba(255, 255, 255, 0.9)" }]}>
+                      <Text style={[styles.matchText, { color: colors.primary }]}>{match.score}% Match</Text>
                     </View>
                   </View>
                   <View style={styles.uniCardContent}>
-                    <Text style={styles.uniCardName} numberOfLines={1}>{uni.name}</Text>
+                    <Text style={[styles.uniCardName, { color: colors.text }]} numberOfLines={1}>{uni.name}</Text>
                     <View style={styles.uniLocationRow}>
-                      <Ionicons name="location" size={14} color={THEME.orange} />
-                      <Text style={styles.uniLocationText} numberOfLines={1}>{uni.location}</Text>
+                      <Ionicons name="location" size={14} color="#F97316" />
+                      <Text style={[styles.uniLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
                     </View>
                     <View style={styles.uniCostRow}>
-                      <Text style={styles.uniCostValue}>
+                      <Text style={[styles.uniCostValue, { color: colors.text }]}>
                         {formatTuition(uni.tuition)}
-                        <Text style={styles.uniCostUnit}>/ year</Text>
+                        <Text style={[styles.uniCostUnit, { color: colors.textSecondary }]}>/ year</Text>
                       </Text>
                       <View style={[
                         styles.safeBadge,
@@ -320,26 +328,27 @@ export default function AdmissionChanceScreen() {
                       ]}>
                         <Text style={[
                           styles.safeText,
-                          activeRiskLevel === 'Moderate' && { color: THEME.orange },
-                          activeRiskLevel === 'Ambitious' && { color: THEME.red }
+                          activeRiskLevel === 'Safe' && { color: "#10B981" },
+                          activeRiskLevel === 'Moderate' && { color: "#F97316" },
+                          activeRiskLevel === 'Ambitious' && { color: "#EF4444" }
                         ]}>
                           {activeRiskLevel}
                         </Text>
                       </View>
                     </View>
                     <View style={styles.uniActions}>
-                      <TouchableOpacity style={styles.saveBtn} activeOpacity={0.7}>
-                        <Text style={styles.saveBtnText}>Save</Text>
+                      <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.border }]} activeOpacity={0.7}>
+                        <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
                       </TouchableOpacity>
                       <TouchableOpacity 
-                        style={styles.compareBtn} 
+                        style={[styles.compareBtn, { backgroundColor: colors.primary + "15" }]} 
                         activeOpacity={0.7}
                         onPress={() => router.push({
                           pathname: "/university/[id]",
                           params: { id: uni.id, country: uni.country, name: uni.name }
                         })}
                       >
-                        <Text style={styles.compareBtnText}>Compare</Text>
+                        <Text style={[styles.compareBtnText, { color: colors.primary }]}>Compare</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -349,8 +358,8 @@ export default function AdmissionChanceScreen() {
           </ScrollView>
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons name="school-outline" size={48} color={THEME.textGray} />
-            <Text style={styles.emptyText}>
+            <Ionicons name="school-outline" size={48} color={colors.textSecondary} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               No universities categorized as "{activeRiskLevel}" for your current profile.
             </Text>
           </View>

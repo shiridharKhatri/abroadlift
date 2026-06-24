@@ -17,6 +17,7 @@ import { Stack, router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUser } from "./context/UserContext";
+import { useTheme } from "./context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,6 +33,7 @@ const COLORS = {
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const { register } = useUser();
+  const { colors, isDark } = useTheme();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -88,9 +90,9 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.mainContent}>
@@ -107,20 +109,20 @@ export default function RegisterScreen() {
           {/* Header */}
           <View style={styles.headerRow}>
             <TouchableOpacity
-              style={styles.backButton}
+              style={[styles.backButton, { backgroundColor: colors.card }]}
               onPress={() => router.back()}
             >
               <Feather
                 name="chevron-left"
                 size={28}
-                color={COLORS.textDark}
+                color={colors.text}
               />
             </TouchableOpacity>
           </View>
 
           <View style={styles.welcomeSection}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Join AbroadLift and start your global journey.
             </Text>
           </View>
@@ -128,18 +130,18 @@ export default function RegisterScreen() {
           {/* Form Container */}
           <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <View style={[styles.inputWrapper, isNameFocused && styles.inputActive]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
+              <View style={[styles.inputWrapper, { borderBottomColor: colors.border }, isNameFocused && { borderBottomColor: colors.primary }]}>
                 <Feather
                   name="user"
                   size={18}
-                  color={isNameFocused ? COLORS.primaryBlue : COLORS.textMuted}
+                  color={isNameFocused ? colors.primary : colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   placeholder="Enter your name"
-                  placeholderTextColor="rgba(15, 23, 42, 0.3)"
-                  style={styles.input}
+                  placeholderTextColor={colors.textSecondary}
+                  style={[styles.input, { color: colors.text }]}
                   value={name}
                   onChangeText={setName}
                   onFocus={() => setIsNameFocused(true)}
@@ -149,18 +151,18 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={[styles.inputWrapper, isEmailFocused && styles.inputActive]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Email Address</Text>
+              <View style={[styles.inputWrapper, { borderBottomColor: colors.border }, isEmailFocused && { borderBottomColor: colors.primary }]}>
                 <Feather
                   name="mail"
                   size={18}
-                  color={isEmailFocused ? COLORS.primaryBlue : COLORS.textMuted}
+                  color={isEmailFocused ? colors.primary : colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   placeholder="example@mail.com"
-                  placeholderTextColor="rgba(15, 23, 42, 0.3)"
-                  style={styles.input}
+                  placeholderTextColor={colors.textSecondary}
+                  style={[styles.input, { color: colors.text }]}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={email}
@@ -172,17 +174,17 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
-              <View style={[styles.phoneInputWrapper, isPhoneFocused && styles.inputActive]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Phone Number</Text>
+              <View style={[styles.phoneInputWrapper, { borderBottomColor: colors.border }, isPhoneFocused && { borderBottomColor: colors.primary }]}>
                 <TouchableOpacity style={styles.countryCodeBox}>
-                   <Text style={styles.countryCodeText}>{countryCode}</Text>
-                   <Feather name="chevron-down" size={14} color={COLORS.textDark} style={styles.chevronIcon} />
+                   <Text style={[styles.countryCodeText, { color: colors.text }]}>{countryCode}</Text>
+                   <Feather name="chevron-down" size={14} color={colors.text} style={styles.chevronIcon} />
                 </TouchableOpacity>
-                <View style={styles.verticalDivider} />
+                <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
                 <TextInput
                   placeholder="Enter phone number"
-                  placeholderTextColor="rgba(15, 23, 42, 0.3)"
-                  style={styles.input}
+                  placeholderTextColor={colors.textSecondary}
+                  style={[styles.input, { color: colors.text }]}
                   keyboardType="phone-pad"
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
@@ -195,23 +197,23 @@ export default function RegisterScreen() {
             {/* Terms and Conditions Checkbox */}
             <View style={styles.termsCheckboxRow}>
               <TouchableOpacity 
-                style={[styles.checkbox, agreeTerms && styles.checkboxActive]}
+                style={[styles.checkbox, { borderColor: colors.border }, agreeTerms && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                 onPress={() => setAgreeTerms(!agreeTerms)}
                 activeOpacity={0.8}
               >
                 {agreeTerms && <Feather name="check" size={12} color="#FFFFFF" />}
               </TouchableOpacity>
-              <Text style={styles.termsCheckboxText}>
+              <Text style={[styles.termsCheckboxText, { color: colors.textSecondary }]}>
                 I agree to the{" "}
                 <Text 
-                  style={styles.termsLink}
+                  style={[styles.termsLink, { color: colors.primary }]}
                   onPress={() => router.push({ pathname: "/terms-privacy", params: { tab: "terms" } })}
                 >
                   Terms of Service
                 </Text>
                 {" "}and{" "}
                 <Text 
-                  style={styles.termsLink}
+                  style={[styles.termsLink, { color: colors.primary }]}
                   onPress={() => router.push({ pathname: "/terms-privacy", params: { tab: "privacy" } })}
                 >
                   Privacy Policy
@@ -220,7 +222,7 @@ export default function RegisterScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.signUpButton, isSubmitting && { opacity: 0.7 }]}
+              style={[styles.signUpButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, isSubmitting && { opacity: 0.7 }]}
               onPress={handleRegister}
               disabled={isSubmitting}
             >
@@ -237,9 +239,9 @@ export default function RegisterScreen() {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push("/login")}>
-              <Text style={styles.footerLink}>Log In</Text>
+              <Text style={[styles.footerLink, { color: colors.primary }]}>Log In</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

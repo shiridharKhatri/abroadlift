@@ -14,6 +14,7 @@ import { Stack, router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -38,6 +39,7 @@ const INTAKE_OPTIONS = [
 export default function IntakeSetup() {
   const { userData, setUserData } = useUser();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [selectedIntake, setSelectedIntake] = useState(userData.intake || "Fall 2025");
 
   const handleContinue = () => {
@@ -58,15 +60,15 @@ export default function IntakeSetup() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Target Intake</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Target Intake</Text>
         <View style={{ width: 44 }} /> 
       </View>
 
@@ -77,7 +79,8 @@ export default function IntakeSetup() {
             key={i} 
             style={[
               styles.trackerSegment, 
-              i === 6 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+              { backgroundColor: colors.border },
+              i === 6 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}
@@ -85,17 +88,17 @@ export default function IntakeSetup() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.titleSection}>
-          <Text style={styles.questionTitle}>When do you want to start your studies?</Text>
-          <Text style={styles.questionSubtitle}>Intakes dictate application deadlines and visa processing times</Text>
+          <Text style={[styles.questionTitle, { color: colors.text }]}>When do you want to start your studies?</Text>
+          <Text style={[styles.questionSubtitle, { color: colors.textSecondary }]}>Intakes dictate application deadlines and visa processing times</Text>
         </View>
 
         {/* Dynamic Country Intake Recommendation Box */}
-        <View style={styles.recommendationCard}>
+        <View style={[styles.recommendationCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF9F2", borderColor: "#FDEED7" }]}>
           <View style={styles.recHeader}>
-            <Ionicons name="sparkles" size={18} color="#D97706" />
-            <Text style={styles.recTitle}>{userData.country || "Global"} Intake Recommendation</Text>
+            <Ionicons name="sparkles" size={18} color={isDark ? colors.primary : "#D97706"} />
+            <Text style={[styles.recTitle, { color: isDark ? colors.text : "#92400E" }]}>{userData.country || "Global"} Intake Recommendation</Text>
           </View>
-          <Text style={styles.recText}>{getIntakeRecommendation()}</Text>
+          <Text style={[styles.recText, { color: colors.textSecondary }]}>{getIntakeRecommendation()}</Text>
         </View>
 
         {/* Intake Options Grid */}
@@ -105,7 +108,8 @@ export default function IntakeSetup() {
               key={item.id}
               style={[
                 styles.card, 
-                selectedIntake === item.label && styles.selectedCard
+                { backgroundColor: colors.card, borderColor: colors.border },
+                selectedIntake === item.label && { borderColor: colors.primary, backgroundColor: colors.primary + "15" }
               ]}
               onPress={() => setSelectedIntake(item.label)}
             >
@@ -114,13 +118,13 @@ export default function IntakeSetup() {
                   <Feather 
                     name="calendar" 
                     size={16} 
-                    color={selectedIntake === item.label ? COLORS.primary : COLORS.textGray} 
+                    color={selectedIntake === item.label ? colors.primary : colors.textSecondary} 
                   />
-                  <Text style={[styles.cardTitle, selectedIntake === item.label && styles.selectedCardTitle]}>
+                  <Text style={[styles.cardTitle, { color: colors.text }, selectedIntake === item.label && { color: colors.primary, fontWeight: "800" }]}>
                     {item.label}
                   </Text>
                 </View>
-                <Text style={styles.cardSub}>{item.sub}</Text>
+                <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{item.sub}</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -128,9 +132,9 @@ export default function IntakeSetup() {
       </ScrollView>
 
       {/* Sticky Bottom Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
-          style={styles.continueButton}
+          style={[styles.continueButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
           onPress={handleContinue}
         >
           <Text style={styles.continueButtonText}>Continue</Text>

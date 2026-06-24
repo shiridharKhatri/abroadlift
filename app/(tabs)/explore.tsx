@@ -21,6 +21,7 @@ import {
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useUser } from "../context/UserContext";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -52,6 +53,7 @@ const COUNTRIES = [
 
 export default function DashboardScreen() {
   const { userData, setUserData } = useUser();
+  const { colors, isDark } = useTheme();
   const [showPlanModal, setShowPlanModal] = React.useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = React.useState(false);
   const [modalStep, setModalStep] = React.useState<'options' | 'country'>('options');
@@ -170,27 +172,27 @@ export default function DashboardScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.greetingSection}>
-          <Text style={styles.greetingText}>Hi, {userData.name || "user"} 👋</Text>
-          <Text style={styles.subGreetingText}>Here's your abroad study overview</Text>
+          <Text style={[styles.greetingText, { color: colors.text }]}>Hi, {userData.name || "user"} 👋</Text>
+          <Text style={[styles.subGreetingText, { color: colors.textSecondary }]}>Here's your abroad study overview</Text>
         </View>
         <View style={styles.topBarIcons}>
           <TouchableOpacity
-            style={styles.iconButton}
+            style={[styles.iconButton, { backgroundColor: colors.card }]}
             onPress={() => setShowNotificationsModal(true)}
           >
-            <Ionicons name="notifications-outline" size={24} color={THEME.textDark} />
+            <Ionicons name="notifications-outline" size={24} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.profileButton}
             onPress={() => router.push("/(tabs)/profile")}
           >
-            <ProfileAvatar size={44} color="#E2E8F0" />
+            <ProfileAvatar size={44} color={colors.border} />
           </TouchableOpacity>
         </View>
       </View>
@@ -203,12 +205,12 @@ export default function DashboardScreen() {
 
         {/* Global Search Bar */}
         <View style={styles.globalSearchContainer}>
-          <View style={styles.globalSearchBar}>
-            <Feather name="search" size={18} color="#94A3B8" />
+          <View style={[styles.globalSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="search" size={18} color={colors.textSecondary} />
             <TextInput
               placeholder="Search university or courses"
-              style={styles.globalSearchInput}
-              placeholderTextColor="#94A3B8"
+              style={[styles.globalSearchInput, { color: colors.text }]}
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
           <TouchableOpacity style={styles.filterBtnSmall}>
@@ -218,109 +220,109 @@ export default function DashboardScreen() {
 
         {/* Study Plan Card */}
         <TouchableOpacity
-          style={styles.studyPlanCard}
+          style={[styles.studyPlanCard, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => setShowPlanModal(true)}
         >
           <View style={styles.studyPlanInfo}>
             <Text style={styles.flagEmoji}>{userData.flag || "🗺️"}</Text>
             <View style={styles.studyPlanTextWrapper}>
-              <Text style={styles.studyPlanLabel}>Study Plan <Text style={styles.studyCountry}>{userData.country || "Select country"}</Text></Text>
+              <Text style={[styles.studyPlanLabel, { color: colors.textSecondary }]}>Study Plan <Text style={[styles.studyCountry, { color: colors.primary }]}>{userData.country || "Select country"}</Text></Text>
             </View>
           </View>
-          <View style={styles.editButton}>
-            <Feather name="edit-2" size={14} color={THEME.blue} />
-            <Text style={styles.editText}>Edit</Text>
+          <View style={[styles.editButton, { backgroundColor: colors.primary + "15" }]}>
+            <Feather name="edit-2" size={14} color={colors.primary} />
+            <Text style={[styles.editText, { color: colors.primary }]}>Edit</Text>
           </View>
         </TouchableOpacity>
 
         {/* Stats Row */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
           {/* Estimated Cost Card */}
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View>
               <View style={styles.statIconHeader}>
-                <View style={[styles.statIconBox, { backgroundColor: "#F3F4F6" }]}>
-                  <MaterialCommunityIcons name="currency-usd" size={20} color={THEME.textDark} />
+                <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F3F4F6" }]}>
+                  <MaterialCommunityIcons name="currency-usd" size={20} color={isDark ? colors.primary : THEME.textDark} />
                 </View>
-                <Text style={styles.statTitle}>Estimated Cost</Text>
+                <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Estimated Cost</Text>
               </View>
-              <Text style={styles.statValue}>{estimatedCost} <Text style={styles.statUnit}>/ year</Text></Text>
-              <View style={styles.statBadge}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{estimatedCost} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>/ year</Text></Text>
+              <View style={[styles.statBadge, { backgroundColor: isDark ? "#2C2C2E" : "#F0FDF4" }]}>
                 <View style={styles.affordableDot} />
-                <Text style={styles.statBadgeText}>Affordable</Text>
+                <Text style={[styles.statBadgeText, { color: isDark ? colors.text : THEME.textGray }]}>Affordable</Text>
               </View>
-              <Text style={styles.statSubtitle}>Tuition + Living</Text>
+              <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>Tuition + Living</Text>
             </View>
             <TouchableOpacity
-              style={styles.statButton}
+              style={[styles.statButton, { backgroundColor: colors.primary + "15" }]}
               onPress={() => router.push({
                 pathname: "/university/cost-breakdown",
                 params: { country: userData.country || "UK" }
               })}
             >
-              <Text style={styles.statButtonText}>View Breakdown</Text>
+              <Text style={[styles.statButtonText, { color: colors.primary }]}>View Breakdown</Text>
             </TouchableOpacity>
           </View>
 
           {/* Admission Chances Card */}
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View>
               <View style={styles.statIconHeader}>
-                <View style={[styles.statIconBox, { backgroundColor: "#FFF7ED" }]}>
-                  <MaterialCommunityIcons name="target" size={20} color={THEME.orange} />
+                <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#FFF7ED" }]}>
+                  <MaterialCommunityIcons name="target" size={20} color={isDark ? colors.primary : THEME.orange} />
                 </View>
-                <Text style={styles.statTitle}>Acceptance Chance</Text>
+                <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Acceptance Chance</Text>
               </View>
-              <Text style={styles.statValue}>{acceptanceChance}</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{acceptanceChance}</Text>
 
               <View style={styles.checkRow}>
                 <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                <Text style={styles.checkText}>Good GPA</Text>
+                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Good GPA</Text>
               </View>
               <View style={styles.checkRow}>
                 <Ionicons name="warning" size={16} color={THEME.orange} />
-                <Text style={styles.checkText}>Improve IELTS</Text>
+                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Improve IELTS</Text>
               </View>
             </View>
 
             <TouchableOpacity
-              style={styles.statButton}
+              style={[styles.statButton, { backgroundColor: colors.primary + "15" }]}
               onPress={() => router.push("/university/admission-chance")}
             >
-              <Text style={styles.statButtonText}>Set Goals</Text>
+              <Text style={[styles.statButtonText, { color: colors.primary }]}>Set Goals</Text>
             </TouchableOpacity>
           </View>
 
           {/* Visa Readiness Card */}
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View>
               <View style={styles.statIconHeader}>
-                <View style={[styles.statIconBox, { backgroundColor: THEME.secondary }]}>
-                  <Text style={styles.visaIconText}>VISA</Text>
+                <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : THEME.secondary + "15" }]}>
+                  <Text style={[styles.visaIconText, { color: isDark ? colors.primary : THEME.secondary }]}>VISA</Text>
                 </View>
-                <Text style={styles.statTitle}>Visa Readiness</Text>
+                <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Visa Readiness</Text>
               </View>
-              <Text style={styles.statValue}>{visaReadiness}</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{visaReadiness}</Text>
 
-              <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBarFull, { width: "60%", backgroundColor: THEME.blue }]} />
+              <View style={[styles.progressBarContainer, { backgroundColor: isDark ? "#2C2C2E" : "#E2E8F0" }]}>
+                <View style={[styles.progressBarFull, { width: "60%", backgroundColor: colors.primary }]} />
               </View>
 
               <View style={styles.checkRow}>
                 <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                <Text style={styles.checkText}>Strong Academics</Text>
+                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Strong Academics</Text>
               </View>
               <View style={styles.checkRow}>
                 <Ionicons name="warning" size={16} color={THEME.orange} />
-                <Text style={styles.checkText}>Financial Proof Weak</Text>
+                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Financial Proof Weak</Text>
               </View>
             </View>
 
             <TouchableOpacity
-              style={styles.statButton}
+              style={[styles.statButton, { backgroundColor: colors.primary + "15" }]}
               onPress={() => router.push("/visa-readiness")}
             >
-              <Text style={styles.statButtonText}>Improve</Text>
+              <Text style={[styles.statButtonText, { color: colors.primary }]}>Improve</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -350,24 +352,24 @@ export default function DashboardScreen() {
         {/* Recommended Universities */}
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionTitle}>Recommended Universities</Text>
-            <Text style={styles.sectionSubtitle}>Based on your profile & budget</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended Universities</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Based on your profile & budget</Text>
           </View>
           <TouchableOpacity onPress={() => router.push("/search")}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
           {loadingUnis ? (
             <View style={{ width: width - 40, height: 280, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={THEME.blue} />
-              <Text style={{ marginTop: 12, color: THEME.textGray }}>Loading recommendations...</Text>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={{ marginTop: 12, color: colors.textSecondary }}>Loading recommendations...</Text>
             </View>
           ) : recommendedUnis.length > 0 ? recommendedUnis.map((uni, idx) => (
             <TouchableOpacity
               key={uni.id || idx}
-              style={styles.uniCard}
+              style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => router.push({
                 pathname: "/university/[id]",
                 params: { id: uni.id, country: uni.country, name: uni.name }
@@ -383,13 +385,13 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <View style={styles.uniCardContent}>
-                <Text style={styles.uniCardName} numberOfLines={1}>{uni.name}</Text>
+                <Text style={[styles.uniCardName, { color: colors.text }]} numberOfLines={1}>{uni.name}</Text>
                 <View style={styles.uniLocationRow}>
                   <Ionicons name="location" size={14} color={THEME.orange} />
-                  <Text style={styles.uniLocationText} numberOfLines={1}>{uni.location}</Text>
+                  <Text style={[styles.uniLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
                 </View>
                 <View style={styles.uniCostRow}>
-                  <Text style={styles.uniCostValue}>{uni.tuition}<Text style={styles.uniCostUnit}>/ year</Text></Text>
+                  <Text style={[styles.uniCostValue, { color: colors.text }]}>{uni.tuition}<Text style={[styles.uniCostUnit, { color: colors.textSecondary }]}>/ year</Text></Text>
                   <View style={[styles.safeBadge, { backgroundColor: uni.acceptanceRate && uni.acceptanceRate > 50 ? "#DCFCE7" : "#FFF7ED" }]}>
                     <Text style={[styles.safeText, { color: uni.acceptanceRate && uni.acceptanceRate > 50 ? THEME.green : THEME.orange }]}>
                       {uni.acceptanceRate && uni.acceptanceRate > 50 ? "Safe" : "Moderate"}
@@ -397,54 +399,54 @@ export default function DashboardScreen() {
                   </View>
                 </View>
                 <View style={styles.uniActions}>
-                  <TouchableOpacity style={styles.saveBtn}>
-                    <Text style={styles.saveBtnText}>Save</Text>
+                  <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary + "15" }]}>
+                    <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.compareBtn}
+                    style={[styles.compareBtn, { borderColor: colors.border }]}
                     onPress={() => router.push({
                       pathname: "/university/[id]",
                       params: { id: uni.id, country: uni.country, name: uni.name }
                     })}
                   >
-                    <Text style={styles.compareBtnText}>View</Text>
+                    <Text style={[styles.compareBtnText, { color: colors.text }]}>View</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </TouchableOpacity>
           )) : (
             <View style={{ width: width - 40, height: 100, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: THEME.textGray }}>No recommendations found for {userData.country}</Text>
+              <Text style={{ color: colors.textSecondary }}>No recommendations found for {userData.country}</Text>
             </View>
           )}
         </ScrollView>
 
         {/* Quick Actions */}
-        <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginBottom: 16 }]}>Quick Actions</Text>
+        <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginBottom: 16, color: colors.text }]}>Quick Actions</Text>
         <View style={styles.quickActionsGrid}>
-          <TouchableOpacity style={styles.quickActionItem}>
-            <View style={[styles.quickActionIconBox, { backgroundColor: "#E0F2FE" }]}>
-              <Ionicons name="search" size={20} color={THEME.blue} />
+          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#E0F2FE" }]}>
+              <Ionicons name="search" size={20} color={isDark ? colors.primary : THEME.blue} />
             </View>
-            <Text style={styles.quickActionText}>Compare Universities</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Compare Universities</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionItem}>
-            <View style={[styles.quickActionIconBox, { backgroundColor: "#F5F3FF" }]}>
-              <MaterialCommunityIcons name="file-document-outline" size={20} color="#8B5CF6" />
+          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F5F3FF" }]}>
+              <MaterialCommunityIcons name="file-document-outline" size={20} color={isDark ? colors.secondary : "#8B5CF6"} />
             </View>
-            <Text style={styles.quickActionText}>View Documents</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>View Documents</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionItem}>
-            <View style={[styles.quickActionIconBox, { backgroundColor: "#DCFCE7" }]}>
-              <MaterialCommunityIcons name="bullseye-arrow" size={20} color={THEME.green} />
+          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#DCFCE7" }]}>
+              <MaterialCommunityIcons name="bullseye-arrow" size={20} color={isDark ? colors.primary : THEME.green} />
             </View>
-            <Text style={styles.quickActionText}>Improve My Chances</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Improve My Chances</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionItem}>
-            <View style={[styles.quickActionIconBox, { backgroundColor: "#FFEDD5" }]}>
-              <Ionicons name="bookmark" size={20} color={THEME.orange} />
+          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#FFEDD5" }]}>
+              <Ionicons name="bookmark" size={20} color={isDark ? colors.secondary : THEME.orange} />
             </View>
-            <Text style={styles.quickActionText}>Saved Universities</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Saved Universities</Text>
           </TouchableOpacity>
         </View>
 
@@ -462,49 +464,49 @@ export default function DashboardScreen() {
           activeOpacity={1}
           onPress={() => setShowNotificationsModal(false)}
         >
-          <View style={styles.modalContent}>
-            <View style={styles.modalIndicator} />
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalIndicator, { backgroundColor: colors.border }]} />
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>Notifications</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Notifications</Text>
               <TouchableOpacity
-                style={styles.modalCloseCircle}
+                style={[styles.modalCloseCircle, { backgroundColor: colors.card }]}
                 onPress={() => setShowNotificationsModal(false)}
               >
-                <Ionicons name="close" size={20} color={THEME.textDark} />
+                <Ionicons name="close" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} style={styles.notificationsList}>
-              <View style={styles.notificationItem}>
-                <View style={[styles.notifIconBox, { backgroundColor: "#EFF6FF" }]}>
-                  <Ionicons name="sparkles-outline" size={18} color={THEME.blue} />
+              <View style={[styles.notificationItem, { borderBottomColor: colors.border }]}>
+                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }]}>
+                  <Ionicons name="sparkles-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
                 </View>
                 <View style={styles.notifTextContent}>
-                  <Text style={styles.notifTitle}>Welcome to AbroadLift!</Text>
-                  <Text style={styles.notifBody}>Start exploring universities and building your roadmap today.</Text>
-                  <Text style={styles.notifTime}>Just now</Text>
+                  <Text style={[styles.notifTitle, { color: colors.text }]}>Welcome to AbroadLift!</Text>
+                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Start exploring universities and building your roadmap today.</Text>
+                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>Just now</Text>
                 </View>
               </View>
 
-              <View style={styles.notificationItem}>
-                <View style={[styles.notifIconBox, { backgroundColor: "#FEF3C7" }]}>
-                  <Ionicons name="person-outline" size={18} color="#D97706" />
+              <View style={[styles.notificationItem, { borderBottomColor: colors.border }]}>
+                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#FEF3C7" }]}>
+                  <Ionicons name="person-outline" size={18} color={isDark ? colors.secondary : "#D97706"} />
                 </View>
                 <View style={styles.notifTextContent}>
-                  <Text style={styles.notifTitle}>Complete Your Profile</Text>
-                  <Text style={styles.notifBody}>Add your academic grades and English scores to estimate admission chances.</Text>
-                  <Text style={styles.notifTime}>2 hours ago</Text>
+                  <Text style={[styles.notifTitle, { color: colors.text }]}>Complete Your Profile</Text>
+                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Add your academic grades and English scores to estimate admission chances.</Text>
+                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>2 hours ago</Text>
                 </View>
               </View>
 
               <View style={[styles.notificationItem, { borderBottomWidth: 0 }]}>
-                <View style={[styles.notifIconBox, { backgroundColor: "#ECFDF5" }]}>
-                  <Ionicons name="bookmark-outline" size={18} color={THEME.green} />
+                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#ECFDF5" }]}>
+                  <Ionicons name="bookmark-outline" size={18} color={isDark ? colors.primary : THEME.green} />
                 </View>
                 <View style={styles.notifTextContent}>
-                  <Text style={styles.notifTitle}>Shortlist Updated</Text>
-                  <Text style={styles.notifBody}>Conestoga College - Doon has been successfully added to your shortlist.</Text>
-                  <Text style={styles.notifTime}>Yesterday</Text>
+                  <Text style={[styles.notifTitle, { color: colors.text }]}>Shortlist Updated</Text>
+                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Conestoga College - Doon has been successfully added to your shortlist.</Text>
+                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>Yesterday</Text>
                 </View>
               </View>
             </ScrollView>
@@ -530,44 +532,44 @@ export default function DashboardScreen() {
             setModalStep('options');
           }}
         >
-          <View style={[styles.modalContent, modalStep === 'country' && { height: '80%' }]}>
-            <View style={styles.modalIndicator} />
+          <View style={[styles.modalContent, { backgroundColor: colors.background }, modalStep === 'country' && { height: '80%' }]}>
+            <View style={[styles.modalIndicator, { backgroundColor: colors.border }]} />
 
             {modalStep === 'options' ? (
               <>
-                <Text style={styles.modalTitle}>Update Study Plan</Text>
-                <Text style={styles.modalSubtitle}>What would you like to update first?</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Update Study Plan</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>What would you like to update first?</Text>
 
                 <View style={styles.modalOptions}>
                   <TouchableOpacity
-                    style={styles.modalOption}
+                    style={[styles.modalOption, { backgroundColor: colors.card, borderColor: colors.border }]}
                     onPress={() => setModalStep('country')}
                   >
-                    <View style={[styles.modalOptionIcon, { backgroundColor: "#E0F2FE" }]}>
-                      <Ionicons name="globe-outline" size={24} color={THEME.blue} />
+                    <View style={[styles.modalOptionIcon, { backgroundColor: isDark ? "#1E293B" : "#E0F2FE" }]}>
+                      <Ionicons name="globe-outline" size={24} color={isDark ? colors.primary : THEME.blue} />
                     </View>
                     <View style={styles.modalOptionTextWrapper}>
-                      <Text style={styles.modalOptionTitle}>Change Destination</Text>
-                      <Text style={styles.modalOptionDesc}>Current: {userData.flag} {userData.country}</Text>
+                      <Text style={[styles.modalOptionTitle, { color: colors.text }]}>Change Destination</Text>
+                      <Text style={[styles.modalOptionDesc, { color: colors.textSecondary }]}>Current: {userData.flag} {userData.country}</Text>
                     </View>
-                    <Feather name="chevron-right" size={20} color="#CBD5E1" />
+                    <Feather name="chevron-right" size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.modalOption}
+                    style={[styles.modalOption, { backgroundColor: colors.card, borderColor: colors.border }]}
                     onPress={() => {
                       setShowPlanModal(false);
                       router.push("/search");
                     }}
                   >
-                    <View style={[styles.modalOptionIcon, { backgroundColor: "#F3F4F6" }]}>
-                      <Ionicons name="business-outline" size={24} color={THEME.textDark} />
+                    <View style={[styles.modalOptionIcon, { backgroundColor: isDark ? "#1E293B" : "#F3F4F6" }]}>
+                      <Ionicons name="business-outline" size={24} color={isDark ? colors.primary : THEME.textDark} />
                     </View>
                     <View style={styles.modalOptionTextWrapper}>
-                      <Text style={styles.modalOptionTitle}>Find University</Text>
-                      <Text style={styles.modalOptionDesc}>Search universities in {userData.country}</Text>
+                      <Text style={[styles.modalOptionTitle, { color: colors.text }]}>Find University</Text>
+                      <Text style={[styles.modalOptionDesc, { color: colors.textSecondary }]}>Search universities in {userData.country}</Text>
                     </View>
-                    <Feather name="chevron-right" size={20} color="#CBD5E1" />
+                    <Feather name="chevron-right" size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
               </>
@@ -575,12 +577,12 @@ export default function DashboardScreen() {
               <>
                 <View style={styles.modalHeaderRow}>
                   <TouchableOpacity onPress={() => setModalStep('options')}>
-                    <Feather name="chevron-left" size={24} color={THEME.textDark} />
+                    <Feather name="chevron-left" size={24} color={colors.text} />
                   </TouchableOpacity>
-                  <Text style={styles.modalTitle}>Select Destination</Text>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Select Destination</Text>
                   <View style={{ width: 24 }} />
                 </View>
-                <Text style={styles.modalSubtitle}>Where do you want to study?</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Where do you want to study?</Text>
 
                 <ScrollView showsVerticalScrollIndicator={false}>
                   <View style={styles.modalGrid}>
@@ -589,7 +591,8 @@ export default function DashboardScreen() {
                         key={c.id}
                         style={[
                           styles.modalCountryItem,
-                          userData.country === c.name && styles.modalCountrySelected
+                          { backgroundColor: colors.card, borderColor: colors.border },
+                          userData.country === c.name && [styles.modalCountrySelected, { borderColor: colors.primary, backgroundColor: colors.primary + "15" }]
                         ]}
                         onPress={() => {
                           setShowPlanModal(false); setModalStep('options'); router.push({ pathname: "/search", params: { pendingCountry: c.name, pendingFlag: c.flag } });
@@ -597,7 +600,7 @@ export default function DashboardScreen() {
                         }}
                       >
                         <Text style={styles.modalCountryFlag}>{c.flag}</Text>
-                        <Text style={styles.modalCountryName}>{c.name}</Text>
+                        <Text style={[styles.modalCountryName, { color: colors.text }]}>{c.name}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -606,13 +609,13 @@ export default function DashboardScreen() {
             )}
 
             <TouchableOpacity
-              style={styles.modalCloseBtn}
+              style={[styles.modalCloseBtn, { backgroundColor: colors.card }]}
               onPress={() => {
                 setShowPlanModal(false);
                 setModalStep('options');
               }}
             >
-              <Text style={styles.modalCloseBtnText}>Close</Text>
+              <Text style={[styles.modalCloseBtnText, { color: colors.textSecondary }]}>Close</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

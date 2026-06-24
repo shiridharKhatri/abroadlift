@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { router, useLocalSearchParams, Stack } from "expo-router";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 
 const THEME = {
   primary: "#1A8A99",
@@ -27,6 +28,7 @@ const THEME = {
 
 export default function ProgramDetailsScreen() {
   const params = useLocalSearchParams();
+  const { colors, isDark } = useTheme();
   const [isDescExpanded, setIsDescExpanded] = React.useState(false);
 
   // Safely parse query parameters
@@ -139,31 +141,31 @@ export default function ProgramDetailsScreen() {
   const intakes = getTypicalIntakes(country);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
-      <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: '#fff' } }} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+      <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color={THEME.textDark} />
+          <Ionicons name="chevron-back" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>Program Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Program Details</Text>
         <View style={{ width: 44 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Course Info Section */}
-        <View style={styles.introCard}>
-          <Text style={styles.universityName}>{universityName.toUpperCase()}</Text>
-          <Text style={styles.programTitle}>{name}</Text>
+        <View style={[styles.introCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.universityName, { color: colors.textSecondary }]}>{universityName.toUpperCase()}</Text>
+          <Text style={[styles.programTitle, { color: colors.text }]}>{name}</Text>
           <View style={styles.categoryRow}>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>{category.toUpperCase()}</Text>
+            <View style={[styles.categoryBadge, { backgroundColor: colors.primary + "15" }]}>
+              <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>{category.toUpperCase()}</Text>
             </View>
             {level.map((lvl, index) => (
-              <View key={index} style={styles.levelBadge}>
-                <Text style={styles.levelBadgeText}>{lvl}</Text>
+              <View key={index} style={[styles.levelBadge, { backgroundColor: colors.border }]}>
+                <Text style={[styles.levelBadgeText, { color: colors.textSecondary }]}>{lvl}</Text>
               </View>
             ))}
           </View>
@@ -171,18 +173,18 @@ export default function ProgramDetailsScreen() {
 
         {/* Tuition & App Fee Row */}
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Ionicons name="wallet-outline" size={22} color={THEME.blue} />
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="wallet-outline" size={22} color={colors.primary} />
             <View style={styles.statInfo}>
-              <Text style={styles.statLabel}>Annual Tuition</Text>
-              <Text style={styles.statValue}>{fee}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Annual Tuition</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{fee}</Text>
             </View>
           </View>
-          <View style={styles.statCard}>
-            <Ionicons name="card-outline" size={22} color={THEME.green} />
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="card-outline" size={22} color={colors.secondary} />
             <View style={styles.statInfo}>
-              <Text style={styles.statLabel}>Application Fee</Text>
-              <Text style={styles.statValue}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Application Fee</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>
                 {applicationFee && !isNaN(Number(applicationFee)) ? `$${applicationFee}` : applicationFee}
               </Text>
             </View>
@@ -190,19 +192,19 @@ export default function ProgramDetailsScreen() {
         </View>
 
         {/* Delivery & Duration Info */}
-        <View style={styles.detailsListCard}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailRowLabel}>Delivery Method</Text>
-            <Text style={styles.detailRowValue}>{formatDelivery(deliveryMethod)}</Text>
+        <View style={[styles.detailsListCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.detailRowLabel, { color: colors.textSecondary }]}>Delivery Method</Text>
+            <Text style={[styles.detailRowValue, { color: colors.text }]}>{formatDelivery(deliveryMethod)}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailRowLabel}>Instruction Language</Text>
-            <Text style={styles.detailRowValue}>{languageOfInstruction}</Text>
+          <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.detailRowLabel, { color: colors.textSecondary }]}>Instruction Language</Text>
+            <Text style={[styles.detailRowValue, { color: colors.text }]}>{languageOfInstruction}</Text>
           </View>
           {lengthBreakdown ? (
             <View style={[styles.detailRow, { borderBottomWidth: 0, paddingBottom: 0, flexDirection: "column", alignItems: "flex-start", gap: 6 }]}>
-              <Text style={styles.detailRowLabel}>Duration / Format</Text>
-              <Text style={[styles.detailRowValue, { textAlign: "left", lineHeight: 20 }]}>{lengthBreakdown}</Text>
+              <Text style={[styles.detailRowLabel, { color: colors.textSecondary }]}>Duration / Format</Text>
+              <Text style={[styles.detailRowValue, { color: colors.text, textAlign: "left", lineHeight: 20 }]}>{lengthBreakdown}</Text>
             </View>
           ) : null}
         </View>
@@ -210,34 +212,44 @@ export default function ProgramDetailsScreen() {
         {/* Work Authorizations Section */}
         <View style={styles.infoSection}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="briefcase-outline" size={18} color={THEME.primary} />
-            <Text style={styles.sectionTitle}>Work & Stay Options</Text>
+            <Ionicons name="briefcase-outline" size={18} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Work & Stay Options</Text>
           </View>
 
           <View style={styles.workOptionsRow}>
-            <View style={[styles.workCard, coop ? styles.workCardActive : styles.workCardInactive]}>
+            <View style={[
+              styles.workCard, 
+              coop 
+                ? { backgroundColor: isDark ? "rgba(16, 185, 129, 0.15)" : "#F0FDF4", borderColor: isDark ? "rgba(16, 185, 129, 0.3)" : "#DCFCE7" } 
+                : { backgroundColor: colors.card, borderColor: colors.border }
+            ]}>
               <Ionicons 
                 name={coop ? "checkmark-circle" : "close-circle"} 
                 size={20} 
-                color={coop ? THEME.green : THEME.textGray} 
+                color={coop ? "#10B981" : colors.textSecondary} 
               />
               <View style={styles.workInfo}>
-                <Text style={styles.workTitle}>Co-op Program</Text>
-                <Text style={styles.workDesc}>
+                <Text style={[styles.workTitle, { color: colors.text }]}>Co-op Program</Text>
+                <Text style={[styles.workDesc, { color: colors.textSecondary }]}>
                   {coop ? "Offers integrated paid internship / work terms." : "No co-op options listed."}
                 </Text>
               </View>
             </View>
 
-            <View style={[styles.workCard, pgwp ? styles.workCardActive : styles.workCardInactive]}>
+            <View style={[
+              styles.workCard, 
+              pgwp 
+                ? { backgroundColor: isDark ? "rgba(16, 185, 129, 0.15)" : "#F0FDF4", borderColor: isDark ? "rgba(16, 185, 129, 0.3)" : "#DCFCE7" } 
+                : { backgroundColor: colors.card, borderColor: colors.border }
+            ]}>
               <Ionicons 
                 name={pgwp ? "checkmark-circle" : "close-circle"} 
                 size={20} 
-                color={pgwp ? THEME.green : THEME.textGray} 
+                color={pgwp ? "#10B981" : colors.textSecondary} 
               />
               <View style={styles.workInfo}>
-                <Text style={styles.workTitle}>Post-Grad Work Permit (PGWP)</Text>
-                <Text style={styles.workDesc}>
+                <Text style={[styles.workTitle, { color: colors.text }]}>Post-Grad Work Permit (PGWP)</Text>
+                <Text style={[styles.workDesc, { color: colors.textSecondary }]}>
                   {pgwp ? "Eligible for stay back work permit after graduation." : "Not listed or eligible for PGWP."}
                 </Text>
               </View>
@@ -248,18 +260,18 @@ export default function ProgramDetailsScreen() {
         {/* Typical Intakes Section */}
         <View style={styles.infoSection}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="calendar-outline" size={18} color={THEME.primary} />
-            <Text style={styles.sectionTitle}>Intake Timeline ({country})</Text>
+            <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Intake Timeline ({country})</Text>
           </View>
-          <View style={styles.intakesCard}>
+          <View style={[styles.intakesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {intakes.map((item, index) => (
-              <View key={index} style={[styles.intakeRow, index === intakes.length - 1 && { borderBottomWidth: 0 }]}>
+              <View key={index} style={[styles.intakeRow, { borderBottomColor: colors.border }, index === intakes.length - 1 && { borderBottomWidth: 0 }]}>
                 <View>
-                  <Text style={styles.intakeTerm}>{item.term}</Text>
-                  <Text style={styles.intakeMonths}>{item.months}</Text>
+                  <Text style={[styles.intakeTerm, { color: colors.text }]}>{item.term}</Text>
+                  <Text style={[styles.intakeMonths, { color: colors.textSecondary }]}>{item.months}</Text>
                 </View>
-                <View style={styles.intakeStatusBadge}>
-                  <Text style={styles.intakeStatusText}>{item.status}</Text>
+                <View style={[styles.intakeStatusBadge, { backgroundColor: colors.primary + "15" }]}>
+                  <Text style={[styles.intakeStatusText, { color: colors.primary }]}>{item.status}</Text>
                 </View>
               </View>
             ))}
@@ -270,51 +282,51 @@ export default function ProgramDetailsScreen() {
         {requirements && (
           <View style={styles.infoSection}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="checkmark-done-circle-outline" size={18} color={THEME.primary} />
-              <Text style={styles.sectionTitle}>Academic & Test Requirements</Text>
+              <Ionicons name="checkmark-done-circle-outline" size={18} color={colors.primary} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Academic & Test Requirements</Text>
             </View>
-            <View style={styles.requirementsCard}>
+            <View style={[styles.requirementsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {requirements.min_gpa && (
-                <View style={styles.reqRow}>
-                  <Text style={styles.reqLabel}>Minimum GPA</Text>
-                  <Text style={styles.reqValue}>{requirements.min_gpa}%</Text>
+                <View style={[styles.reqRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.reqLabel, { color: colors.text }]}>Minimum GPA</Text>
+                  <Text style={[styles.reqValue, { color: colors.primary }]}>{requirements.min_gpa}%</Text>
                 </View>
               )}
               {requirements.min_ielts_average && (
-                <View style={styles.reqRow}>
-                  <Text style={styles.reqLabel}>IELTS Requirement</Text>
-                  <Text style={styles.reqValue}>{requirements.min_ielts_average} Average</Text>
+                <View style={[styles.reqRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.reqLabel, { color: colors.text }]}>IELTS Requirement</Text>
+                  <Text style={[styles.reqValue, { color: colors.primary }]}>{requirements.min_ielts_average} Average</Text>
                 </View>
               )}
               {requirements.min_toefl_total && (
-                <View style={styles.reqRow}>
-                  <Text style={styles.reqLabel}>TOEFL Score</Text>
-                  <Text style={styles.reqValue}>{requirements.min_toefl_total} Minimum</Text>
+                <View style={[styles.reqRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.reqLabel, { color: colors.text }]}>TOEFL Score</Text>
+                  <Text style={[styles.reqValue, { color: colors.primary }]}>{requirements.min_toefl_total} Minimum</Text>
                 </View>
               )}
               {requirements.min_duolingo_score && (
-                <View style={styles.reqRow}>
-                  <Text style={styles.reqLabel}>Duolingo Score</Text>
-                  <Text style={styles.reqValue}>{requirements.min_duolingo_score}</Text>
+                <View style={[styles.reqRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.reqLabel, { color: colors.text }]}>Duolingo Score</Text>
+                  <Text style={[styles.reqValue, { color: colors.primary }]}>{requirements.min_duolingo_score}</Text>
                 </View>
               )}
               {requirements.min_pte_overall && (
                 <View style={[styles.reqRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                  <Text style={styles.reqLabel}>PTE Overall</Text>
-                  <Text style={styles.reqValue}>{requirements.min_pte_overall}</Text>
+                  <Text style={[styles.reqLabel, { color: colors.text }]}>PTE Overall</Text>
+                  <Text style={[styles.reqValue, { color: colors.primary }]}>{requirements.min_pte_overall}</Text>
                 </View>
               )}
 
               {/* Prerequisites list */}
               {requirements.other_requirements && requirements.other_requirements.filter((r: string) => r && r.trim() !== "").length > 0 && (
-                <View style={styles.prereqSection}>
-                  <Text style={styles.prereqTitle}>Academic Prerequisites</Text>
+                <View style={[styles.prereqSection, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.prereqTitle, { color: colors.text }]}>Academic Prerequisites</Text>
                   {requirements.other_requirements
                     .filter((r: string) => r && r.trim() !== "")
                     .map((reqText: string, rIdx: number) => (
                       <View key={rIdx} style={styles.prereqItem}>
-                        <FontAwesome5 name="chevron-right" size={10} color={THEME.blue} style={{ marginTop: 4 }} />
-                        <Text style={styles.prereqText}>{reqText.trim()}</Text>
+                        <FontAwesome5 name="chevron-right" size={10} color={colors.primary} style={{ marginTop: 4 }} />
+                        <Text style={[styles.prereqText, { color: colors.textSecondary }]}>{reqText.trim()}</Text>
                       </View>
                     ))}
                 </View>
@@ -326,11 +338,11 @@ export default function ProgramDetailsScreen() {
         {/* Description Section */}
         <View style={styles.infoSection}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="document-text-outline" size={18} color={THEME.primary} />
-            <Text style={styles.sectionTitle}>Program Overview</Text>
+            <Ionicons name="document-text-outline" size={18} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Program Overview</Text>
           </View>
-          <View style={styles.descCard}>
-            <Text style={styles.descText}>
+          <View style={[styles.descCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.descText, { color: colors.text }]}>
               {description.length > 250 && !isDescExpanded
                 ? `${description.substring(0, 250)}...`
                 : description}
@@ -340,13 +352,13 @@ export default function ProgramDetailsScreen() {
                 onPress={() => setIsDescExpanded(!isDescExpanded)}
                 style={{ marginTop: 12, alignSelf: "flex-start", flexDirection: "row", alignItems: "center" }}
               >
-                <Text style={{ color: THEME.blue, fontWeight: "700", fontSize: 13 }}>
+                <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>
                   {isDescExpanded ? "Read Less" : "Read More"}
                 </Text>
                 <Ionicons 
                   name={isDescExpanded ? "chevron-up" : "chevron-down"} 
                   size={16} 
-                  color={THEME.blue} 
+                  color={colors.primary} 
                   style={{ marginLeft: 4 }} 
                 />
               </TouchableOpacity>
@@ -358,10 +370,10 @@ export default function ProgramDetailsScreen() {
         {otherFees && otherFees.length > 0 && (
           <View style={styles.infoSection}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="receipt-outline" size={18} color={THEME.primary} />
-              <Text style={styles.sectionTitle}>Other Estimated Fees</Text>
+              <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Other Estimated Fees</Text>
             </View>
-            <View style={styles.feesCard}>
+            <View style={[styles.feesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {otherFees.map((item: any, index: number) => {
                 const isObject = typeof item === "object" && item !== null;
                 let feeName = `Fee #${index + 1}`;
@@ -382,9 +394,9 @@ export default function ProgramDetailsScreen() {
                 }
 
                 return (
-                  <View key={index} style={[styles.feeRow, index === otherFees.length - 1 && { borderBottomWidth: 0 }]}>
-                    <Text style={styles.feeLabel}>{feeName}</Text>
-                    {feeAmount ? <Text style={styles.feeValue}>{feeAmount}</Text> : null}
+                  <View key={index} style={[styles.feeRow, { borderBottomColor: colors.border }, index === otherFees.length - 1 && { borderBottomWidth: 0 }]}>
+                    <Text style={[styles.feeLabel, { color: colors.text }]}>{feeName}</Text>
+                    {feeAmount ? <Text style={[styles.feeValue, { color: colors.primary }]}>{feeAmount}</Text> : null}
                   </View>
                 );
               })}

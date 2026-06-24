@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../context/UserContext";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -32,23 +33,24 @@ const THEME = {
 
 export default function RecentUniversities() {
   const { userData } = useUser();
+  const { colors, isDark } = useTheme();
   const selectedList = userData.selectedUniversities || [];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
-          <Text style={styles.title}>Saved</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Saved</Text>
           {selectedList.length > 0 && (
-            <View style={styles.countBadge}>
-              <Text style={styles.countBadgeText}>{selectedList.length} SAVED</Text>
+            <View style={[styles.countBadge, { backgroundColor: colors.primary + "15" }]}>
+              <Text style={[styles.countBadgeText, { color: colors.primary }]}>{selectedList.length} SAVED</Text>
             </View>
           )}
         </View>
-        <Text style={styles.subtitle}>Track your selected institutions and estimate your costs</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Track your selected institutions and estimate your costs</Text>
       </View>
 
       <ScrollView 
@@ -57,15 +59,15 @@ export default function RecentUniversities() {
       >
         {selectedList.length === 0 ? (
           <View style={styles.emptyState}>
-            <View style={styles.emptyIconBox}>
-              <Feather name="heart" size={36} color={THEME.textGray} />
+            <View style={[styles.emptyIconBox, { backgroundColor: colors.card }]}>
+              <Feather name="heart" size={36} color={colors.textSecondary} />
             </View>
-            <Text style={styles.emptyTitle}>Your saved list is empty</Text>
-            <Text style={styles.emptySubtitle}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Your saved list is empty</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
               Universities you save during setup or search will appear here for quick access and comparing estimates.
             </Text>
             <TouchableOpacity 
-              style={styles.browseButton}
+              style={[styles.browseButton, { backgroundColor: colors.primary }]}
               onPress={() => router.push("/(tabs)/search")}
             >
               <Text style={styles.browseButtonText}>Explore Universities</Text>
@@ -77,7 +79,7 @@ export default function RecentUniversities() {
             <TouchableOpacity 
               key={`${uni.id}-${index}`} 
               activeOpacity={0.95} 
-              style={styles.card}
+              style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => router.push(`/university/${uni.id}`)}
             >
               {/* Card Image Cover */}
@@ -87,38 +89,38 @@ export default function RecentUniversities() {
                   colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.65)"]}
                   style={StyleSheet.absoluteFillObject}
                 />
-                <View style={styles.costBadge}>
-                  <Text style={styles.costValue}>{uni.tuition || "$25,000 / yr"}</Text>
-                  <Text style={styles.costLabel}>EST. TUITION</Text>
+                <View style={[styles.costBadge, { backgroundColor: isDark ? "rgba(0,0,0,0.8)" : "rgba(255, 255, 255, 0.95)" }]}>
+                  <Text style={[styles.costValue, { color: colors.text }]}>{uni.tuition || "$25,000 / yr"}</Text>
+                  <Text style={[styles.costLabel, { color: colors.textSecondary }]}>EST. TUITION</Text>
                 </View>
               </View>
 
               {/* Card Contents */}
               <View style={styles.cardInfo}>
                 <View style={styles.uniMainInfo}>
-                  <Text style={styles.uniName}>{uni.name}</Text>
+                  <Text style={[styles.uniName, { color: colors.text }]}>{uni.name}</Text>
                   {uni.course ? (
                     <View style={styles.courseRow}>
-                      <View style={styles.courseIndicator} />
-                      <Text style={styles.courseName} numberOfLines={1}>{uni.course}</Text>
+                      <View style={[styles.courseIndicator, { backgroundColor: colors.primary }]} />
+                      <Text style={[styles.courseName, { color: colors.textSecondary }]} numberOfLines={1}>{uni.course}</Text>
                     </View>
                   ) : null}
                 </View>
                 
-                <View style={styles.cardFooter}>
+                <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
                   <View style={styles.footerItem}>
-                    <Ionicons name="location-outline" size={15} color={THEME.textGray} />
-                    <Text style={styles.footerText}>{uni.location}</Text>
+                    <Ionicons name="location-outline" size={15} color={colors.textSecondary} />
+                    <Text style={[styles.footerText, { color: colors.textSecondary }]}>{uni.location}</Text>
                   </View>
                   <TouchableOpacity 
-                    style={styles.viewDetailsBtn}
+                    style={[styles.viewDetailsBtn, { backgroundColor: colors.primary + "15" }]}
                     onPress={() => router.push({
                       pathname: "/university/cost-breakdown",
                       params: { id: uni.id, country: uni.location.split(",")[1]?.trim() || "Canada" }
                     })}
                   >
-                    <Text style={styles.viewDetailsText}>View Cost</Text>
-                    <Feather name="arrow-right" size={14} color={THEME.primary} />
+                    <Text style={[styles.viewDetailsText, { color: colors.primary }]}>View Cost</Text>
+                    <Feather name="arrow-right" size={14} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
