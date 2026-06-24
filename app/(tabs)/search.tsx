@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   card: {
     backgroundColor: THEME.white,

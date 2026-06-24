@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   profileCard: {
     backgroundColor: THEME.white,

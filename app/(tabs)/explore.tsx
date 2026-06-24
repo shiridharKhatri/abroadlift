@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   studyPlanCard: {
     marginHorizontal: 20,
