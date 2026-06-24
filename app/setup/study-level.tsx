@@ -6,25 +6,16 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
-  Image,
   ScrollView,
   StatusBar,
-  ImageBackground,
-  LayoutAnimation,
   Platform,
-  UIManager,
-  Animated,
 } from "react-native";
 import { Stack, router } from "expo-router";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Enable LayoutAnimation for Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const COLORS = {
   primary: "#33BFFF", 
@@ -32,158 +23,136 @@ const COLORS = {
   textGray: "#64748B",
   white: "#FFFFFF",
   bgSubtle: "#F8FAFF",
-  glassBorder: "rgba(255, 255, 255, 0.5)",
+  borderLight: "#F1F5F9",
 };
 
 const STUDY_LEVELS = [
-  { id: "bachelors", name: "Bachelor's Degree", icon: "school-outline", provider: "Ionicons" },
-  { id: "masters", name: "Master's Degree", icon: "book-outline", provider: "Ionicons" },
-  { id: "phd", name: "PHD Degree", icon: "book-outline", provider: "Ionicons" },
-  { id: "diploma", name: "Diploma", icon: "certificate-outline", provider: "MaterialCommunityIcons" },
+  { 
+    id: "bachelors", 
+    name: "Bachelor's Degree", 
+    icon: "school-outline", 
+    provider: "Ionicons",
+    desc: "Ideal for high school / 10+2 graduates looking for foundational degrees. Duration: 3–4 years."
+  },
+  { 
+    id: "masters", 
+    name: "Master's Degree", 
+    icon: "book-outline", 
+    provider: "Ionicons",
+    desc: "For university graduates aiming for specialization. Duration: 1–2 years."
+  },
+  { 
+    id: "phd", 
+    name: "PHD Degree", 
+    icon: "ribbon-outline", 
+    provider: "Ionicons",
+    desc: "For advanced research candidates. Requires a prior master's degree."
+  },
+  { 
+    id: "diploma", 
+    name: "Diploma", 
+    icon: "certificate-outline", 
+    provider: "MaterialCommunityIcons",
+    desc: "Vocational and career-focused programs with faster employment paths. Duration: 1–2 years."
+  },
 ];
 
 export default function StudyLevelSelection() {
   const { userData, setUserData } = useUser();
+  const insets = useSafeAreaInsets();
   const [selectedLevel, setSelectedLevel] = useState<string | null>(
     STUDY_LEVELS.find(l => l.name === userData.studyLevel)?.id || null
   );
   
-  // Animated values for each option's blur
-  const anims = React.useRef(STUDY_LEVELS.reduce((acc, level) => {
-    acc[level.id] = new Animated.Value(level.name === userData.studyLevel ? 1 : 0);
-    return acc;
-  }, {} as Record<string, Animated.Value>)).current;
-
   const handleSelect = (id: string, name: string) => {
-    if (id === selectedLevel) return;
-
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    
-    // Smoothly fade out the old selection and fade in the new one
-    const animTasks = [
-      Animated.timing(anims[id], {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      })
-    ];
-
-    if (selectedLevel) {
-      animTasks.push(
-        Animated.timing(anims[selectedLevel], {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        })
-      );
-    }
-
-    Animated.parallel(animTasks).start();
-
     setSelectedLevel(id);
     setUserData(prev => ({ ...prev, studyLevel: name }));
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ImageBackground
-        source={require("../../assets/images/onboarding-bg-4k.png")}
-        style={styles.background}
-        imageStyle={{ top: -140, height: height + 140 }}
-        resizeMode="cover"
+      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Study Level</Text>
+        <View style={{ width: 44 }} /> 
+      </View>
+
+      <View style={styles.trackerContainer}>
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <View 
+            key={i} 
+            style={[
+              styles.trackerSegment, 
+              i === 2 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+            ]} 
+          />
+        ))}
+      </View>
+
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Feather name="chevron-left" size={28} color={COLORS.textDark} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Study Level</Text>
-            <View style={{ width: 44 }} /> 
-          </View>
+        <Text style={styles.questionText}>What level of study are you planning?</Text>
 
-          <View style={styles.trackerContainer}>
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <View 
-                key={i} 
+        {/* Info Banner */}
+        <View style={styles.infoCard}>
+          <Ionicons name="sparkles" size={20} color="#D97706" />
+          <Text style={styles.infoText}>
+            Selecting the correct level filters course requirements, admission score minimums, and stay-back work permit paths.
+          </Text>
+        </View>
+
+        {/* Level List */}
+        <View style={styles.list}>
+          {STUDY_LEVELS.map((level) => {
+            const isSelected = selectedLevel === level.id;
+            return (
+              <TouchableOpacity
+                key={level.id}
+                activeOpacity={0.8}
                 style={[
-                  styles.trackerSegment, 
-                  i === 2 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
-                ]} 
-              />
-            ))}
-          </View>
+                  styles.levelItem,
+                  isSelected && styles.selectedItem,
+                ]}
+                onPress={() => handleSelect(level.id, level.name)}
+              >
+                <View style={[styles.iconWrapper, isSelected && styles.selectedIconWrapper]}>
+                  {level.provider === 'Ionicons' ? (
+                    <Ionicons name={level.icon as any} size={22} color={isSelected ? COLORS.primary : COLORS.textGray} />
+                  ) : (
+                    <MaterialCommunityIcons name={level.icon as any} size={22} color={isSelected ? COLORS.primary : COLORS.textGray} />
+                  )}
+                </View>
+                <View style={styles.textWrapper}>
+                  <Text style={[styles.levelName, isSelected && styles.selectedLevelName]}>{level.name}</Text>
+                  <Text style={styles.levelDesc}>{level.desc}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
 
-          <ScrollView 
-            style={{ flex: 1 }}
-            contentContainerStyle={styles.scrollContent} 
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.questionText}>What level of study are you planning?</Text>
-
-            {/* Education Banner */}
-            <View style={styles.bannerContainer}>
-              <Image
-                source={require("../../assets/images/onboarding-bg-4k.png")} 
-                style={styles.bannerImage}
-                resizeMode="cover"
-              />
-            </View>
-
-            {/* Level List */}
-            <View style={styles.list}>
-              {STUDY_LEVELS.map((level) => {
-                const isSelected = selectedLevel === level.id;
-                return (
-                  <TouchableOpacity
-                    key={level.id}
-                    activeOpacity={0.8}
-                    style={[
-                      styles.levelItem,
-                      isSelected && styles.selectedItem,
-                    ]}
-                    onPress={() => handleSelect(level.id, level.name)}
-                  >
-                    <Animated.View style={[styles.glassContainer, { opacity: anims[level.id] }]}>
-                      <Image 
-                        source={require("../../assets/images/onboarding-bg-4k.png")}
-                        style={styles.glassImageBackground}
-                        blurRadius={30}
-                      />
-                      <View style={styles.glassOverlay} />
-                    </Animated.View>
-
-                    <View style={styles.iconWrapper}>
-                      {level.provider === 'Ionicons' ? (
-                        <Ionicons name={level.icon as any} size={24} color={isSelected ? COLORS.primary : COLORS.textDark} />
-                      ) : (
-                        <MaterialCommunityIcons name={level.icon as any} size={24} color={isSelected ? COLORS.primary : COLORS.textDark} />
-                      )}
-                    </View>
-                    <Text style={[styles.levelName, isSelected && styles.selectedLevelName]}>{level.name}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </ScrollView>
-
-          {/* Sticky Bottom Button */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                !selectedLevel && { opacity: 0.5 }
-              ]}
-              disabled={!selectedLevel}
-              onPress={() => router.push("/setup/field-of-study")}
-            >
-              <Text style={styles.continueButtonText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </ImageBackground>
+      {/* Sticky Bottom Button */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            !selectedLevel && { opacity: 0.5 }
+          ]}
+          disabled={!selectedLevel}
+          onPress={() => router.push("/setup/field-of-study")}
+        >
+          <Text style={styles.continueButtonText}>Continue</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -192,15 +161,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-  },
-  background: {
-    flex: 1,
-    width: width,
-    height: height,
-  },
-  safeArea: {
-    flex: 1,
-    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   header: {
     flexDirection: "row",
@@ -212,97 +172,98 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: COLORS.bgSubtle,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "900",
     color: COLORS.textDark,
     letterSpacing: -0.4,
   },
   scrollContent: {
-    paddingHorizontal: 28,
-    paddingBottom: 100,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
   questionText: {
     fontSize: 16,
     color: COLORS.textGray,
     textAlign: "center",
     marginTop: 10,
-    marginBottom: 40,
+    marginBottom: 24,
     fontWeight: "500",
   },
-  bannerContainer: {
-    width: "100%",
-    height: 160,
-    borderRadius: 20,
-    backgroundColor: COLORS.bgSubtle,
-    overflow: "hidden",
-    marginBottom: 32,
+  infoCard: {
+    backgroundColor: "#FEF3C7",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
+    borderColor: "#FEEB99",
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 24,
+    alignItems: "center",
   },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
+  infoText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#D97706",
+    lineHeight: 18,
+    fontWeight: "600",
   },
   list: {
-    gap: 12,
+    gap: 16,
   },
   levelItem: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    overflow: "hidden",
-    position: "relative",
-    marginBottom: 2,
+    alignItems: "flex-start",
+    backgroundColor: COLORS.white,
+    padding: 18,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: COLORS.borderLight,
+    gap: 16,
   },
   selectedItem: {
-    borderColor: "rgba(255, 255, 255, 0.6)",
-    backgroundColor: "transparent",
-    transform: [{ scale: 1.02 }],
-  },
-  glassContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: "hidden",
-  },
-  glassImageBackground: {
-    ...StyleSheet.absoluteFillObject,
-    width: width,
-    height: height,
-    top: -460,
-    left: -20,
-  },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.35)",
+    borderColor: COLORS.primary,
+    backgroundColor: "#F0F9FF",
   },
   iconWrapper: {
-    width: 44,
-    alignItems: "flex-start",
-    zIndex: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.bgSubtle,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  selectedIconWrapper: {
+    backgroundColor: COLORS.white,
+  },
+  textWrapper: {
+    flex: 1,
+    gap: 4,
   },
   levelName: {
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "800",
     color: COLORS.textDark,
-    zIndex: 1,
   },
   selectedLevelName: {
     color: COLORS.primary,
-    fontWeight: "800",
+  },
+  levelDesc: {
+    fontSize: 12,
+    color: COLORS.textGray,
+    lineHeight: 16,
+    fontWeight: "500",
   },
   footer: {
     padding: 24,
-    backgroundColor: "transparent",
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
   },
   continueButton: {
     backgroundColor: COLORS.primary,

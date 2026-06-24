@@ -6,26 +6,25 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
-  Image,
   ScrollView,
   StatusBar,
-  ImageBackground,
   Platform,
 } from "react-native";
 import { Stack, router } from "expo-router";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const COLORS = {
   primary: "#33BFFF", 
   textDark: "#0F172A",
   textGray: "#64748B",
   white: "#FFFFFF",
-  glassBase: "rgba(255, 255, 255, 0.75)",
-  glassBorder: "rgba(255, 255, 255, 0.6)",
-  cardSelectedBg: "#E0F2FE",
+  bgSubtle: "#F8FAFF",
+  borderLight: "#F1F5F9",
+  cardSelectedBg: "#F0F9FF",
   cardBorder: "#E2E8F0",
 };
 
@@ -38,9 +37,7 @@ const INTAKE_OPTIONS = [
 
 export default function IntakeSetup() {
   const { userData, setUserData } = useUser();
-  
-  // Initialize with values from context or defaults
-  // We'll map the intake string to our ID if needed, but for now just use selection
+  const insets = useSafeAreaInsets();
   const [selectedIntake, setSelectedIntake] = useState(userData.intake || "Fall 2025");
 
   const handleContinue = () => {
@@ -51,92 +48,94 @@ export default function IntakeSetup() {
     router.push("/setup/university-select");
   };
 
+  // Get dynamic suggestion based on selected country
+  const getIntakeRecommendation = () => {
+    const c = (userData.country || "USA").toUpperCase();
+    if (c.includes("USA") || c.includes("UK") || c.includes("CANADA") || c.includes("AUSTRALIA")) {
+      return `Fall (September) Intake is highly recommended for ${userData.country || "your destination"}. It offers 80% of all available courses, holds the highest scholarship funding, and ensures maximum internship/co-op opportunities.`;
+    }
+    return "Fall (September) is the primary intake globally, followed by Spring (January). Fall generally provides the widest course selections and highest funding approvals.";
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ImageBackground
-        source={require("../../assets/images/onboarding-bg-4k.png")}
-        style={styles.background}
-        imageStyle={{ top: -140, height: height + 140 }}
-        resizeMode="cover"
-      >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Feather name="chevron-left" size={28} color={COLORS.textDark} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Target Intake</Text>
-            <View style={{ width: 44 }} /> 
+      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Target Intake</Text>
+        <View style={{ width: 44 }} /> 
+      </View>
+
+      {/* Progress Tracker (Step 6 of 7) */}
+      <View style={styles.trackerContainer}>
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <View 
+            key={i} 
+            style={[
+              styles.trackerSegment, 
+              i === 6 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+            ]} 
+          />
+        ))}
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.titleSection}>
+          <Text style={styles.questionTitle}>When do you want to start your studies?</Text>
+          <Text style={styles.questionSubtitle}>Intakes dictate application deadlines and visa processing times</Text>
+        </View>
+
+        {/* Dynamic Country Intake Recommendation Box */}
+        <View style={styles.recommendationCard}>
+          <View style={styles.recHeader}>
+            <Ionicons name="sparkles" size={18} color="#D97706" />
+            <Text style={styles.recTitle}>{userData.country || "Global"} Intake Recommendation</Text>
           </View>
+          <Text style={styles.recText}>{getIntakeRecommendation()}</Text>
+        </View>
 
-          {/* Progress Tracker (Step 6 of 7) */}
-          <View style={styles.trackerContainer}>
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <View 
-                key={i} 
-                style={[
-                  styles.trackerSegment, 
-                  i === 6 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
-                ]} 
-              />
-            ))}
-          </View>
-
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.titleSection}>
-              <Text style={styles.questionTitle}>When do you want to start your studies?</Text>
-              <Text style={styles.questionSubtitle}>This helps us estimate your admission chances</Text>
-            </View>
-
-            {/* Banner Image - Map of Flags */}
-            <View style={styles.bannerContainer}>
-              <Image 
-                source={require("./world_flags_map.png")} 
-                style={styles.bannerImage}
-                resizeMode="cover"
-              />
-            </View>
-
-            {/* Intake Grid */}
-            <View style={styles.grid}>
-              {INTAKE_OPTIONS.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.card, 
-                    selectedIntake === item.label && styles.selectedCard
-                  ]}
-                  onPress={() => setSelectedIntake(item.label)}
-                >
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardHeader}>
-                      <Feather 
-                        name="calendar" 
-                        size={16} 
-                        color={selectedIntake === item.label ? COLORS.primary : "#EF4444"} 
-                      />
-                      <Text style={styles.cardTitle}>{item.label}</Text>
-                    </View>
-                    <Text style={styles.cardSub}>{item.sub}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={{ height: 40 }} />
-
+        {/* Intake Options Grid */}
+        <View style={styles.grid}>
+          {INTAKE_OPTIONS.map((item) => (
             <TouchableOpacity
-              style={styles.continueButton}
-              onPress={handleContinue}
+              key={item.id}
+              style={[
+                styles.card, 
+                selectedIntake === item.label && styles.selectedCard
+              ]}
+              onPress={() => setSelectedIntake(item.label)}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                  <Feather 
+                    name="calendar" 
+                    size={16} 
+                    color={selectedIntake === item.label ? COLORS.primary : COLORS.textGray} 
+                  />
+                  <Text style={[styles.cardTitle, selectedIntake === item.label && styles.selectedCardTitle]}>
+                    {item.label}
+                  </Text>
+                </View>
+                <Text style={styles.cardSub}>{item.sub}</Text>
+              </View>
             </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
 
-          </ScrollView>
-        </SafeAreaView>
-      </ImageBackground>
+      {/* Sticky Bottom Button */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <TouchableOpacity
+          style={styles.continueButton}
+          onPress={handleContinue}
+        >
+          <Text style={styles.continueButtonText}>Continue</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -145,15 +144,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-  },
-  background: {
-    flex: 1,
-    width: width,
-    height: height,
-  },
-  safeArea: {
-    flex: 1,
-    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   header: {
     flexDirection: "row",
@@ -165,7 +155,7 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: COLORS.bgSubtle,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
@@ -174,6 +164,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "900",
     color: COLORS.textDark,
+    letterSpacing: -0.4,
   },
   trackerContainer: {
     flexDirection: "row",
@@ -181,7 +172,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginTop: 10,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   trackerSegment: {
     height: 6,
@@ -215,17 +206,30 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "500",
   },
-  bannerContainer: {
-    width: "100%",
-    height: 180,
-    borderRadius: 24,
-    overflow: "hidden",
-    marginBottom: 32,
-    backgroundColor: "#F1F5F9",
+  recommendationCard: {
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 28,
   },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
+  recHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  recTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#B45309",
+  },
+  recText: {
+    fontSize: 13,
+    color: "#78350F",
+    lineHeight: 18,
+    fontWeight: "500",
   },
   grid: {
     flexDirection: "row",
@@ -240,11 +244,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1.5,
     borderColor: COLORS.cardBorder,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   selectedCard: {
     backgroundColor: COLORS.cardSelectedBg,
@@ -263,22 +262,31 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: COLORS.textDark,
   },
+  selectedCardTitle: {
+    color: COLORS.primary,
+  },
   cardSub: {
     fontSize: 13,
     color: COLORS.textGray,
     fontWeight: "600",
   },
+  footer: {
+    padding: 24,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
   continueButton: {
     backgroundColor: COLORS.primary,
-    height: 64,
-    borderRadius: 32,
+    height: 60,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
   },
   continueButtonText: {
     color: COLORS.white,

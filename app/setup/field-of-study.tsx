@@ -6,189 +6,196 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
-  Image,
   ScrollView,
   StatusBar,
-  ImageBackground,
-  LayoutAnimation,
-  Platform,
-  UIManager,
   TextInput,
-  Animated,
+  Platform,
 } from "react-native";
 import { Stack, router } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Enable LayoutAnimation for Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const COLORS = {
   primary: "#33BFFF", 
   textDark: "#0F172A",
   textGray: "#64748B",
   white: "#FFFFFF",
-  bgSubtle: "rgba(255, 255, 255, 0.4)",
-  glassBorder: "rgba(255, 255, 255, 0.5)",
+  bgSubtle: "#F8FAFF",
+  borderLight: "#F1F5F9",
 };
 
 const FIELDS = [
   { id: "engineering", name: "Engineering and Technology" },
-  { id: "business", name: "Business, Management" },
-  { id: "sciences", name: "Sciences" },
-  { id: "arts", name: "Arts" },
-  { id: "law", name: "Law" },
+  { id: "business", name: "Business & Management (MBA)" },
+  { id: "sciences", name: "Computer & Data Sciences" },
+  { id: "arts", name: "Arts & Humanities" },
+  { id: "law", name: "Law & Public Policy" },
+  { id: "medicine", name: "Medicine & Healthcare" },
+];
+
+const POPULAR_BADGES = [
+  "Computer Science",
+  "Data Science",
+  "MBA",
+  "Information Technology",
+  "Nursing",
+  "Finance",
+  "Mechanical Engineering"
 ];
 
 export default function FieldOfStudySelection() {
   const { userData, setUserData } = useUser();
+  const insets = useSafeAreaInsets();
   const [selectedField, setSelectedField] = useState<string | null>(
     FIELDS.find(f => f.name === userData.fieldOfStudy)?.id || null
   );
+  const [customField, setCustomField] = useState(
+    FIELDS.some(f => f.name === userData.fieldOfStudy) ? "" : userData.fieldOfStudy || ""
+  );
   const [search, setSearch] = useState("");
 
-  const anims = React.useRef(FIELDS.reduce((acc, field) => {
-    acc[field.id] = new Animated.Value(field.name === userData.fieldOfStudy ? 1 : 0);
-    return acc;
-  }, {} as Record<string, Animated.Value>)).current;
-
   const handleSelect = (id: string, name: string) => {
-    if (id === selectedField) return;
-
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    
-    const animTasks = [
-      Animated.timing(anims[id], {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      })
-    ];
-
-    if (selectedField) {
-      animTasks.push(
-        Animated.timing(anims[selectedField], {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        })
-      );
-    }
-
-    Animated.parallel(animTasks).start();
-
     setSelectedField(id);
+    setCustomField("");
     setUserData(prev => ({ ...prev, fieldOfStudy: name }));
+  };
+
+  const handleCustomFieldChange = (text: string) => {
+    setSearch(text);
+    setCustomField(text);
+    setSelectedField(null);
+    setUserData(prev => ({ ...prev, fieldOfStudy: text }));
+  };
+
+  const handleBadgePress = (badgeName: string) => {
+    setSearch(badgeName);
+    setCustomField(badgeName);
+    setSelectedField(null);
+    setUserData(prev => ({ ...prev, fieldOfStudy: badgeName }));
   };
 
   const filteredFields = FIELDS.filter(field => 
     field.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isFormValid = selectedField !== null || customField.trim().length > 0;
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ImageBackground
-        source={require("../../assets/images/onboarding-bg-4k.png")}
-        style={styles.background}
-        imageStyle={{ top: -140, height: height + 140 }}
-        resizeMode="cover"
+      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Field Of Study</Text>
+        <View style={{ width: 44 }} /> 
+      </View>
+
+      <View style={styles.trackerContainer}>
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <View 
+            key={i} 
+            style={[
+              styles.trackerSegment, 
+              i === 3 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+            ]} 
+          />
+        ))}
+      </View>
+
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Feather name="chevron-left" size={28} color={COLORS.textDark} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Field Of Study</Text>
-            <View style={{ width: 44 }} /> 
+        <Text style={styles.questionText}>What do you want to study?</Text>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Feather name="search" size={20} color={COLORS.textGray} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search or type custom study course"
+            placeholderTextColor={COLORS.textGray}
+            value={search}
+            onChangeText={handleCustomFieldChange}
+          />
+        </View>
+
+        {/* Popular Badges Recommendations */}
+        <View style={styles.badgesWrapper}>
+          <Text style={styles.sectionTitle}>Popular Recommendations</Text>
+          <View style={styles.badgeGrid}>
+            {POPULAR_BADGES.map((badge) => {
+              const isSelected = customField === badge;
+              return (
+                <TouchableOpacity
+                  key={badge}
+                  style={[styles.badgeItem, isSelected && styles.badgeItemActive]}
+                  onPress={() => handleBadgePress(badge)}
+                >
+                  <Text style={[styles.badgeText, isSelected && styles.badgeTextActive]}>
+                    {badge}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+        </View>
 
-          <View style={styles.trackerContainer}>
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <View 
-                key={i} 
-                style={[
-                  styles.trackerSegment, 
-                  i === 3 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
-                ]} 
-              />
-            ))}
+        {/* Standard Fields List */}
+        <View style={styles.listWrapper}>
+          <Text style={styles.sectionTitle}>Broad Categories</Text>
+          <View style={styles.list}>
+            {filteredFields.map((field) => {
+              const isSelected = selectedField === field.id;
+              return (
+                <TouchableOpacity
+                  key={field.id}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.levelItem,
+                    isSelected && styles.selectedItem,
+                  ]}
+                  onPress={() => handleSelect(field.id, field.name)}
+                >
+                  <Text style={[styles.fieldName, isSelected && styles.selectedFieldName]}>
+                    {field.name}
+                  </Text>
+                  {isSelected && <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+            {filteredFields.length === 0 && search.trim().length > 0 && (
+              <View style={styles.customSelectionCard}>
+                <Ionicons name="sparkles-outline" size={20} color={COLORS.primary} />
+                <Text style={styles.customSelectionText}>
+                  Use custom field: <Text style={{ fontWeight: "800" }}>"{search}"</Text>
+                </Text>
+              </View>
+            )}
           </View>
+        </View>
+      </ScrollView>
 
-          <ScrollView 
-            style={{ flex: 1 }}
-            contentContainerStyle={styles.scrollContent} 
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.questionText}>What do you want to study?</Text>
-
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-              <Feather name="search" size={20} color={COLORS.textGray} style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder='"Search study courses"'
-                placeholderTextColor={COLORS.textGray}
-                value={search}
-                onChangeText={setSearch}
-              />
-            </View>
-
-            {/* Fields List */}
-            <View style={styles.list}>
-              {filteredFields.map((field) => {
-                const isSelected = selectedField === field.id;
-                return (
-                  <TouchableOpacity
-                    key={field.id}
-                    activeOpacity={0.8}
-                    style={[
-                      styles.levelItem,
-                      isSelected && styles.selectedItem,
-                    ]}
-                    onPress={() => handleSelect(field.id, field.name)}
-                  >
-                    <Animated.View style={[styles.glassContainer, { opacity: anims[field.id] }]}>
-                      <Image 
-                        source={require("../../assets/images/onboarding-bg-4k.png")}
-                        style={styles.glassImageBackground}
-                        blurRadius={30}
-                      />
-                      <View style={styles.glassOverlay} />
-                    </Animated.View>
-
-                    <Text style={[styles.fieldName, isSelected && styles.selectedFieldName]}>{field.name}</Text>
-                    {isSelected && <Feather name="check" size={20} color={COLORS.primary} />}
-                  </TouchableOpacity>
-                );
-              })}
-              {filteredFields.length === 0 && (
-                <Text style={styles.noResultsText}>No fields found matching "{search}"</Text>
-              )}
-            </View>
-          </ScrollView>
-
-          {/* Sticky Bottom Button */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                !selectedField && { opacity: 0.5 }
-              ]}
-              disabled={!selectedField}
-              onPress={() => router.push("/setup/academics")}
-            >
-              <Text style={styles.continueButtonText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </ImageBackground>
+      {/* Sticky Bottom Button */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            !isFormValid && { opacity: 0.5 }
+          ]}
+          disabled={!isFormValid}
+          onPress={() => router.push("/setup/academics")}
+        >
+          <Text style={styles.continueButtonText}>Continue</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -197,15 +204,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-  },
-  background: {
-    flex: 1,
-    width: width,
-    height: height,
-  },
-  safeArea: {
-    flex: 1,
-    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   header: {
     flexDirection: "row",
@@ -217,19 +215,19 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: COLORS.bgSubtle,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "900",
     color: COLORS.textDark,
     letterSpacing: -0.4,
   },
   scrollContent: {
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
     paddingBottom: 40,
   },
   questionText: {
@@ -237,29 +235,68 @@ const styles = StyleSheet.create({
     color: COLORS.textGray,
     textAlign: "center",
     marginTop: 10,
-    marginBottom: 40,
+    marginBottom: 24,
     fontWeight: "500",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
-    height: 48,
-    borderRadius: 14,
+    backgroundColor: COLORS.bgSubtle,
+    height: 52,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
+    borderWidth: 1.5,
+    borderColor: COLORS.borderLight,
     marginBottom: 24,
   },
   searchIcon: {
     marginRight: 10,
-    opacity: 0.4,
+    opacity: 0.5,
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
     color: COLORS.textDark,
-    fontWeight: "500",
+    fontWeight: "600",
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.textGray,
+    marginBottom: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+  },
+  badgesWrapper: {
+    marginBottom: 24,
+  },
+  badgeGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  badgeItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.bgSubtle,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  badgeItemActive: {
+    backgroundColor: "#F0F9FF",
+    borderColor: COLORS.primary,
+  },
+  badgeText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textGray,
+  },
+  badgeTextActive: {
+    color: COLORS.primary,
+  },
+  listWrapper: {
+    marginBottom: 16,
   },
   list: {
     gap: 12,
@@ -268,57 +305,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: COLORS.white,
     paddingHorizontal: 18,
-    paddingVertical: 18,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    overflow: "hidden",
-    position: "relative",
-    marginBottom: 2,
+    paddingVertical: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: COLORS.borderLight,
   },
   selectedItem: {
-    borderColor: "rgba(255, 255, 255, 0.6)",
-    backgroundColor: "transparent",
-    transform: [{ scale: 1.02 }],
-  },
-  glassContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: "hidden",
-  },
-  glassImageBackground: {
-    ...StyleSheet.absoluteFillObject,
-    width: width,
-    height: height,
-    top: -460,
-    left: -20,
-  },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.35)",
+    borderColor: COLORS.primary,
+    backgroundColor: "#F0F9FF",
   },
   fieldName: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: COLORS.textDark,
-    zIndex: 1,
   },
   selectedFieldName: {
     color: COLORS.primary,
-    fontWeight: "800",
   },
-  noResultsText: {
-    textAlign: "center",
-    color: COLORS.textGray,
-    fontSize: 16,
-    marginTop: 20,
+  customSelectionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F9FF",
+    borderColor: COLORS.primary,
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+  },
+  customSelectionText: {
+    fontSize: 14,
+    color: COLORS.textDark,
     fontWeight: "500",
   },
   footer: {
     padding: 24,
-    backgroundColor: "transparent",
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
   },
   continueButton: {
     backgroundColor: COLORS.primary,

@@ -6,56 +6,60 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
-  Image,
   ScrollView,
   StatusBar,
-  ImageBackground,
-  LayoutAnimation,
-  Platform,
-  UIManager,
   TextInput,
-  Animated,
+  Platform,
 } from "react-native";
 import { Stack, router } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Enable LayoutAnimation for Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const COLORS = {
   primary: "#33BFFF", 
   textDark: "#0F172A",
   textGray: "#64748B",
   white: "#FFFFFF",
-  glassBase: "rgba(255, 255, 255, 0.8)",
-  glassBorder: "rgba(255, 255, 255, 0.4)",
+  bgSubtle: "#F8FAFF",
+  borderLight: "#F1F5F9",
 };
 
 const ENGLISH_LEVELS = ["Beginner", "Intermediate", "Advanced", "Fluent", "Native"];
-const TEST_TYPES = ["IELTS", "PTE", "TOEFL", "Duolingo"];
+const TEST_TYPES = ["IELTS", "PTE", "TOEFL", "Duolingo"] as const;
+
+type TestType = typeof TEST_TYPES[number];
+
+const TEST_TIPS: Record<TestType, string> = {
+  IELTS: "Most top universities require an overall band of 6.5 or higher, with no sub-score under 6.0.",
+  PTE: "An overall score of 58 or higher is generally required for bachelor's and master's admissions.",
+  TOEFL: "An overall score of 80 to 90 is recommended for most competitive institutions.",
+  Duolingo: "A minimum score of 115 to 120 is standard for major universities accepting Duolingo.",
+};
 
 export default function EnglishTestSelection() {
   const { userData, setUserData } = useUser();
+  const insets = useSafeAreaInsets();
   const [hasTakenTest, setHasTakenTest] = useState<boolean | null>(
     userData.testType && userData.testType !== "Not Taken" ? true :
-    userData.englishLevel ? false : null
+    userData.englishLevel && userData.englishLevel !== "N/A" ? false : null
   );
   const [testType, setTestType] = useState<string>(userData.testType === "Not Taken" ? "" : userData.testType || "");
-  const [score, setScore] = useState(userData.score === "Pending" ? "" : userData.score || "");
-  const [englishLevel, setEnglishLevel] = useState(userData.englishLevel || "");
+  const [score, setScore] = useState(userData.score === "Pending" || userData.score === "N/A" ? "" : userData.score || "");
+  const [englishLevel, setEnglishLevel] = useState(userData.englishLevel === "N/A" ? "" : userData.englishLevel || "");
   const [scoreError, setScoreError] = useState("");
 
   const handleToggle = (taken: boolean) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setHasTakenTest(taken);
-    // Reset other fields when toggling
-    if (taken) setEnglishLevel("");
-    else { setTestType(""); setScore(""); }
+    if (taken) {
+      setEnglishLevel("");
+    } else {
+      setTestType(""); 
+      setScore("");
+      setScoreError("");
+    }
   };
   
   const handleComplete = () => {
@@ -94,169 +98,147 @@ export default function EnglishTestSelection() {
   };
 
   const isFormValid = hasTakenTest === true 
-    ? (testType !== "" && score.trim().length > 0 && isScoreValid(testType, score))
+    ? (testType !== "" && score.trim().length > 0 && isScoreValid(testType, score) && !scoreError)
     : (hasTakenTest === false && englishLevel !== "");
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ImageBackground
-        source={require("../../assets/images/onboarding-bg-4k.png")}
-        style={styles.background}
-        imageStyle={{ top: -140, height: height + 140 }}
-        resizeMode="cover"
+      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? (insets.top || 20) + 10 : insets.top + 10 }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={COLORS.textDark} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>English</Text>
+        <View style={{ width: 44 }} /> 
+      </View>
+
+      <View style={styles.trackerContainer}>
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <View 
+            key={i} 
+            style={[
+              styles.trackerSegment, 
+              i === 5 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
+            ]} 
+          />
+        ))}
+      </View>
+
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Feather name="chevron-left" size={28} color={COLORS.textDark} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>English</Text>
-            <View style={{ width: 44 }} /> 
-          </View>
+        <Text style={styles.questionText}>Have you taken an English test?</Text>
 
-          <View style={styles.trackerContainer}>
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <View 
-                key={i} 
-                style={[
-                  styles.trackerSegment, 
-                  i === 5 ? styles.trackerSegmentActive : styles.trackerSegmentInactive
-                ]} 
-              />
-            ))}
-          </View>
+        {/* Yes/No Toggle */}
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[styles.toggleBtn, hasTakenTest === true && styles.activeToggle]}
+            onPress={() => handleToggle(true)}
+          >
+            <Text style={[styles.toggleText, hasTakenTest === true && styles.activeToggleText]}>Yes, I have</Text>
+          </TouchableOpacity>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <Text style={styles.questionText}>Have you taken an English test?</Text>
+          <TouchableOpacity
+            style={[styles.toggleBtn, hasTakenTest === false && styles.activeToggle]}
+            onPress={() => handleToggle(false)}
+          >
+            <Text style={[styles.toggleText, hasTakenTest === false && styles.activeToggleText]}>No, I haven't</Text>
+          </TouchableOpacity>
+        </View>
 
-            {/* Banner */}
-            <View style={styles.bannerContainer}>
-              <Image
-                source={require("../../assets/images/onboarding-bg-4k.png")} 
-                style={styles.bannerImage}
-                resizeMode="cover"
-              />
+        {/* Dynamic Content based on selection */}
+        {hasTakenTest === true && (
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>Select your test type</Text>
+            
+            <View style={styles.badgeGrid}>
+              {TEST_TYPES.map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[styles.badge, testType === type && styles.activeBadge]}
+                  onPress={() => { setTestType(type); setScore(""); setScoreError(""); }}
+                >
+                  <Text style={[styles.badgeText, testType === type && styles.activeBadgeText]}>{type}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
-            {/* Yes/No Toggle */}
-            <View style={styles.toggleRow}>
-              <TouchableOpacity
-                style={[styles.toggleBtn, hasTakenTest === true && styles.activeToggle]}
-                onPress={() => handleToggle(true)}
-              >
-                {hasTakenTest === true && (
-                  <>
-                    <Image 
-                      source={require("../../assets/images/onboarding-bg-4k.png")}
-                      style={styles.glassImageBackground}
-                      blurRadius={30}
-                    />
-                    <View style={styles.glassOverlay} />
-                  </>
-                )}
-                <Text style={[styles.toggleText, hasTakenTest === true && styles.activeToggleText]}>Yes, I have</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.toggleBtn, hasTakenTest === false && styles.activeToggle]}
-                onPress={() => handleToggle(false)}
-              >
-                {hasTakenTest === false && (
-                  <>
-                    <Image 
-                      source={require("../../assets/images/onboarding-bg-4k.png")}
-                      style={styles.glassImageBackground}
-                      blurRadius={30}
-                    />
-                    <View style={styles.glassOverlay} />
-                  </>
-                )}
-                <Text style={[styles.toggleText, hasTakenTest === false && styles.activeToggleText]}>No, I haven't</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Dynamic Content based on selection */}
-            {hasTakenTest === true && (
-              <Animated.View style={styles.formSection}>
-                <Text style={styles.sectionTitle}>Select your test type</Text>
-                
-                <View style={styles.horizontalList}>
-                  {TEST_TYPES.map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[styles.badge, testType === type && styles.activeBadge]}
-                      onPress={() => setTestType(type)}
-                    >
-                      <Text style={[styles.badgeText, testType === type && styles.activeBadgeText]}>{type}</Text>
-                    </TouchableOpacity>
-                  ))}
+            {testType !== "" && (
+              <View style={styles.form}>
+                <View style={styles.inputCard}>
+                  <Text style={styles.inputLabel}>Overall {testType} Score</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={
+                      testType === "IELTS" ? "e.g. 7.5" :
+                      testType === "PTE" ? "e.g. 65" :
+                      testType === "TOEFL" ? "e.g. 100" :
+                      "e.g. 120"
+                    }
+                    placeholderTextColor={COLORS.textGray}
+                    value={score}
+                    onChangeText={handleScoreChange}
+                    keyboardType="numeric"
+                  />
+                  {scoreError ? <Text style={styles.errorText}>{scoreError}</Text> : null}
                 </View>
 
-                {testType !== "" && (
-                  <View style={styles.inputCard}>
-                    <Image 
-                      source={require("../../assets/images/onboarding-bg-4k.png")}
-                      style={[styles.glassImageBackground, { top: -600 }]}
-                      blurRadius={30}
-                    />
-                    <View style={styles.glassOverlay} />
-                    <Text style={[styles.inputLabel, { zIndex: 1 }]}>Overall Score</Text>
-                    <TextInput
-                      style={[styles.textInput, { zIndex: 1 }]}
-                      placeholder={
-                        testType === "IELTS" ? "e.g. 7.5" :
-                        testType === "PTE" ? "e.g. 65" :
-                        testType === "TOEFL" ? "e.g. 100" :
-                        testType === "Duolingo" ? "e.g. 120" :
-                        "Score"
-                      }
-                      placeholderTextColor={COLORS.textGray}
-                      value={score}
-                      onChangeText={handleScoreChange}
-                      keyboardType="numeric"
-                    />
-                    {scoreError ? <Text style={styles.errorText}>{scoreError}</Text> : null}
-                  </View>
-                )}
-              </Animated.View>
-            )}
-
-            {hasTakenTest === false && (
-              <View style={styles.formSection}>
-                <Text style={styles.sectionTitle}>Select your proficiency level</Text>
-                <View style={styles.horizontalList}>
-                  {ENGLISH_LEVELS.map((level) => (
-                    <TouchableOpacity
-                      key={level}
-                      style={[styles.badge, englishLevel === level && styles.activeBadge]}
-                      onPress={() => setEnglishLevel(level)}
-                    >
-                      <Text style={[styles.badgeText, englishLevel === level && styles.activeBadgeText]}>{level}</Text>
-                    </TouchableOpacity>
-                  ))}
+                {/* Recommendation Tip Banner */}
+                <View style={styles.infoCard}>
+                  <Ionicons name="sparkles" size={20} color="#3B82F6" />
+                  <Text style={styles.infoText}>
+                    {TEST_TIPS[testType as TestType]}
+                  </Text>
                 </View>
               </View>
             )}
+          </View>
+        )}
 
-            {/* Continue Button */}
-            <TouchableOpacity
-              style={[
-                styles.continueButton, 
-                { marginTop: 40 },
-                !isFormValid && { opacity: 0.5 }
-              ]}
-              disabled={!isFormValid}
-              onPress={handleComplete}
-            >
-              <Text style={styles.continueButtonText}>Continue</Text>
-            </TouchableOpacity>
+        {hasTakenTest === false && (
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>Select your proficiency level</Text>
+            <View style={styles.badgeGrid}>
+              {ENGLISH_LEVELS.map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[styles.badge, englishLevel === level && styles.activeBadge]}
+                  onPress={() => setEnglishLevel(level)}
+                >
+                  <Text style={[styles.badgeText, englishLevel === level && styles.activeBadgeText]}>{level}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-          </ScrollView>
-        </SafeAreaView>
-      </ImageBackground>
+            {englishLevel !== "" && (
+              <View style={styles.infoCard}>
+                <Ionicons name="information-circle-outline" size={22} color="#059669" />
+                <Text style={styles.infoTextEmerald}>
+                  Many universities accept Medium of Instruction (MOI) certificates from your previous college, or offer English pathway courses (ESL) if your scores are pending.
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Sticky Bottom Button */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <TouchableOpacity
+          style={[
+            styles.continueButton, 
+            !isFormValid && { opacity: 0.5 }
+          ]}
+          disabled={!isFormValid}
+          onPress={handleComplete}
+        >
+          <Text style={styles.continueButtonText}>Continue</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -265,15 +247,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-  },
-  background: {
-    flex: 1,
-    width: width,
-    height: height,
-  },
-  safeArea: {
-    flex: 1,
-    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   header: {
     flexDirection: "row",
@@ -285,104 +258,80 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: COLORS.bgSubtle,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "900",
     color: COLORS.textDark,
+    letterSpacing: -0.4,
   },
   scrollContent: {
-    paddingHorizontal: 28,
-    paddingBottom: 100,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
   questionText: {
     fontSize: 16,
     color: COLORS.textGray,
     textAlign: "center",
     marginTop: 10,
-    marginBottom: 32,
+    marginBottom: 24,
     fontWeight: "500",
-  },
-  bannerContainer: {
-    width: "100%",
-    height: 160,
-    borderRadius: 20,
-    overflow: "hidden",
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-  },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
   },
   toggleRow: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   toggleBtn: {
     flex: 1,
     height: 54,
     borderRadius: 18,
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    backgroundColor: COLORS.bgSubtle,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    overflow: "hidden",
+    borderColor: COLORS.borderLight,
   },
   activeToggle: {
     borderColor: COLORS.primary,
+    backgroundColor: "#F0F9FF",
   },
   toggleText: {
     fontSize: 15,
     fontWeight: "700",
-    color: COLORS.textDark,
-    zIndex: 1,
+    color: COLORS.textGray,
   },
   activeToggleText: {
     color: COLORS.primary,
-  },
-  glassImageBackground: {
-    ...StyleSheet.absoluteFillObject,
-    width: width,
-    height: height,
-    top: -460,
-    left: -20,
-  },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.35)",
   },
   formSection: {
     marginTop: 8,
   },
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: "800",
     color: COLORS.textGray,
-    textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 16,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
   },
-  horizontalList: {
+  badgeGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
-    justifyContent: "center",
     marginBottom: 24,
   },
   badge: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: COLORS.bgSubtle,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.6)",
+    borderColor: COLORS.borderLight,
   },
   activeBadge: {
     backgroundColor: COLORS.primary,
@@ -396,17 +345,19 @@ const styles = StyleSheet.create({
   activeBadgeText: {
     color: COLORS.white,
   },
+  form: {
+    gap: 16,
+  },
   inputCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
-    borderRadius: 18,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    overflow: "hidden",
+    borderColor: COLORS.borderLight,
   },
   inputLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     color: COLORS.textGray,
     marginBottom: 8,
     textTransform: "uppercase",
@@ -415,6 +366,42 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: COLORS.textDark,
     fontWeight: "700",
+    backgroundColor: COLORS.bgSubtle,
+    borderRadius: 12,
+    height: 48,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  infoCard: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#1E40AF",
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+  infoTextEmerald: {
+    flex: 1,
+    fontSize: 13,
+    color: "#065F46",
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+  footer: {
+    padding: 24,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
   },
   continueButton: {
     backgroundColor: COLORS.primary,

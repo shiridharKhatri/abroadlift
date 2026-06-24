@@ -85,13 +85,12 @@ export default function CountrySelection() {
       >
         <Text style={styles.questionText}>Which country are you interested in?</Text>
 
-        {/* Landmark Banner */}
-        <View style={styles.bannerContainer}>
-          <Image
-            source={require("../../assets/images/onboarding-bg-4k.png")}
-            style={styles.bannerImage}
-            resizeMode="cover"
-          />
+        {/* Information Banner */}
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle-outline" size={22} color="#0388C7" />
+          <Text style={styles.infoText}>
+            Selecting your destination automatically configures local cost of living estimates, visa readiness tracks, and tailored university match criteria.
+          </Text>
         </View>
 
         {/* Country Grid */}
@@ -186,19 +185,23 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     opacity: 0.8,
   },
-  bannerContainer: {
-    width: "100%",
-    height: 180,
-    borderRadius: 20,
-    backgroundColor: COLORS.bgSubtle,
-    overflow: "hidden",
-    marginBottom: 40,
+  infoCard: {
+    backgroundColor: "#F0F9FF",
     borderWidth: 1,
-    borderColor: COLORS.glassBorder,
+    borderColor: "#E0F2FE",
+    borderRadius: 20,
+    padding: 18,
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 32,
+    alignItems: "center",
   },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
+  infoText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#0369A1",
+    lineHeight: 18,
+    fontWeight: "600",
   },
   grid: {
     flexDirection: "row",

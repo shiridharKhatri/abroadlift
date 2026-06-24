@@ -43,6 +43,7 @@ const MATCHED_UNIVERSITIES = [
     tuition: "$32,100 / yr",
     acceptanceRate: 75,
     recommended: true,
+    tag: "Best Match",
   },
   {
     id: "2",
@@ -55,6 +56,7 @@ const MATCHED_UNIVERSITIES = [
     tuition: "$35,500 / yr",
     acceptanceRate: 58,
     recommended: true,
+    tag: "Top Rank",
   },
   {
     id: "3",
@@ -67,6 +69,7 @@ const MATCHED_UNIVERSITIES = [
     tuition: "$38,000 / yr",
     acceptanceRate: 25,
     recommended: true,
+    tag: "Low Tuition",
   },
 ];
 
@@ -201,9 +204,19 @@ export default function UniversitySelectionSetup() {
                       <Ionicons name="location-outline" size={14} color="#64748B" />
                       <Text style={styles.locationText}>{uni.location}</Text>
                     </View>
-                    {uni.recommended && (
-                      <View style={styles.recommendedBadge}>
-                        <Text style={styles.recommendedText}>Matched</Text>
+                    {uni.tag && (
+                      <View style={[
+                        styles.recommendedBadge,
+                        uni.tag === "Best Match" && { backgroundColor: "rgba(16, 185, 129, 0.1)" },
+                        uni.tag === "Top Rank" && { backgroundColor: "rgba(245, 158, 11, 0.1)" },
+                        uni.tag === "Low Tuition" && { backgroundColor: "rgba(59, 130, 246, 0.1)" },
+                      ]}>
+                        <Text style={[
+                          styles.recommendedText,
+                          uni.tag === "Best Match" && { color: THEME.green },
+                          uni.tag === "Top Rank" && { color: THEME.orange },
+                          uni.tag === "Low Tuition" && { color: THEME.primary },
+                        ]}>{uni.tag}</Text>
                       </View>
                     )}
                   </View>
@@ -395,16 +408,11 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: THEME.white,
-    borderRadius: 32,
-    marginBottom: 24,
+    borderRadius: 24,
+    marginBottom: 20,
     borderWidth: 1.5,
     borderColor: "#F1F5F9",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 4,
   },
   imageContainer: {
     height: 180,
