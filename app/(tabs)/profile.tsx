@@ -1,20 +1,19 @@
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Platform,
-  Dimensions,
   Alert,
+  Dimensions,
+  Image,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { router } from "expo-router";
-import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../context/UserContext";
 
 const { width } = Dimensions.get("window");
@@ -43,11 +42,11 @@ export default function ProfileTab() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Profile</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingsHeaderBtn}
           onPress={handleEditPress}
         >
@@ -55,11 +54,11 @@ export default function ProfileTab() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        
+
         {/* Profile Card / Header Box */}
         <View style={styles.profileCard}>
           <View style={styles.avatarWrapper}>
@@ -149,8 +148,8 @@ export default function ProfileTab() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.prefLabel}>Academics</Text>
                 <Text style={styles.prefValue}>
-                  {userData.recentAcademicField 
-                    ? `${userData.recentAcademicField} • ${userData.cgpa} CGPA${userData.passoutYear ? ` (${userData.passoutYear})` : ""}` 
+                  {userData.recentAcademicField
+                    ? `${userData.recentAcademicField} • ${userData.cgpa} CGPA${userData.passoutYear ? ` (${userData.passoutYear})` : ""}`
                     : "Not Set"}
                 </Text>
               </View>
@@ -175,7 +174,7 @@ export default function ProfileTab() {
 
         {/* Menu/Quick Links */}
         <View style={styles.menuGroup}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push("/(tabs)/recent")}
           >
@@ -186,7 +185,7 @@ export default function ProfileTab() {
             <Feather name="chevron-right" size={16} color={THEME.textGray} />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => Alert.alert("Notifications", "You have no new notifications at this time.")}
           >
@@ -197,7 +196,7 @@ export default function ProfileTab() {
             <Feather name="chevron-right" size={16} color={THEME.textGray} />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push("/profile/edit")}
           >

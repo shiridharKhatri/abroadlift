@@ -91,15 +91,17 @@ export default function EditProfile() {
             onPress={pickImage}
             activeOpacity={0.8}
           >
-            <View style={styles.avatarBox}>
-               {formData.profileImage ? (
-                 <Image source={{ uri: formData.profileImage }} style={styles.avatarImage} />
-               ) : (
-                 <Ionicons name="person" size={50} color={COLORS.textGray} />
-               )}
-               <View style={styles.cameraIcon}>
-                  <Feather name="camera" size={16} color="white" />
-               </View>
+            <View style={styles.avatarWrapper}>
+              <View style={styles.avatarBox}>
+                 {formData.profileImage ? (
+                   <Image source={{ uri: formData.profileImage }} style={styles.avatarImage} />
+                 ) : (
+                   <Ionicons name="person" size={50} color={COLORS.textGray} />
+                 )}
+              </View>
+              <View style={styles.cameraIcon}>
+                 <Feather name="camera" size={16} color="white" />
+              </View>
             </View>
             <Text style={styles.changePhotoText}>Change Profile Photo</Text>
           </TouchableOpacity>
@@ -218,6 +220,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 40,
   },
+  avatarWrapper: {
+    position: "relative",
+    width: 100,
+    height: 100,
+  },
   avatarBox: {
     width: 100,
     height: 100,
@@ -225,7 +232,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
-    position: "relative",
     borderWidth: 1.5,
     borderColor: COLORS.border,
     overflow: "hidden",
