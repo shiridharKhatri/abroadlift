@@ -32,9 +32,30 @@ export default function Index() {
   const player = useVideoPlayer(require("../assets/homescreen.mp4"), (p) => {
     p.loop = true;
     p.muted = true;
-    p.playbackRate = 2.0;
+    p.timeUpdateEventInterval = 0.05;
+    p.playbackRate = 4.0;
     p.play();
   });
+
+  React.useEffect(() => {
+    const subscription = player.addListener("timeUpdate", (event) => {
+      // If the currentTime is between 0 and 2.0 seconds, play at 4x speed.
+      // After 2.0 seconds, drop speed to a smooth 1.2x.
+      if (event.currentTime < 2.0) {
+        if (player.playbackRate !== 4.0) {
+          player.playbackRate = 4.0;
+        }
+      } else {
+        if (player.playbackRate !== 1.2) {
+          player.playbackRate = 1.2;
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [player]);
 
   React.useEffect(() => {
     if (!isLoading && isAuthenticated) {
