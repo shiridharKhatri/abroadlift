@@ -1,6 +1,16 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = Platform.OS === 'android' ? `http://10.0.2.2:5052/api` : `http://localhost:5052/api`;
+const getApiBaseUrl = () => {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    return `http://${host}:5052/api`;
+  }
+  return Platform.OS === 'android' ? `http://10.0.2.2:5052/api` : `http://localhost:5052/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const API_KEY = "vl0i3A4W7DxG1fJohzI2qmbedgp4EAYT";
 
 const getHeaders = (extraHeaders?: Record<string, string>) => ({
