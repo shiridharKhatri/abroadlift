@@ -764,27 +764,30 @@ const styles = StyleSheet.create({
 
   // ---- Card Actions ----
   cardActions: {
+    flexDirection: "row",
     paddingHorizontal: 18,
     paddingBottom: 18,
-    gap: 8,
+    gap: 10,
   },
   selectBtn: {
+    flex: 1.25,
     backgroundColor: THEME.primary,
-    height: 50,
-    borderRadius: 14,
+    height: 46,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
   },
   selectBtnText: {
     color: THEME.white,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "700",
   },
   viewBtn: {
+    flex: 1,
     height: 46,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: THEME.border,
     justifyContent: "center",
@@ -792,7 +795,7 @@ const styles = StyleSheet.create({
   },
   viewBtnText: {
     color: THEME.textMedium,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
 
