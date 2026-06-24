@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { Tabs } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { useTheme } from '../context/ThemeContext';
 
 const THEME = {
   primary: "#33BFFF",
@@ -12,11 +13,19 @@ const THEME = {
 };
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
+  const { colors } = useTheme();
+
   return (
     <BlurView 
       intensity={88} 
-      tint="light"
-      style={styles.bottomTabContainer}
+      tint={colors.tabBlur}
+      style={[
+        styles.bottomTabContainer,
+        {
+          backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.tabBg,
+          borderColor: colors.tabBorder,
+        }
+      ]}
     >
       {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
@@ -62,13 +71,18 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               <Feather 
                 name={iconName as any} 
                 size={22} 
-                color={isFocused ? THEME.primary : THEME.textGray} 
+                color={isFocused ? colors.primary : colors.textSecondary} 
               />
             </View>
-            <Text style={[styles.tabText, isFocused && styles.tabTextActive]}>
+            <Text style={[
+              styles.tabText, 
+              { color: colors.textSecondary },
+              isFocused && styles.tabTextActive,
+              isFocused && { color: colors.primary }
+            ]}>
               {label}
             </Text>
-            {isFocused && <View style={styles.activeDot} />}
+            {isFocused && <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />}
           </TouchableOpacity>
         );
       })}

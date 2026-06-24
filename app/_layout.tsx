@@ -2,18 +2,22 @@ import React from "react";
 import { Stack, useSegments, router } from "expo-router";
 import { StatusBar } from "react-native";
 import { UserProvider, useUser } from "./context/UserContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 
 export default function RootLayout() {
   return (
-    <UserProvider>
-      <AuthRouter />
-    </UserProvider>
+    <ThemeProvider>
+      <UserProvider>
+        <AuthRouter />
+      </UserProvider>
+    </ThemeProvider>
   );
 }
 
 function AuthRouter() {
   const { isAuthenticated, isLoading } = useUser();
   const segments = useSegments();
+  const { isDark } = useTheme();
 
   React.useEffect(() => {
     if (isLoading) return;
@@ -33,7 +37,7 @@ function AuthRouter() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
