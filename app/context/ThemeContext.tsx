@@ -31,15 +31,15 @@ const LightColors: ThemeColors = {
 };
 
 const DarkColors: ThemeColors = {
-  background: "#0F172A",
-  card: "#1E293B",
-  text: "#F8FAFC",
-  textSecondary: "#94A3B8",
-  border: "#334155",
+  background: "#000000",
+  card: "#1C1C1E",
+  text: "#FFFFFF",
+  textSecondary: "#A1A1AA",
+  border: "#2C2C2E",
   primary: "#33BFFF",
-  secondary: "#38BDF8",
-  tabBg: "rgba(15, 23, 42, 0.85)",
-  tabBorder: "rgba(255, 255, 255, 0.12)",
+  secondary: "#0A84FF",
+  tabBg: "rgba(28, 28, 30, 0.85)",
+  tabBorder: "rgba(255, 255, 255, 0.1)",
   tabBlur: "dark",
 };
 
