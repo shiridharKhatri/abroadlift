@@ -41,7 +41,7 @@ export default function TermsPrivacyScreen() {
           <Feather name="chevron-left" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Legal Agreements</Text>
-        <View style={{ width: 48 }} /> {/* Spacer to align title */}
+        <View style={{ width: 48 }} />
       </View>
 
       {/* Tab Switcher */}

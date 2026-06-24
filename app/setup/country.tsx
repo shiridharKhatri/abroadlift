@@ -27,18 +27,18 @@ const COLORS = {
 };
 
 const COUNTRIES = [
-  { id: "usa", name: "USA", flag: "🇺🇸", badge: "Gold" },
-  { id: "uk", name: "UK", flag: "🇬🇧" },
-  { id: "canada", name: "Canada", flag: "🇨🇦" },
-  { id: "korea", name: "Korea", flag: "🇰🇷" },
-  { id: "nether", name: "Nether", flag: "🇳🇱", badge: "Silver" },
-  { id: "brazil", name: "Brazil", flag: "🇧🇷" },
-  { id: "germany", name: "Germany", flag: "🇩🇪" },
-  { id: "india", name: "India", flag: "🇮🇳" },
-  { id: "australia", name: "Australia", flag: "🇦🇺" },
-  { id: "france", name: "France", flag: "🇫🇷" },
-  { id: "japan", name: "Japan", flag: "🇯🇵" },
-  { id: "italy", name: "Italy", flag: "🇮🇹" },
+  { id: "usa", name: "USA", code: "us", flag: "🇺🇸" },
+  { id: "uk", name: "UK", code: "gb", flag: "🇬🇧" },
+  { id: "canada", name: "Canada", code: "ca", flag: "🇨🇦" },
+  { id: "korea", name: "Korea", code: "kr", flag: "🇰🇷" },
+  { id: "nether", name: "Nether", code: "nl", flag: "🇳🇱" },
+  { id: "brazil", name: "Brazil", code: "br", flag: "🇧🇷" },
+  { id: "germany", name: "Germany", code: "de", flag: "🇩🇪" },
+  { id: "india", name: "India", code: "in", flag: "🇮🇳" },
+  { id: "australia", name: "Australia", code: "au", flag: "🇦🇺" },
+  { id: "france", name: "France", code: "fr", flag: "🇫🇷" },
+  { id: "japan", name: "Japan", code: "jp", flag: "🇯🇵" },
+  { id: "italy", name: "Italy", code: "it", flag: "🇮🇹" },
 ];
 
 export default function CountrySelection() {
@@ -104,22 +104,20 @@ export default function CountrySelection() {
               ]}
               onPress={() => toggleCountry(country.id, country.name, country.flag)}
             >
-              <View style={[
-                styles.flagContainer,
-                selectedCountryId === country.id && styles.selectedFlagContainer
-              ]}>
-                <Text style={styles.flagEmoji}>{country.flag}</Text>
+              <View style={styles.flagWrapper}>
+                <View style={[
+                  styles.flagContainer,
+                  selectedCountryId === country.id && styles.selectedFlagContainer
+                ]}>
+                  <Image
+                    source={{ uri: `https://flagcdn.com/w160/${country.code}.png` }}
+                    style={styles.flagImage}
+                    resizeMode="cover"
+                  />
+                </View>
                 {selectedCountryId === country.id && (
                   <View style={styles.checkBadge}>
                     <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
-                  </View>
-                )}
-                {country.badge && selectedCountryId !== country.id && (
-                  <View style={[
-                    styles.badge, 
-                    { backgroundColor: country.badge === 'Gold' ? '#FFD700' : country.badge === 'Silver' ? '#C0C0C0' : '#CD7F32' }
-                  ]}>
-                    <Text style={styles.badgeText}>{country.badge}</Text>
                   </View>
                 )}
               </View>
@@ -153,7 +151,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    paddingTop: 40, // Increased to provide breathing room from status bar
+    paddingTop: 40, 
   },
   header: {
     flexDirection: "row",
@@ -227,17 +225,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     zIndex: 10,
   },
+  flagWrapper: {
+    position: "relative",
+    marginBottom: 8,
+  },
   flagContainer: {
-    width: 65,
-    height: 50,
+    width: 60,
+    height: 44,
     backgroundColor: COLORS.bgSubtle,
-    borderRadius: 12,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: COLORS.glassBorder,
     position: "relative",
+    overflow: "hidden",
     // Shadow for depth
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -245,8 +247,9 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
   },
-  flagEmoji: {
-    fontSize: 28,
+  flagImage: {
+    width: "100%",
+    height: "100%",
   },
   countryName: {
     fontSize: 13,
@@ -256,22 +259,6 @@ const styles = StyleSheet.create({
   selectedCountryName: {
     color: COLORS.primary,
     fontWeight: "800",
-  },
-  badge: {
-    position: "absolute",
-    top: -5,
-    left: 10,
-    right: 10,
-    height: 14,
-    borderRadius: 7,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  badgeText: {
-    fontSize: 8,
-    fontWeight: "900",
-    color: COLORS.white,
-    textTransform: "uppercase",
   },
   footer: {
     position: "absolute",
@@ -284,7 +271,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.glassBorder,
   },
   continueButton: {
-    backgroundColor: COLORS.primary, // Using standardized primary blue
+    backgroundColor: COLORS.primary, 
     height: 60,
     borderRadius: 30,
     justifyContent: "center",

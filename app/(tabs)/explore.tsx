@@ -197,6 +197,21 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         
+        {/* Global Search Bar */}
+        <View style={styles.globalSearchContainer}>
+          <View style={styles.globalSearchBar}>
+            <Feather name="search" size={18} color="#94A3B8" />
+            <TextInput 
+              placeholder="Search university or courses" 
+              style={styles.globalSearchInput}
+              placeholderTextColor="#94A3B8"
+            />
+          </View>
+          <TouchableOpacity style={styles.filterBtnSmall}>
+            <Ionicons name="options-outline" size={20} color="white" />
+          </TouchableOpacity>
+        </View>
+
         {/* Study Plan Card */}
         <TouchableOpacity 
           style={styles.studyPlanCard}
@@ -216,104 +231,109 @@ export default function DashboardScreen() {
 
         {/* Stats Row */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
-           {/* Estimated Cost Card */}
-           <View style={styles.statCard}>
-              <View>
-                <View style={styles.statIconHeader}>
-                  <View style={[styles.statIconBox, { backgroundColor: "#F3F4F6" }]}>
-                    <MaterialCommunityIcons name="currency-usd" size={20} color={THEME.textDark} />
+            {/* Estimated Cost Card */}
+            <View style={styles.statCard}>
+               <View>
+                 <View style={styles.statIconHeader}>
+                   <View style={[styles.statIconBox, { backgroundColor: "#F3F4F6" }]}>
+                     <MaterialCommunityIcons name="currency-usd" size={20} color={THEME.textDark} />
+                   </View>
+                   <Text style={styles.statTitle}>Estimated Cost</Text>
+                 </View>
+                 <Text style={styles.statValue}>{estimatedCost} <Text style={styles.statUnit}>/ year</Text></Text>
+                 <View style={styles.statBadge}>
+                   <View style={styles.affordableDot} />
+                   <Text style={styles.statBadgeText}>Affordable</Text>
+                 </View>
+                 <Text style={styles.statSubtitle}>Tuition + Living</Text>
+               </View>
+               <TouchableOpacity 
+                 style={styles.statButton}
+                 onPress={() => router.push({
+                   pathname: "/university/cost-breakdown",
+                   params: { country: userData.country || "UK" }
+                 })}
+               >
+                 <Text style={styles.statButtonText}>View Breakdown</Text>
+               </TouchableOpacity>
+            </View>
+
+             {/* Admission Chances Card */}
+             <View style={styles.statCard}>
+                <View>
+                  <View style={styles.statIconHeader}>
+                    <View style={[styles.statIconBox, { backgroundColor: "#FFF7ED" }]}>
+                      <MaterialCommunityIcons name="target" size={20} color={THEME.orange} />
+                    </View>
+                    <Text style={styles.statTitle}>Acceptance Chance</Text>
                   </View>
-                  <Text style={styles.statTitle}>Estimated Cost</Text>
+                  <Text style={styles.statValue}>{acceptanceChance}</Text>
+                  
+                  <View style={styles.checkRow}>
+                     <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
+                     <Text style={styles.checkText}>Good GPA</Text>
+                  </View>
+                  <View style={styles.checkRow}>
+                     <Ionicons name="warning" size={16} color={THEME.orange} />
+                     <Text style={styles.checkText}>Improve IELTS</Text>
+                  </View>
                 </View>
-                <Text style={styles.statValue}>{estimatedCost} <Text style={styles.statUnit}>/ year</Text></Text>
-                <View style={styles.statBadge}>
-                  <View style={styles.affordableDot} />
-                  <Text style={styles.statBadgeText}>Affordable</Text>
+
+                <TouchableOpacity 
+                  style={styles.statButton}
+                  onPress={() => router.push("/university/admission-chance")}
+                >
+                  <Text style={styles.statButtonText}>Set Goals</Text>
+                </TouchableOpacity>
+             </View>
+
+             {/* Visa Readiness Card */}
+             <View style={styles.statCard}>
+                <View>
+                  <View style={styles.statIconHeader}>
+                    <View style={[styles.statIconBox, { backgroundColor: THEME.secondary }]}>
+                      <Text style={styles.visaIconText}>VISA</Text>
+                    </View>
+                    <Text style={styles.statTitle}>Visa Readiness</Text>
+                  </View>
+                  <Text style={styles.statValue}>{visaReadiness}</Text>
+                  
+                  <View style={styles.progressBarContainer}>
+                     <View style={[styles.progressBarFull, { width: "60%", backgroundColor: THEME.blue }]} />
+                  </View>
+
+                  <View style={styles.checkRow}>
+                     <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
+                     <Text style={styles.checkText}>Strong Academics</Text>
+                  </View>
+                  <View style={styles.checkRow}>
+                     <Ionicons name="warning" size={16} color={THEME.orange} />
+                     <Text style={styles.checkText}>Financial Proof Weak</Text>
+                  </View>
                 </View>
-                <Text style={styles.statSubtitle}>Tuition + Living</Text>
-              </View>
-              <TouchableOpacity 
-                style={[styles.statButton, { backgroundColor: THEME.green }]}
-                onPress={() => router.push({
-                  pathname: "/university/cost-breakdown",
-                  params: { country: userData.country || "UK" }
-                })}
-              >
-                <Text style={styles.statButtonText}>View Breakdown</Text>
-              </TouchableOpacity>
-           </View>
 
-            {/* Admission Chances Card */}
-            <View style={styles.statCard}>
-               <View>
-                 <View style={styles.statIconHeader}>
-                   <View style={[styles.statIconBox, { backgroundColor: "#FFF7ED" }]}>
-                     <MaterialCommunityIcons name="target" size={20} color={THEME.orange} />
-                   </View>
-                   <Text style={styles.statTitle}>Acceptance Chance</Text>
-                 </View>
-                 <Text style={styles.statValue}>{acceptanceChance}</Text>
-                 
-                 <View style={styles.checkRow}>
-                    <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                    <Text style={styles.checkText}>Good GPA</Text>
-                 </View>
-                 <View style={styles.checkRow}>
-                    <Ionicons name="warning" size={16} color={THEME.orange} />
-                    <Text style={styles.checkText}>Improve IELTS</Text>
-                 </View>
-               </View>
+                <TouchableOpacity 
+                  style={styles.statButton}
+                  onPress={() => router.push("/visa-readiness")}
+                >
+                  <Text style={styles.statButtonText}>Improve</Text>
+                </TouchableOpacity>
+             </View>
+         </ScrollView>
 
-               <TouchableOpacity 
-                 style={[styles.statButton, { backgroundColor: THEME.orange }]}
-                 onPress={() => router.push("/university/admission-chance")}
-               >
-                 <Text style={styles.statButtonText}>Set Goals</Text>
-               </TouchableOpacity>
-            </View>
-
-            {/* Visa Readiness Card */}
-            <View style={styles.statCard}>
-               <View>
-                 <View style={styles.statIconHeader}>
-                   <View style={[styles.statIconBox, { backgroundColor: THEME.secondary }]}>
-                     <Text style={styles.visaIconText}>VISA</Text>
-                   </View>
-                   <Text style={styles.statTitle}>Visa Readiness</Text>
-                 </View>
-                 <Text style={styles.statValue}>{visaReadiness}</Text>
-                 
-                 <View style={styles.progressBarContainer}>
-                    <View style={[styles.progressBarFull, { width: "60%", backgroundColor: THEME.blue }]} />
-                 </View>
-
-                 <View style={styles.checkRow}>
-                    <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                    <Text style={styles.checkText}>Strong Academics</Text>
-                 </View>
-                 <View style={styles.checkRow}>
-                    <Ionicons name="warning" size={16} color={THEME.orange} />
-                    <Text style={styles.checkText}>Financial Proof Weak</Text>
-                 </View>
-               </View>
-
-               <TouchableOpacity 
-                 style={[styles.statButton, { backgroundColor: THEME.blue }]}
-                 onPress={() => router.push("/visa-readiness")}
-               >
-                 <Text style={styles.statButtonText}>Improve</Text>
-               </TouchableOpacity>
-            </View>
-        </ScrollView>
-
-        {/* Improve Your Chances Banner */}
-        <View style={styles.improveBanner}>
+         {/* Improve Your Chances Banner */}
+         <LinearGradient
+           colors={[THEME.primary, THEME.secondary]}
+           start={{ x: 0, y: 0 }}
+           end={{ x: 1, y: 1 }}
+           style={styles.improveBannerGradient}
+         >
            <View style={styles.improveContent}>
               <View style={styles.improveTitleRow}>
-                 <Ionicons name="sparkles" size={18} color={THEME.orange} />
+                 <Ionicons name="sparkles" size={18} color="#FFE066" />
                  <Text style={styles.improveTitle}>Improve Your Chances</Text>
               </View>
-              <Text style={styles.improveSubtitle} numberOfLines={2}>Get personalized steps to boost your success.</Text>
+              <Text style={styles.improveSubtitle}>Get personalized recommendations and actionable steps to boost your admissions success rate.</Text>
               <TouchableOpacity 
                  style={styles.viewPlanButton}
                  onPress={() => router.push("/university/admission-chance")}
@@ -321,20 +341,7 @@ export default function DashboardScreen() {
                 <Text style={styles.viewPlanButtonText}>View Plan</Text>
               </TouchableOpacity>
            </View>
-           <View style={styles.imageFadeContainer}>
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=400&q=80" }} 
-                style={styles.improveImage}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={["transparent", "#FDF5E1"]}
-                start={{ x: 1, y: 0.5 }}
-                end={{ x: 0, y: 0.5 }}
-                style={styles.fadeOverlay}
-              />
-           </View>
-        </View>
+         </LinearGradient>
 
         {/* Recommended Universities */}
         <View style={styles.sectionHeader}>
@@ -435,21 +442,6 @@ export default function DashboardScreen() {
               </View>
               <Text style={styles.quickActionText}>Saved Universities</Text>
            </TouchableOpacity>
-        </View>
-
-        {/* Global Search Bar */}
-        <View style={styles.globalSearchContainer}>
-          <View style={styles.globalSearchBar}>
-            <Feather name="search" size={18} color="#94A3B8" />
-            <TextInput 
-              placeholder="Search university or courses" 
-              style={styles.globalSearchInput}
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-          <TouchableOpacity style={styles.filterBtnSmall}>
-            <Ionicons name="options-outline" size={20} color="white" />
-          </TouchableOpacity>
         </View>
 
       </ScrollView>
@@ -628,11 +620,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#F1F5F9",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
     marginBottom: 24,
   },
   studyPlanInfo: {
@@ -681,11 +668,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     borderWidth: 1,
     borderColor: "#F1F5F9",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 3,
     minHeight: 280, 
     justifyContent: "space-between", 
   },
@@ -747,8 +729,11 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   statButton: {
-    height: 36,
-    borderRadius: 18,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    borderColor: THEME.primary,
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 16,
@@ -756,7 +741,7 @@ const styles = StyleSheet.create({
   statButtonText: {
     fontSize: 12,
     fontWeight: "800",
-    color: THEME.white,
+    color: THEME.primary,
   },
   checkRow: {
     flexDirection: "row",
@@ -785,19 +770,13 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 3,
   },
-  improveBanner: {
-    height: 160,
+  improveBannerGradient: {
     marginHorizontal: 20,
-    backgroundColor: "#FDF5E1",
     borderRadius: 24,
-    flexDirection: "row",
     overflow: "hidden",
     marginBottom: 32,
-    borderWidth: 1,
-    borderColor: "#FEF3C7",
   },
   improveContent: {
-    flex: 1,
     padding: 24,
     justifyContent: "center",
   },
@@ -809,56 +788,27 @@ const styles = StyleSheet.create({
   },
   improveTitle: {
     fontSize: 16,
-    fontWeight: "900",
-    color: "#92400E",
+    fontWeight: "800",
+    color: THEME.white,
   },
   improveSubtitle: {
     fontSize: 13,
-    color: "#B45309",
+    color: "rgba(255, 255, 255, 0.85)",
     marginBottom: 16,
     lineHeight: 18,
     fontWeight: "500",
   },
-  improveBullets: {
-    marginBottom: 20,
-    gap: 4,
-  },
-  bulletItem: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#D97706",
-  },
   viewPlanButton: {
-    backgroundColor: THEME.orange,
-    paddingHorizontal: 20,
+    backgroundColor: THEME.white,
+    paddingHorizontal: 22,
     paddingVertical: 10,
     borderRadius: 12,
     alignSelf: "flex-start",
-    shadowColor: THEME.orange,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   viewPlanButtonText: {
-    color: THEME.white,
+    color: THEME.secondary,
     fontSize: 13,
     fontWeight: "800",
-  },
-  imageFadeContainer: {
-    width: 140,
-    position: "relative",
-  },
-  improveImage: {
-    width: "100%",
-    height: "100%",
-  },
-  fadeOverlay: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 60,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -894,11 +844,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     borderWidth: 1,
     borderColor: "#F1F5F9",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 4,
     overflow: "hidden",
   },
   uniImageContainer: {
@@ -1000,11 +945,6 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.textDark,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
   compareBtnText: {
     fontSize: 13,
@@ -1074,11 +1014,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
   },
   modalOverlay: {
     flex: 1,

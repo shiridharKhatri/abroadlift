@@ -155,6 +155,7 @@ export default function UniversitySelection() {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   
   // UI Refs
   const scrollRef = useRef<ScrollView>(null);
@@ -267,7 +268,7 @@ export default function UniversitySelection() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Search and Header Section Moved Inside ScrollView */}
-        <View style={[styles.header, { paddingHorizontal: 0, paddingTop: insets.top + 20 }]}>
+        <View style={[styles.header, { paddingHorizontal: 0, paddingTop: 10 }]}>
           <View style={styles.headerTopRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>Find Universities That Match Your Profile</Text>
@@ -283,14 +284,16 @@ export default function UniversitySelection() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.searchBar}>
-            <Feather name="search" size={20} color="#94A3B8" />
+          <View style={[styles.searchBar, isSearchFocused && styles.searchBarActive]}>
+            <Feather name="search" size={20} color={isSearchFocused ? THEME.primary : "#94A3B8"} />
             <TextInput 
               placeholder="Search universities, courses..." 
               style={styles.searchInput}
               placeholderTextColor="#94A3B8"
               value={searchQuery}
               onChangeText={setSearchQuery}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
             />
           </View>
 
@@ -325,12 +328,14 @@ export default function UniversitySelection() {
               >
                 <View style={styles.imageContainer}>
                   <Image source={{ uri: uni.image }} style={styles.cardImage} />
-                  <View style={styles.rankBadge}>
-                    <BlurView intensity={20} style={styles.rankBlur}>
-                      <Ionicons name="trophy-outline" size={12} color="#004be3" />
-                      <Text style={styles.rankText}>{uni.rank}</Text>
-                    </BlurView>
-                  </View>
+                  {uni.rank && uni.rank !== "N/A" && (
+                    <View style={styles.rankBadge}>
+                      <BlurView intensity={20} style={styles.rankBlur}>
+                        <Ionicons name="trophy-outline" size={12} color="#004be3" />
+                        <Text style={styles.rankText}>{uni.rank}</Text>
+                      </BlurView>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.cardInfo}>
@@ -348,11 +353,15 @@ export default function UniversitySelection() {
 
                   <View style={styles.nameRow}>
                     <View style={styles.uniIconBox}>
+                      {uni.logo ? (
+                        <Image source={{ uri: uni.logo }} style={styles.uniLogoImage} resizeMode="contain" />
+                      ) : (
                         <Ionicons name="school" size={20} color={THEME.secondary} />
+                      )}
                     </View>
                     <View style={styles.nameTexts}>
                         <Text style={styles.uniName}>{uni.name}</Text>
-                        <Text style={styles.courseName}>{uni.course}</Text>
+                        <Text style={styles.courseName}>{uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters Program")}</Text>
                     </View>
                   </View>
 
@@ -363,7 +372,7 @@ export default function UniversitySelection() {
                         <Feather name="calendar" size={14} color="#64748B" />
                         <View style={styles.detailTextWrapper}>
                             <Text style={styles.detailLabel}>Duration</Text>
-                            <Text style={styles.detailValue}>{uni.duration}</Text>
+                            <Text style={styles.detailValue}>{uni.duration || "2 - 4 Years"}</Text>
                         </View>
                     </View>
                     <View style={styles.detailItem}>
@@ -580,9 +589,9 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.white,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     backgroundColor: THEME.white,
-    paddingTop: 60,
+    paddingTop: 10,
   },
   headerTopRow: {
     flexDirection: "row",
@@ -622,40 +631,40 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 54,
-    marginBottom: 16,
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#E2E8F0",
+    paddingBottom: 4,
+    height: 48,
+    marginBottom: 20,
+  },
+  searchBarActive: {
+    borderBottomColor: THEME.primary,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 15,
+    fontSize: 16,
     color: THEME.textDark,
     fontWeight: "500",
   },
   actionsRow: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   actionButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#E2E8F0",
-    borderRadius: 16,
-    height: 50,
+    borderRadius: 12,
+    height: 44,
     gap: 8,
   },
   actionButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
     color: THEME.textDark,
   },
@@ -665,16 +674,11 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: THEME.white,
-    borderRadius: 32,
+    borderRadius: 24,
     marginBottom: 24,
     borderWidth: 1.5,
     borderColor: "#F1F5F9",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 4,
   },
   imageContainer: {
     height: 180,
@@ -750,6 +754,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
+  },
+  uniLogoImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 24,
   },
   nameTexts: {
     flex: 1,
@@ -847,11 +857,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    shadowColor: THEME.secondary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
     width: "100%",
   },
   selectButtonText: {

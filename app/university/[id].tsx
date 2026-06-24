@@ -1,28 +1,30 @@
-import React, { useState, useEffect } from "react";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
+  ActivityIndicator,
   Dimensions,
-  StatusBar,
+  Image,
   Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
   TextInput,
+  TouchableOpacity,
+  View,
+  Modal,
 } from "react-native";
-import { useLocalSearchParams, router, Stack } from "expo-router";
-import { Feather, Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
-import { getUniversityDetails, UniversityDetail, getCostOfLiving } from "../../lib/api";
-import { ActivityIndicator } from "react-native";
+import { getCostOfLiving, getUniversityDetails, UniversityDetail } from "../../lib/api";
+import { useUser } from "../context/UserContext";
 
 const { width, height } = Dimensions.get("window");
 
 const THEME = {
-  primary: "#33BFFF", 
+  primary: "#33BFFF",
   secondary: "#004be3",
   textDark: "#111827",
   textGray: "#6B7280",
@@ -67,22 +69,24 @@ const UNIVERSITIES: Record<string, any> = {
   },
 };
 
-const TABS = ["Estimates", "Overview", "Rankings", "Courses & Fees"];
+const TABS = ["Estimates", "Overview", "Gallery", "Courses & Fees"];
 
 export default function UniversityDetails() {
   const { id, country: countryParam, name } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { userData, selectUniversity } = useUser();
-  
+
   // Resolve the actual country to use for API and display
-  const currentCountry = (countryParam && countryParam !== "undefined") 
-    ? (countryParam as string) 
+  const currentCountry = (countryParam && countryParam !== "undefined")
+    ? (countryParam as string)
     : (userData.country || "UK");
   const [selectedTab, setSelectedTab] = useState("Estimates");
   const [courseSearch, setCourseSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isUniDescriptionExpanded, setIsUniDescriptionExpanded] = useState(false);
   const [uniData, setUniData] = useState<UniversityDetail | null>(null);
   const [costData, setCostData] = useState<any>(null);
+  const [activePhotoUrl, setActivePhotoUrl] = useState<string | null>(null);
 
   const USD_TO_NPR = 134;
 
@@ -109,12 +113,17 @@ export default function UniversityDetails() {
     return () => { mounted = false; };
   }, [id, currentCountry]);
 
+  const stripHtml = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&ldquo;/g, '"').replace(/&rdquo;/g, '"').trim();
+  };
+
   const fallback = UNIVERSITIES["3"];
   const details = {
     title: uniData?.name || (name as string) || fallback.title,
     location: uniData?.location || fallback.location,
-    image: uniData?.image || fallback.image, 
-    description: uniData?.description || fallback.description,
+    image: uniData?.image || fallback.image,
+    description: stripHtml(uniData?.description || fallback.description),
     type: uniData?.type || fallback.type,
     established: uniData?.established || fallback.established,
     campus: uniData?.campus || fallback.campus,
@@ -130,84 +139,106 @@ export default function UniversityDetails() {
     const totalNpr = (tuitionUsd + livingUsd) * USD_TO_NPR;
 
     const fmtNpr = (v: number) => {
-        if (v >= 100000) return `NPR ${(v / 100000).toFixed(1)} Lakhs`;
-        return `NPR ${v.toLocaleString()}`;
+      if (v >= 100000) return `NPR ${(v / 100000).toFixed(1)} Lakhs`;
+      return `NPR ${v.toLocaleString()}`;
     };
 
     return (
-    <View style={styles.tabContent}>
-      <View style={styles.estimateCard}>
-        <Text style={styles.estimateLabel}>ESTIMATED TOTAL COST / YR</Text>
-        <Text style={styles.estimateValue}>{fmtNpr(totalNpr)}</Text>
-        <Text style={{ fontSize: 13, color: THEME.textGray, marginBottom: 16, fontWeight: "600" }}>
-           Approx. ${(tuitionUsd + livingUsd).toLocaleString()} USD
-        </Text>
-        <View style={styles.costBar}>
-          <View style={[styles.costSegment, { width: `${(tuitionUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#6366F1' }]} />
-          <View style={[styles.costSegment, { width: `${(livingUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#FBBF24' }]} />
-          <View style={[styles.costSegment, { width: '5%', backgroundColor: '#10B981' }]} />
-        </View>
-        <View style={styles.costLegend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#6366F1' }]} />
-            <Text style={styles.legendText}>Tuition</Text>
+      <View style={styles.tabContent}>
+        <View style={styles.estimateCard}>
+          <Text style={styles.estimateLabel}>ESTIMATED TOTAL COST / YR</Text>
+          <Text style={styles.estimateValue}>{fmtNpr(totalNpr)}</Text>
+          <Text style={{ fontSize: 13, color: THEME.textGray, marginBottom: 16, fontWeight: "600" }}>
+            Approx. ${(tuitionUsd + livingUsd).toLocaleString()} USD
+          </Text>
+          <View style={styles.costBar}>
+            <View style={[styles.costSegment, { width: `${(tuitionUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#6366F1' }]} />
+            <View style={[styles.costSegment, { width: `${(livingUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#FBBF24' }]} />
+            <View style={[styles.costSegment, { width: '5%', backgroundColor: '#10B981' }]} />
           </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
-            <Text style={styles.legendText}>Living</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
-            <Text style={styles.legendText}>Other</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.chancesCard}>
-        <Text style={styles.chancesTitle}>Your Chances</Text>
-        <View style={styles.chancesVisual}>
-          <View style={styles.circularProgress}>
-            <View style={[styles.circularFill, { transform: [{ rotate: '45deg' }] }]} />
-            <View style={styles.circularInner}>
-              <Text style={styles.percentageText}>12%</Text>
+          <View style={styles.costLegend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#6366F1' }]} />
+              <Text style={styles.legendText}>Tuition</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
+              <Text style={styles.legendText}>Living</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+              <Text style={styles.legendText}>Other</Text>
             </View>
           </View>
-          <Text style={styles.admissionLabel}>Admission</Text>
         </View>
-        <Text style={styles.chancesDescription}>
-          Based on your profile, you have a <Text style={{ fontWeight: '800' }}>low chance</Text> of admission. Improve your test scores to increase odds.
-        </Text>
-        <TouchableOpacity 
-          style={styles.completeEstimateBtn}
-          onPress={() => router.push({
-            pathname: "/university/cost-breakdown",
-            params: { id: id, country: currentCountry }
-          })}
-        >
-          <Text style={styles.completeEstimateBtnText}>Get Complete Cost Breakdown</Text>
-        </TouchableOpacity>
+
+        <View style={styles.chancesCard}>
+          <Text style={styles.chancesTitle}>Your Chances</Text>
+          <View style={styles.chancesVisual}>
+            <View style={styles.circularProgress}>
+              <View style={[styles.circularFill, { transform: [{ rotate: '45deg' }] }]} />
+              <View style={styles.circularInner}>
+                <Text style={styles.percentageText}>12%</Text>
+              </View>
+            </View>
+            <Text style={styles.admissionLabel}>Admission</Text>
+          </View>
+          <Text style={styles.chancesDescription}>
+            Based on your profile, you have a <Text style={{ fontWeight: '800' }}>low chance</Text> of admission. Improve your test scores to increase odds.
+          </Text>
+          <TouchableOpacity
+            style={styles.completeEstimateBtn}
+            onPress={() => router.push({
+              pathname: "/university/cost-breakdown",
+              params: { id: id, country: currentCountry }
+            })}
+          >
+            <Text style={styles.completeEstimateBtnText}>Get Complete Cost Breakdown</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
     );
   };
 
-  const renderOverview = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionIconBox}>
-          <Ionicons name="book-outline" size={18} color={THEME.purple} />
-        </View>
-        <Text style={styles.contentSectionTitle}>About University</Text>
-      </View>
-      <View style={styles.overviewTextCard}>
-        <Text style={styles.overviewText}>{details.description}</Text>
-        {uniData?.notes && (
-          <View style={styles.notesBox}>
-            <Text style={styles.notesLabel}>ADMISSION NOTES</Text>
-            <Text style={styles.notesText}>{uniData.notes}</Text>
+  const renderOverview = () => {
+    const isLongDescription = details.description.length > 250;
+    const displayedDescription = isLongDescription && !isUniDescriptionExpanded
+      ? `${details.description.substring(0, 250)}...`
+      : details.description;
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIconBox}>
+            <Ionicons name="book-outline" size={18} color={THEME.purple} />
           </View>
-        )}
-      </View>
+          <Text style={styles.contentSectionTitle}>About University</Text>
+        </View>
+        <View style={styles.overviewTextCard}>
+          <Text style={styles.overviewText}>{displayedDescription}</Text>
+          {isLongDescription && (
+            <TouchableOpacity
+              onPress={() => setIsUniDescriptionExpanded(!isUniDescriptionExpanded)}
+              style={{ marginTop: 12, alignSelf: "flex-start", flexDirection: "row", alignItems: "center" }}
+            >
+              <Text style={{ color: THEME.blue, fontWeight: "700", fontSize: 13 }}>
+                {isUniDescriptionExpanded ? "Read Less" : "Read More"}
+              </Text>
+              <Ionicons 
+                name={isUniDescriptionExpanded ? "chevron-up" : "chevron-down"} 
+                size={16} 
+                color={THEME.blue} 
+                style={{ marginLeft: 4 }} 
+              />
+            </TouchableOpacity>
+          )}
+          {uniData?.notes && (
+            <View style={styles.notesBox}>
+              <Text style={styles.notesLabel}>ADMISSION NOTES</Text>
+              <Text style={styles.notesText}>{uniData.notes}</Text>
+            </View>
+          )}
+        </View>
 
       <View style={styles.sectionHeader}>
         <View style={styles.sectionIconBox}>
@@ -215,24 +246,57 @@ export default function UniversityDetails() {
         </View>
         <Text style={styles.contentSectionTitle}>Highlights</Text>
       </View>
+      {details.ranking_world && details.ranking_world !== "N/A" && details.ranking_world !== "0" && (
+        <View style={styles.highlightItem}>
+          <View style={styles.checkCircle}>
+            <Ionicons name="ribbon-outline" size={12} color={THEME.orange} />
+          </View>
+          <Text style={styles.highlightText}>QS World Ranking: #{details.ranking_world}</Text>
+        </View>
+      )}
+      {details.ranking_national && details.ranking_national !== "N/A" && details.ranking_national !== "0" && (
+        <View style={styles.highlightItem}>
+          <View style={styles.checkCircle}>
+            <Ionicons name="ribbon-outline" size={12} color={THEME.orange} />
+          </View>
+          <Text style={styles.highlightText}>National Ranking: #{details.ranking_national}</Text>
+        </View>
+      )}
       <View style={styles.highlightItem}>
         <View style={styles.checkCircle}>
-          <Ionicons name="checkmark" size={12} color={THEME.blue} />
+          <Ionicons name="school-outline" size={12} color={THEME.blue} />
         </View>
-        <Text style={styles.highlightText}>#1 in Computer Science</Text>
+        <Text style={styles.highlightText}>{details.type || "Higher Education Institution"}</Text>
       </View>
       <View style={styles.highlightItem}>
         <View style={styles.checkCircle}>
-          <Ionicons name="checkmark" size={12} color={THEME.blue} />
+          <Ionicons name="calendar-outline" size={12} color={THEME.blue} />
         </View>
-        <Text style={styles.highlightText}>Silicon Valley Network</Text>
+        <Text style={styles.highlightText}>Established in {details.established !== "N/A" ? details.established : "N/A"}</Text>
       </View>
       <View style={styles.highlightItem}>
         <View style={styles.checkCircle}>
-          <Ionicons name="checkmark" size={12} color={THEME.blue} />
+          <Ionicons name="people-outline" size={12} color={THEME.blue} />
         </View>
-        <Text style={styles.highlightText}>High Employability</Text>
+        <Text style={styles.highlightText}>
+          {(() => {
+            const count = details.students;
+            if (!count) return "10,000+ Students";
+            if (typeof count === "number" || !isNaN(Number(count))) {
+              return `${Number(count).toLocaleString()} Students`;
+            }
+            return `${count} Students`;
+          })()}
+        </Text>
       </View>
+      {uniData?.address && (
+        <View style={styles.highlightItem}>
+          <View style={styles.checkCircle}>
+            <Ionicons name="location-outline" size={12} color={THEME.blue} />
+          </View>
+          <Text style={styles.highlightText}>Address: {uniData.address}</Text>
+        </View>
+      )}
 
       <View style={styles.sectionHeader}>
         <View style={styles.sectionIconBox}>
@@ -240,13 +304,13 @@ export default function UniversityDetails() {
         </View>
         <Text style={styles.contentSectionTitle}>Scholarships</Text>
       </View>
-      
+
       {uniData?.scholarships && uniData.scholarships.length > 0 ? (
         uniData.scholarships.map((s, idx) => (
           <View key={idx} style={styles.scholarshipCard}>
             <View style={styles.scholarshipHeader}>
-               <Text style={styles.scholarshipName}>{s.name}</Text>
-               <Text style={styles.scholarshipValue}>{s.value}</Text>
+              <Text style={styles.scholarshipName}>{s.name}</Text>
+              <Text style={styles.scholarshipValue}>{s.value}</Text>
             </View>
             {s.eligibility && (
               <Text style={styles.scholarshipElig}>
@@ -306,104 +370,185 @@ export default function UniversityDetails() {
         </View>
       </View>
     </View>
-  );
+    );
+  };
 
-  const renderRankings = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.rankingGlobalCard}>
-        <View style={styles.globalHeader}>
-          <View style={styles.medalIcon}>
-            <Ionicons name="ribbon" size={24} color="#FBBF24" />
+  const renderRankings = () => {
+    const hasRank = (details.ranking_world && details.ranking_world !== "N/A" && details.ranking_world !== "0") ||
+      (details.ranking_national && details.ranking_national !== "N/A" && details.ranking_national !== "0");
+
+    return (
+      <View style={styles.tabContent}>
+        {hasRank ? (
+          <>
+            <View style={styles.rankingGlobalCard}>
+              <View style={styles.globalHeader}>
+                <View style={styles.medalIcon}>
+                  <Ionicons name="ribbon" size={24} color="#FBBF24" />
+                </View>
+                <View>
+                  <Text style={styles.globalRatingTitle}>Global Excellence</Text>
+                  <Text style={styles.globalRatingSub}>University Rankings</Text>
+                </View>
+              </View>
+              <View style={styles.globalRanksRow}>
+                {details.ranking_world !== "N/A" && details.ranking_world !== "0" && (
+                  <View style={styles.rankSubCard}>
+                    <Text style={styles.rankAgency}>QS WORLD</Text>
+                    <Text style={styles.rankNumber}>#{details.ranking_world}</Text>
+                    <Text style={styles.rankScope}>Global</Text>
+                  </View>
+                )}
+                {details.ranking_national !== "N/A" && details.ranking_national !== "0" && (
+                  <View style={styles.rankSubCard}>
+                    <Text style={styles.rankAgency}>NATIONAL</Text>
+                    <Text style={styles.rankNumber}>#{details.ranking_national}</Text>
+                    <Text style={styles.rankScope}>National</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </>
+        ) : (
+          <View style={styles.noPhotosBox}>
+            <Ionicons name="ribbon-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
+            <Text style={styles.noPhotosText}>Rankings data not available. Visit official website.</Text>
           </View>
-          <View>
-            <Text style={styles.globalRatingTitle}>Global Excellence</Text>
-            <Text style={styles.globalRatingSub}>Top ranked globally</Text>
-          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderCourses = () => {
+    const rawCourses = uniData?.courses || [];
+
+    // Filter the courses based on search text
+    const filtered = rawCourses.filter(c =>
+      c.name.toLowerCase().includes(courseSearch.toLowerCase()) ||
+      (c.category && c.category.toLowerCase().includes(courseSearch.toLowerCase()))
+    );
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.courseSearchWrapper}>
+          <Ionicons name="search" size={20} color="#94A3B8" />
+          <TextInput
+            placeholder="Search Courses..."
+            style={styles.courseInput}
+            placeholderTextColor="#94A3B8"
+            value={courseSearch}
+            onChangeText={setCourseSearch}
+          />
         </View>
-        <View style={styles.globalRanksRow}>
-           <View style={styles.rankSubCard}>
-             <Text style={styles.rankAgency}>QS WORLD</Text>
-             <Text style={styles.rankNumber}>#{details.ranking_world}</Text>
-             <Text style={styles.rankScope}>Global</Text>
+
+        {filtered.length > 0 ? (
+          filtered.map((course: any, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.courseCard}
+              activeOpacity={0.7}
+              onPress={() => {
+                router.push({
+                  pathname: "/university/program-details",
+                  params: {
+                    name: course.name || "",
+                    category: course.category || "",
+                    level: JSON.stringify(course.level || []),
+                    fee: course.fee || "",
+                    description: course.description || "",
+                    other_fees: JSON.stringify(course.other_fees || []),
+                    coop: course.coop_participating ? "true" : "false",
+                    pgwp: course.pgwp_participating ? "true" : "false",
+                    universityName: details.title,
+                    application_fee: course.application_fee || "",
+                    delivery_method: course.delivery_method || "",
+                    length_breakdown: course.length_breakdown || "",
+                    language_of_instruction: course.language_of_instruction || "",
+                    requirements: course.requirements ? JSON.stringify(course.requirements) : "",
+                    country: uniData?.country || "",
+                  },
+                });
+              }}
+            >
+              {/* Category Badge at the top left */}
+              <View style={styles.courseTopRow}>
+                <View style={styles.categoryTag}>
+                  <Text style={styles.categoryTagText}>
+                    {(course.category || "General").toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Course Title taking full width */}
+              <Text style={styles.courseName}>{course.name}</Text>
+
+              {/* Course Details */}
+              <View style={styles.courseDetails}>
+                <View style={styles.courseDetailItem}>
+                  <Ionicons name="time-outline" size={15} color="#64748B" />
+                  <Text style={styles.courseDetailText}>{course.level?.join(", ") || "2 - 4 Years"}</Text>
+                </View>
+                <View style={styles.courseDetailItem}>
+                  <Ionicons name="briefcase-outline" size={15} color="#64748B" />
+                  <Text style={styles.courseDetailText}>Full-time</Text>
+                </View>
+              </View>
+
+              <View style={styles.courseDivider} />
+
+              {/* Tuition Row */}
+              <View style={styles.tuitionRowCompact}>
+                <View>
+                  <Text style={styles.tuitionLabelCompact}>Annual Tuition</Text>
+                  <Text style={styles.tuitionValueCompact}>{course.fee || "Varies"}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={THEME.secondary} />
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.noPhotosBox}>
+            <Text style={styles.noPhotosText}>
+              {courseSearch === "" ? "No courses listed. Check university website." : "No matching courses found"}
+            </Text>
           </View>
-          <View style={styles.rankSubCard}>
-             <Text style={styles.rankAgency}>NATIONAL</Text>
-             <Text style={styles.rankNumber}>#{details.ranking_national}</Text>
-             <Text style={styles.rankScope}>National</Text>
-          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderGallery = () => {
+    const photos = uniData?.photos || [];
+    if (photos.length === 0) {
+      return (
+        <View style={styles.noPhotosBox}>
+          <Ionicons name="images-outline" size={48} color="#94A3B8" style={{ marginBottom: 12 }} />
+          <Text style={styles.noPhotosText}>No campus photos available</Text>
         </View>
-        <View style={styles.ribbonOverlay}>
-           <Ionicons name="ribbon-outline" size={140} color="rgba(255,255,255,0.15)" />
+      );
+    }
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.galleryGrid}>
+          {photos.map((photo, idx) => (
+            <TouchableOpacity
+              key={photo.id || idx}
+              style={styles.galleryItem}
+              onPress={() => setActivePhotoUrl(photo.url || photo.url_thumbnail || null)}
+              activeOpacity={0.9}
+            >
+              <Image
+                source={{ uri: photo.url || photo.url_thumbnail }}
+                style={styles.galleryImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
-
-      <View style={styles.nationalRankCard}>
-         <View style={styles.nationalIconBox}>
-            <Ionicons name="location" size={24} color={THEME.blue} />
-         </View>
-         <View style={{ flex: 1 }}>
-            <View style={styles.nationalRow}>
-               <Text style={styles.nationalLabel}>NATIONAL RANK</Text>
-               <View style={styles.tierBadge}>
-                  <Text style={styles.tierText}>Top Tier</Text>
-               </View>
-            </View>
-            <Text style={styles.nationalValue}>#2 USA <Text style={styles.nationalSub}>in Country</Text></Text>
-         </View>
-      </View>
-    </View>
-  );
-
-  const renderCourses = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.courseSearchWrapper}>
-        <Ionicons name="search" size={20} color="#94A3B8" />
-        <TextInput 
-          placeholder="Search Courses..." 
-          style={styles.courseInput}
-          placeholderTextColor="#94A3B8"
-          value={courseSearch}
-          onChangeText={setCourseSearch}
-        />
-      </View>
-
-      {(uniData?.courses?.length ? uniData.courses.map(c => ({
-          name: c.name,
-          duration: c.level.join(", ") || "Unknown",
-          mode: "Full-time",
-          fee: c.fee || (details.fee_usd ? `$${details.fee_usd.toLocaleString()}/yr` : "Unknown"),
-          category: c.category.toUpperCase() || "GENERAL"
-      })) : [
-        { name: "MSc Computer Science", duration: "2 Years", mode: "Full-time", fee: "$62,000/yr", category: "ENGINEERING" },
-        { name: "MBA", duration: "2 Years", mode: "Full-time", fee: "$75,000/yr", category: "BUSINESS" },
-        { name: "MSc Data Science", duration: "1.5 Years", mode: "Full-time", fee: "$58,000/yr", category: "ENGINEERING" },
-      ]).map((course, idx) => (
-        <View key={idx} style={styles.courseCard}>
-          <View style={styles.courseCardHeader}>
-            <Text style={styles.courseName}>{course.name}</Text>
-            <View style={[styles.categoryBadge, { backgroundColor: course.category === 'ENGINEERING' ? '#DBEAFE' : '#E0E7FF' }]}>
-              <Text style={[styles.categoryText, { color: course.category === 'ENGINEERING' ? '#2563EB' : '#4338CA' }]}>{course.category}</Text>
-            </View>
-          </View>
-          <View style={styles.courseDetails}>
-            <View style={styles.courseDetailItem}>
-              <Ionicons name="time-outline" size={16} color="#94A3B8" />
-              <Text style={styles.courseDetailText}>{course.duration}</Text>
-            </View>
-            <View style={styles.courseDetailItem}>
-              <Ionicons name="briefcase-outline" size={16} color="#94A3B8" />
-              <Text style={styles.courseDetailText}>{course.mode}</Text>
-            </View>
-          </View>
-          <Text style={styles.tuitionLabel}>Tuition Fee</Text>
-          <View style={styles.tuitionRow}>
-            <Text style={styles.tuitionValue}>{course.fee}</Text>
-            <Ionicons name="chevron-forward" size={20} color="#6366F1" />
-          </View>
-        </View>
-      ))}
-    </View>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -419,16 +564,19 @@ export default function UniversityDetails() {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: '#fff' } }} />
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
       >
         {/* Banner Section */}
         <View style={styles.bannerContainer}>
           <Image source={{ uri: details.image }} style={styles.bannerImage} />
-          <View style={styles.bannerOverlay} />
-          
+          <LinearGradient
+            colors={["rgba(0,0,0,0.45)", "rgba(0,0,0,0.1)", "rgba(0,0,0,0.85)"]}
+            style={StyleSheet.absoluteFillObject}
+          />
+
           <View style={[styles.bannerHeader, { paddingTop: insets.top + 10 }]}>
             <TouchableOpacity style={styles.headerCircleBtn} onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={22} color="white" />
@@ -440,7 +588,7 @@ export default function UniversityDetails() {
               <TouchableOpacity style={styles.headerCircleBtn}>
                 <Ionicons name="heart-outline" size={22} color="white" />
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.headerCircleBtn}
                 onPress={() => router.push("/(tabs)/profile")}
               >
@@ -462,8 +610,8 @@ export default function UniversityDetails() {
         <View style={styles.tabBarWrapper}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
             {TABS.map((tab) => (
-              <TouchableOpacity 
-                key={tab} 
+              <TouchableOpacity
+                key={tab}
                 style={[styles.tabItem, selectedTab === tab && styles.activeTabItem]}
                 onPress={() => setSelectedTab(tab)}
               >
@@ -477,13 +625,13 @@ export default function UniversityDetails() {
         <View style={styles.mainContent}>
           {selectedTab === "Estimates" && renderEstimates()}
           {selectedTab === "Overview" && renderOverview()}
-          {selectedTab === "Rankings" && renderRankings()}
+          {selectedTab === "Gallery" && renderGallery()}
           {selectedTab === "Courses & Fees" && renderCourses()}
         </View>
 
         {/* Action Button */}
         <View style={styles.bottomActionWrap}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.shortlistBtn}
             onPress={() => {
               selectUniversity({
@@ -492,6 +640,7 @@ export default function UniversityDetails() {
                 location: details.location,
                 image: details.image,
                 course: uniData?.courses?.[0]?.name || "MSc Computer Science",
+                tuition: uniData?.tuition || "$25,000 / yr",
               });
               router.push("/(tabs)/explore");
             }}
@@ -501,6 +650,34 @@ export default function UniversityDetails() {
         </View>
 
       </ScrollView>
+
+      {/* Full-screen Image Viewer Modal */}
+      <Modal
+        visible={!!activePhotoUrl}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setActivePhotoUrl(null)}
+      >
+        <TouchableOpacity
+          style={styles.viewerOverlay}
+          activeOpacity={1}
+          onPress={() => setActivePhotoUrl(null)}
+        >
+          <TouchableOpacity
+            style={styles.viewerCloseBtn}
+            onPress={() => setActivePhotoUrl(null)}
+          >
+            <Ionicons name="close" size={28} color="white" />
+          </TouchableOpacity>
+          {activePhotoUrl && (
+            <Image
+              source={{ uri: activePhotoUrl }}
+              style={styles.viewerImage}
+              resizeMode="contain"
+            />
+          )}
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -511,17 +688,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
   },
   bannerContainer: {
-    height: 200,
+    height: 220,
     width: "100%",
     position: "relative",
+    backgroundColor: "#0F172A",
   },
   bannerImage: {
     width: "100%",
     height: "100%",
-  },
-  bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.3)",
   },
   bannerHeader: {
     position: "absolute",
@@ -606,14 +780,9 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#F1F5F9",
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
   },
   estimateLabel: {
     fontSize: 12,
@@ -1049,37 +1218,38 @@ const styles = StyleSheet.create({
   },
   courseCard: {
     backgroundColor: "white",
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
+    borderColor: "#E2E8F0",
   },
-  courseCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
+  courseTopRow: {
+    marginBottom: 8,
+  },
+  categoryTag: {
+    alignSelf: "flex-start",
+    backgroundColor: "#EFF6FF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  categoryTagText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: THEME.secondary,
   },
   courseName: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "800",
     color: THEME.textDark,
-    flex: 1,
-  },
-  categoryBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  categoryText: {
-    fontSize: 10,
-    fontWeight: "900",
+    lineHeight: 22,
+    marginBottom: 12,
   },
   courseDetails: {
     flexDirection: "row",
     gap: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   courseDetailItem: {
     flexDirection: "row",
@@ -1087,25 +1257,30 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   courseDetailText: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: "500",
     color: "#64748B",
   },
-  tuitionLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#94A3B8",
-    marginBottom: 4,
+  courseDivider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginVertical: 12,
   },
-  tuitionRow: {
+  tuitionRowCompact: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  tuitionValue: {
-    fontSize: 20,
+  tuitionLabelCompact: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#94A3B8",
+    marginBottom: 2,
+  },
+  tuitionValueCompact: {
+    fontSize: 18,
     fontWeight: "900",
-    color: THEME.textDark,
+    color: THEME.secondary,
   },
   bottomActionWrap: {
     paddingHorizontal: 24,
@@ -1118,15 +1293,59 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: THEME.blue,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 8,
   },
   shortlistBtnText: {
     color: "white",
     fontSize: 18,
     fontWeight: "900",
+  },
+  noPhotosBox: {
+    padding: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noPhotosText: {
+    fontSize: 14,
+    color: "#94A3B8",
+    fontWeight: "600",
+  },
+  galleryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    paddingTop: 8,
+  },
+  galleryItem: {
+    width: (width - 44) / 2,
+    height: 140,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#F1F5F9",
+  },
+  galleryImage: {
+    width: "100%",
+    height: "100%",
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerCloseBtn: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 60 : 40,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
+  },
+  viewerImage: {
+    width: width,
+    height: height * 0.7,
   },
 });

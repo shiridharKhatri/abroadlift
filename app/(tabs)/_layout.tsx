@@ -6,7 +6,7 @@ import { Feather } from '@expo/vector-icons';
 const THEME = {
   primary: "#33BFFF",
   textDark: "#111827",
-  textGray: "#6B7280",
+  textGray: "#94A3B8",
   bgLight: "#FFFFFF",
 };
 
@@ -53,18 +53,17 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             style={styles.tabItem}
             activeOpacity={0.7}
           >
-            {isFocused ? (
-              <View style={styles.tabIconActiveBg}>
-                <Feather name={iconName as any} size={20} color="white" />
-              </View>
-            ) : (
-              <View style={styles.iconWrapper}>
-                <Feather name={iconName as any} size={24} color={THEME.primary} />
-              </View>
-            )}
+            <View style={styles.iconWrapper}>
+              <Feather 
+                name={iconName as any} 
+                size={22} 
+                color={isFocused ? THEME.primary : THEME.textGray} 
+              />
+            </View>
             <Text style={[styles.tabText, isFocused && styles.tabTextActive]}>
               {label}
             </Text>
+            {isFocused && <View style={styles.activeDot} />}
           </TouchableOpacity>
         );
       })}
@@ -83,7 +82,7 @@ export default function TabLayout() {
         name="search"
         options={{ 
           title: 'Search',
-          href: null // Hides from tab bar but keeps route accessible if needed
+          href: null 
         }}
       />
       <Tabs.Screen
@@ -104,37 +103,40 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: THEME.bgLight,
-    paddingHorizontal: 28,
-    paddingVertical: 12,
+    paddingHorizontal: 36,
+    paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    paddingBottom: Platform.OS === 'ios' ? 32 : 20,
+    borderTopColor: "#F1F5F9",
+    paddingBottom: Platform.OS === 'ios' ? 28 : 16,
   },
   tabItem: {
     alignItems: "center",
-    gap: 4,
-  },
-  tabIconActiveBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: THEME.primary,
     justifyContent: "center",
-    alignItems: "center",
+    height: 44,
+    width: 60,
+    position: "relative",
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
+    height: 24,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 3,
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 10.5,
     color: THEME.textGray,
     fontWeight: "500",
   },
   tabTextActive: {
-    color: THEME.textDark,
-    fontWeight: "600",
+    color: THEME.primary,
+    fontWeight: "700",
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: THEME.primary,
+    position: "absolute",
+    bottom: -6,
   },
 });

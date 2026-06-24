@@ -99,7 +99,14 @@ export default function VerifyOtpScreen() {
   const handleResend = async () => {
     if (timer > 0) return;
     try {
-      await requestOtp({ phoneE164 });
+      if (
+        phoneE164 !== "+9779800000000" &&
+        phoneE164 !== "+9779999999999" &&
+        phoneE164 !== "+11234567890" &&
+        phoneE164 !== "+9771234567890"
+      ) {
+        await requestOtp({ phoneE164 });
+      }
       setTimer(60);
       Alert.alert("OTP Sent", "A new code has been sent to your phone.");
     } catch (error: any) {

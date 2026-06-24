@@ -1,8 +1,6 @@
 import { Platform } from 'react-native';
 
-const API_BASE_URL = Platform.OS === 'android' ? `${process.env.EXPO_PUBLIC_API_URL}/api` : `http://192.168.1.68:3000/api`;
-// Fallback local IP for Expo Go on physical device if neither of the above works:
-// const API_BASE_URL = 'http://192.168.1.68:3000/api';
+const API_BASE_URL = Platform.OS === 'android' ? `http://10.0.2.2:5052/api` : `http://localhost:5052/api`;
 
 export interface UniversityResult {
   id: string | number;
@@ -16,6 +14,7 @@ export interface UniversityResult {
   // Fallbacks for the UI formatting
   course?: string;
   image?: string;
+  logo?: string;
   rank?: string;
   duration?: string;
   tuitionValue?: number;
@@ -34,17 +33,25 @@ export interface UniversityDetail extends UniversityResult {
   ranking_world?: number | string;
   ranking_national?: number | string;
   courses?: { name: string; category: string; level: string[]; fee?: string | number }[];
-  scholarships?: { 
-    name: string; 
+  scholarships?: {
+    name: string;
     type?: string;
     value: string;
     eligibility?: string;
     notes?: string;
   }[];
   notes?: string;
+  photos?: { id?: string | number; url: string; url_thumbnail?: string }[];
+  address?: string;
+  province?: string;
+  postal_code?: string;
+  coop_participating?: boolean;
+  pgwp_participating?: boolean;
+  cost_of_living?: string | number;
+  currency?: string;
 }
 
-import { fetchWorqnowUniversities, getWorqnowUniversityDetail, WorqnowUniversity } from './worqnow';
+import { fetchWorqnowUniversities, getWorqnowUniversityDetail } from './worqnow';
 
 export const login = async (phoneE164: string, otp: string): Promise<any> => {
   try {
@@ -103,8 +110,8 @@ export const register = async (userData: any): Promise<any> => {
     });
     const data = await response.json();
     if (response.status === 200 && data.existingUser) {
-        // Handle existing user (OTP already sent)
-        return data;
+      // Handle existing user (OTP already sent)
+      return data;
     }
     if (!response.ok) throw new Error(data.error || 'Registration failed');
     return data;
@@ -160,41 +167,216 @@ export const updateProfile = async (userData: any, token: string): Promise<any> 
   }
 };
 
-export const searchUniversities = async (query: string, countries: string = "All"): Promise<UniversityResult[]> => {
+const ABROADLIFT_API_BASE = "http://localhost:5052/api";
+const API_KEY = "vl0i3A4W7DxG1fJohzI2qmbedgp4EAYT";
 
+const getHeaders = () => ({
+  "Content-Type": "application/json",
+  "X-API-Key": API_KEY,
+});
+
+export const getScholarships = async (): Promise<any[]> => {
   try {
-    // If "All" countries, we'll default to a popular one or a list for demo
-    // The web client usually specifies a country.
+    const res = await fetch(`${ABROADLIFT_API_BASE}/scholarships`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const result = await res.json();
+    return result.data || [];
+  } catch (error) {
+    console.error("Failed to load scholarships:", error);
+    return [];
+  }
+};
+
+export const saveStudentEvaluation = async (profileData: any): Promise<any> => {
+  try {
+    const response = await fetch(`${ABROADLIFT_API_BASE}/profiles`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        name: profileData.name || "Jane Doe",
+        gpa: parseFloat(profileData.cgpa || profileData.gpa || "80"),
+        english_score: parseFloat(profileData.score || profileData.english_score || "6.5"),
+        gap_years: parseInt(profileData.gap_years || "0"),
+        backlogs: parseInt(profileData.backlogs || "0"),
+        work_experience: parseInt(profileData.work_experience || "0"),
+        available_funds: parseFloat(profileData.yearlyBudget || profileData.available_funds || "25000"),
+        sponsor_type: profileData.sponsor_type || "parents"
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to save evaluation');
+    return data;
+  } catch (error) {
+    console.error("Save Evaluation Error:", error);
+    throw error;
+  }
+};
+
+const normalizeCountry = (country: string): string => {
+  const c = country.toLowerCase().trim();
+  if (c === "usa" || c === "us" || c === "united states" || c === "united states of america") return "usa";
+  if (c === "uk" || c === "gb" || c === "united kingdom" || c === "great britain") return "uk";
+  if (c === "canada" || c === "ca") return "canada";
+  if (c === "germany" || c === "de") return "germany";
+  if (c === "australia" || c === "au") return "australia";
+  if (c === "india" || c === "in") return "india";
+  if (c === "japan" || c === "jp") return "japan";
+  if (c === "france" || c === "fr") return "france";
+  if (c === "italy" || c === "it") return "italy";
+  if (c === "korea" || c === "kr" || c === "south korea") return "korea";
+  if (c === "nether" || c === "nl" || c === "netherlands" || c === "holland") return "nether";
+  if (c === "brazil" || c === "br") return "brazil";
+  return c;
+};
+
+export const searchUniversities = async (query: string, countries: string = "All"): Promise<UniversityResult[]> => {
+  try {
+    const res = await fetch(`${ABROADLIFT_API_BASE}/schools?limit=100`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const result = await res.json();
+    const schools = result.data || [];
+
+    const mapped: UniversityResult[] = schools.map((s: any) => {
+      const countryName = s.country || "USA";
+      return {
+        id: String(s.id || s.school_id || s._id),
+        name: s.name || "Unknown University",
+        location: s.location || s.city || countryName,
+        tuition: s.tuition || s.average_fees || "$25,000 / yr",
+        acceptanceRate: s.acceptanceRate || s.acceptance_rate || 65,
+        website: s.website || "",
+        country: countryName,
+        levels: s.levels || ["Bachelors", "Masters"],
+        image: s.banner?.url || s.logo?.url || s.image || s.image_url || "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
+        logo: s.logo?.url || s.logo?.url_thumbnail || "",
+        rank: s.rank || s.ranking || "N/A",
+      };
+    });
+
+    let filtered = mapped;
+    if (countries !== "All") {
+      const targetCountryNorm = normalizeCountry(countries);
+      filtered = mapped.filter(u => normalizeCountry(u.country) === targetCountryNorm);
+    }
+
+    if (query) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(u =>
+        u.name.toLowerCase().includes(q) ||
+        u.location.toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
+  } catch (error: any) {
+    console.log(`[API Search] Rate limited or offline (${error.message || error}), using local Worqnow fallback.`);
     const countryToFetch = countries === "All" ? "uk" : countries.toLowerCase();
-    
-    console.log(`[API Search] Redirecting search to direct WorqNow client for ${countryToFetch}...`);
-    const results: WorqnowUniversity[] = await fetchWorqnowUniversities(countryToFetch);
-    
+    const results = await fetchWorqnowUniversities(countryToFetch);
+
     let filtered = results;
     if (query) {
       const q = query.toLowerCase();
-      filtered = results.filter(u => 
-        u.name.toLowerCase().includes(q) || 
+      filtered = results.filter(u =>
+        u.name.toLowerCase().includes(q) ||
         u.city?.toLowerCase().includes(q)
       );
     }
 
     return processResults(filtered, countries);
-  } catch (error) {
-    console.error("Error fetching universities:", error);
-    return [];
   }
 };
 
 export const getUniversityDetails = async (id: string, country: string): Promise<UniversityDetail | null> => {
   try {
-    // Basic guard for when 'country' arrives as a string "undefined"
+    const res = await fetch(`${ABROADLIFT_API_BASE}/schools/${id}`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const result = await res.json();
+    const s = result.data || result;
+
+    let schoolCourses: any[] = [];
+    try {
+      const progRes = await fetch(`${ABROADLIFT_API_BASE}/programs/school/${id}`, {
+        method: "GET",
+        headers: getHeaders(),
+      });
+      if (progRes.ok) {
+        const progResult = await progRes.json();
+        const programsList = Array.isArray(progResult) ? progResult : (progResult.data || []);
+        schoolCourses = programsList.map((p: any) => ({
+          name: p.name || p.title,
+          category: p.category || p.level_text || p.level || "General",
+          level: p.level_text ? [p.level_text] : (p.level ? [p.level] : ["Bachelors", "Masters"]),
+          fee: p.tuition ? `$${parseFloat(p.tuition).toLocaleString()}/yr` : (p.fee || s.tuition || s.average_fees || "$25,000 / yr"),
+          description: p.description || "",
+          other_fees: p.other_fees || [],
+          coop_participating: p.coop_participating ?? false,
+          pgwp_participating: p.pgwp_participating ?? false,
+          application_fee: p.application_fee || "",
+          delivery_method: p.delivery_method || "",
+          length_breakdown: p.length_breakdown || "",
+          language_of_instruction: p.language_of_instruction || "",
+          requirements: p.requirements || null,
+        }));
+      }
+    } catch (e) {
+      console.error("Error fetching school programs:", e);
+    }
+
+    const countryName = s.country || country || "USA";
+    return {
+      id: String(s.id || s.school_id || s._id),
+      name: s.name || "Unknown University",
+      location: s.location || s.city || countryName,
+      tuition: s.tuition || s.average_fees || "$25,000 / yr",
+      acceptanceRate: s.acceptanceRate || s.acceptance_rate || 65,
+      website: s.website || "",
+      country: countryName,
+      levels: s.levels || ["Bachelors", "Masters"],
+      image: s.banner?.url || s.logo?.url || s.image || s.image_url || "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
+      rank: s.school_rank || s.rank || s.ranking || "N/A",
+      description: s.description || s.about || `The ${s.name} is a renowned institution.`,
+      type: s.type || s.institution_type || "Public University",
+      established: s.established || s.founded_in || "N/A",
+      campus: s.campus || "Main Campus",
+      students: s.total_number_of_students || s.students || "10,000+",
+      ranking_world: s.school_rank || s.ranking_world || s.rank || "N/A",
+      ranking_national: s.ranking_national || "N/A",
+      courses: schoolCourses,
+      scholarships: s.scholarships || [],
+      photos: s.photos || [],
+      address: s.address || "",
+      province: s.province || "",
+      postal_code: s.postal_code || "",
+      coop_participating: s.coop_participating ?? false,
+      pgwp_participating: s.pgwp_participating ?? false,
+      cost_of_living: s.cost_of_living || "",
+      currency: s.currency || "USD"
+    };
+  } catch (error) {
+    console.error("Error fetching details from AbroadLift API, falling back to local Worqnow:", error);
     const actualCountry = (country === "undefined" || !country) ? "uk" : country;
     const data = await getWorqnowUniversityDetail(id, actualCountry);
     if (!data) return null;
 
     const processed = processResults([data], actualCountry)[0];
-    
+
     return {
       ...processed,
       description: data.description || `The ${data.name} is a renowned institution located in ${data.city || data.region || country}. It offers a wide range of academic programs and is known for its commitment to excellence in research and teaching.`,
@@ -211,9 +393,6 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       scholarships: data.scholarships || [],
       notes: (data as any).notes || ""
     };
-  } catch (error) {
-    console.error("Error fetching university details:", error);
-    return null;
   }
 };
 
@@ -222,7 +401,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
   return results.map((res: any) => {
     // WorqNow uses 'code' as the unique ID
     const uniqueId = res.code || res.id || `temp-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Attempt to extract numerical tuition
     let tuitionValue = 35000;
     if (typeof res.tuition === 'number') {
@@ -252,7 +431,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
       tuition: (() => {
         if (typeof res.tuition === 'number') return `$${res.tuition.toLocaleString()} / yr`;
         if (res.tuition && res.tuition !== "Check Website") return res.tuition;
-        
+
         // Regional Averages (USD)
         const country = (res.country || searchCountry || "").toUpperCase();
         if (country.includes("USA") || country.includes("UNITED STATES")) return "$35,000 / yr";
@@ -261,7 +440,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
         if (country.includes("AUSTRALIA") || country === "AU") return "$26,000 / yr";
         if (country.includes("GERMANY") || country === "DE") return "$2,500 / yr";
         if (country.includes("IRELAND") || country === "IE") return "$18,000 / yr";
-        
+
         return "$20,000 / yr"; // Global fallback
       })(),
       tuitionValue: (() => {
@@ -269,7 +448,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
         const mappedStr = res.tuition || "";
         const match = mappedStr.replace(/[^0-9]/g, '');
         if (match) return parseInt(match, 10);
-        
+
         // Match the same logic as above for the numeric value
         const country = (res.country || searchCountry || "").toUpperCase();
         if (country.includes("USA") || country.includes("UNITED STATES")) return 35000;
@@ -277,7 +456,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
         if (country.includes("CANADA") || country === "CA") return 20000;
         if (country.includes("AUSTRALIA") || country === "AU") return 26000;
         if (country.includes("GERMANY") || country === "DE") return 2500;
-        
+
         return 20000;
       })(),
       acceptanceRate: rate,
@@ -285,7 +464,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
       matchRating: "4.0",
       country: displayCountry,
       city: res.city || res.location?.split(',')[0] || "",
-      recommended: false, 
+      recommended: false,
       website: res.website || "",
       levels: res.courses?.reduce((acc: string[], c: any) => {
         if (c.level) {
@@ -307,7 +486,7 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
     const rawUrl = process.env.EXPO_PUBLIC_COST_ESTIMSTION_API;
     // Handle the potential open quote in .env
     const url = rawUrl?.startsWith('"') ? rawUrl.substring(1) : rawUrl;
-    
+
     if (!url) {
       console.warn("Cost of living API URL not found in env");
       return null;
@@ -315,10 +494,10 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
 
     const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch cost of living");
-    
+
     const json = await response.json();
     const data = json.data || [];
-    
+
     const normalization: Record<string, string> = {
       "USA": "US", "UNITED STATES": "US",
       "UK": "GB", "UNITED KINGDOM": "GB", "GREAT BRITAIN": "GB",
@@ -331,9 +510,9 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
 
     const upperCountry = countryCode.toUpperCase();
     const targetCode = (normalization[upperCountry] || countryCode).toUpperCase();
-    
+
     let countryData = data.find((d: any) => d.country_code?.toUpperCase() === targetCode);
-    
+
     // Fallback GB/UK
     if (!countryData && targetCode === "GB") countryData = data.find((d: any) => d.country_code?.toUpperCase() === "UK");
     if (!countryData && targetCode === "UK") countryData = data.find((d: any) => d.country_code?.toUpperCase() === "GB");
@@ -355,10 +534,10 @@ export const getRelocationIndex = async (countryCode: string): Promise<any> => {
 
     const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch relocation index");
-    
+
     const json = await response.json();
     const data = json.data || [];
-    
+
     const normalization: Record<string, string> = {
       "USA": "US", "UNITED STATES": "US",
       "UK": "GB", "UNITED KINGDOM": "GB", "GREAT BRITAIN": "GB",
@@ -371,9 +550,9 @@ export const getRelocationIndex = async (countryCode: string): Promise<any> => {
 
     const upperCountry = countryCode.toUpperCase();
     const targetCode = (normalization[upperCountry] || countryCode).toLowerCase();
-    
+
     let countryData = data.find((d: any) => d.country_code?.toLowerCase() === targetCode);
-    
+
     // Fallback GB/UK
     if (!countryData && targetCode === "gb") countryData = data.find((d: any) => d.country_code?.toLowerCase() === "uk");
     if (!countryData && targetCode === "uk") countryData = data.find((d: any) => d.country_code?.toLowerCase() === "gb");
@@ -386,17 +565,17 @@ export const getRelocationIndex = async (countryCode: string): Promise<any> => {
 };
 export const calculateAcceptanceChance = (user: any, uni: any) => {
   if (!user || !uni) return { score: 50, label: "Moderate" };
-  
+
   const gpa = parseFloat(user.cgpa || "0");
   const engScore = parseFloat(user.score || "0");
-  
+
   // 1. Normalize Academic Data
   let gpaNorm = 0.5; // Default middle
   if (gpa > 0) {
     gpaNorm = gpa / 4.0;
     if (gpa > 4.5) gpaNorm = gpa / 10.0;
   }
-  
+
   let engNorm = 0.6; // Default middle
   if (engScore > 0) {
     engNorm = engScore / 9.0;
@@ -405,14 +584,14 @@ export const calculateAcceptanceChance = (user: any, uni: any) => {
   // 2. Base University Probability (Historical)
   // Most good universities have acceptance rates between 15% and 60%
   const baseProb = uni.acceptanceRate || 45;
-  
+
   // 3. Calculation with high sensitivity to GPA/English
   // We want user details to significantly shift the base admission rate
   let prob = baseProb;
-  
+
   // GPA can shift it by +/- 30%
-  prob += (gpaNorm - 0.75) * 40; 
-  
+  prob += (gpaNorm - 0.75) * 40;
+
   // English can shift it by +/- 15%
   prob += (engNorm - 0.7) * 20;
 
@@ -429,11 +608,11 @@ export const calculateAcceptanceChance = (user: any, uni: any) => {
   prob += jitter;
 
   const finalScore = Math.min(95, Math.max(5, Math.round(prob)));
-  
+
   let label = "Moderate";
   if (finalScore >= 80) label = "Safe";
   else if (finalScore >= 65) label = "Good";
   else if (finalScore < 45) label = "Reach";
-  
+
   return { score: finalScore, label };
 };

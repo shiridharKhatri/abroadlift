@@ -75,30 +75,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         
         if (storedToken) {
           setToken(storedToken);
-          // NEW: Refresh user data from server if we have a token
-          const { getProfile } = require('../../lib/api');
-          getProfile(storedToken).then((data: any) => {
-            const profile = data.profile || {};
-            const refreshedUser = {
-              ...(storedUser ? JSON.parse(storedUser) : DEFAULT_USER_DATA),
-              ...data,
-              country: profile.nationality || profile.currentCountry || "",
-              studyLevel: profile.degreeLevel || "",
-              cgpa: profile.gpa ? String(profile.gpa) : "",
-              score: profile.englishScore ? String(profile.englishScore) : "",
-              fieldOfStudy: profile.fieldOfStudy || "",
-              testType: profile.testType || "",
-              recentAcademicField: profile.recentAcademicField || "",
-              passoutYear: profile.passoutYear || "",
-              intake: profile.intake || "",
-              englishLevel: profile.englishLevel || "",
-              yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : "",
-              scholarshipNeeded: profile.scholarshipNeeded ?? false,
-              selectedUniversities: data.user?.selectedUniversities || (storedUser ? JSON.parse(storedUser).selectedUniversities : []) || [],
-            };
-            _setUserData(refreshedUser);
-            AsyncStorage.setItem('@user_data', JSON.stringify(refreshedUser));
-          }).catch((e: any) => console.error("Profile refresh error:", e));
+          
+          if (storedToken !== "dummy-jwt-token-for-testing") {
+            // NEW: Refresh user data from server if we have a token
+            const { getProfile } = require('../../lib/api');
+            getProfile(storedToken).then((data: any) => {
+              const profile = data.profile || {};
+              const refreshedUser = {
+                ...(storedUser ? JSON.parse(storedUser) : DEFAULT_USER_DATA),
+                ...data,
+                country: profile.nationality || profile.currentCountry || "",
+                studyLevel: profile.degreeLevel || "",
+                cgpa: profile.gpa ? String(profile.gpa) : "",
+                score: profile.englishScore ? String(profile.englishScore) : "",
+                fieldOfStudy: profile.fieldOfStudy || "",
+                testType: profile.testType || "",
+                recentAcademicField: profile.recentAcademicField || "",
+                passoutYear: profile.passoutYear || "",
+                intake: profile.intake || "",
+                englishLevel: profile.englishLevel || "",
+                yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : "",
+                scholarshipNeeded: profile.scholarshipNeeded ?? false,
+                selectedUniversities: data.user?.selectedUniversities || (storedUser ? JSON.parse(storedUser).selectedUniversities : []) || [],
+              };
+              _setUserData(refreshedUser);
+              AsyncStorage.setItem('@user_data', JSON.stringify(refreshedUser));
+            }).catch((e: any) => console.error("Profile refresh error:", e));
+          } else if (storedUser) {
+            _setUserData(JSON.parse(storedUser));
+          }
         }
         if (storedUser && !storedToken) _setUserData(JSON.parse(storedUser));
       } catch (e) {
@@ -112,6 +117,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // Login handler
   const login = async (phoneE164: string, otp: string) => {
+    // Check for dummy login bypass for testing
+    if (
+      phoneE164 === "+9779800000000" ||
+      phoneE164 === "+9779999999999" ||
+      phoneE164 === "+11234567890" ||
+      phoneE164 === "+9771234567890"
+    ) {
+      const dummyUser = {
+        id: "dummy-user-id",
+        name: "Test User",
+        username: "@testuser",
+        email: "testuser@abroadlift.com",
+        profileImage: null,
+        country: "",
+        flag: "",
+        studyLevel: "",
+        fieldOfStudy: "",
+        selectedUniversities: [],
+      };
+      const dummyToken = "dummy-jwt-token-for-testing";
+
+      setToken(dummyToken);
+      _setUserData(dummyUser);
+
+      await AsyncStorage.setItem('@auth_token', dummyToken);
+      await AsyncStorage.setItem('@user_data', JSON.stringify(dummyUser));
+      return dummyUser;
+    }
+
     try {
       const data = await apiLogin(phoneE164, otp);
       // data: { user, token }
@@ -200,8 +234,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       _setUserData(newData);
       await AsyncStorage.setItem('@user_data', JSON.stringify(newData));
 
-      // Sync with backend if authenticated
-      if (token) {
+      // Sync with backend if authenticated and not using a dummy test token
+      if (token && token !== "dummy-jwt-token-for-testing") {
         apiUpdateProfile(newData, token).catch(e => console.error("Sync error:", e));
       }
     } catch (e) {
