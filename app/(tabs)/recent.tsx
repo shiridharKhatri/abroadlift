@@ -41,7 +41,7 @@ export default function RecentUniversities() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
-          <Text style={styles.title}>Shortlist</Text>
+          <Text style={styles.title}>Saved</Text>
           {selectedList.length > 0 && (
             <View style={styles.countBadge}>
               <Text style={styles.countBadgeText}>{selectedList.length} SAVED</Text>
@@ -58,11 +58,11 @@ export default function RecentUniversities() {
         {selectedList.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconBox}>
-              <Feather name="bookmark" size={36} color={THEME.textGray} />
+              <Feather name="heart" size={36} color={THEME.textGray} />
             </View>
-            <Text style={styles.emptyTitle}>Your shortlist is empty</Text>
+            <Text style={styles.emptyTitle}>Your saved list is empty</Text>
             <Text style={styles.emptySubtitle}>
-              Universities you select during setup or search will appear here for quick access and comparing estimates.
+              Universities you save during setup or search will appear here for quick access and comparing estimates.
             </Text>
             <TouchableOpacity 
               style={styles.browseButton}

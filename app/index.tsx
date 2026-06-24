@@ -1,18 +1,15 @@
-import { AntDesign, Feather, FontAwesome } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
-import { Stack, router } from "expo-router";
+import { router, Stack } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
 import React from "react";
 import {
   Dimensions,
-  Image,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useVideoPlayer, VideoView } from "expo-video";
 import { useUser } from "./context/UserContext";
 
 import { useIsFocused } from "@react-navigation/native";

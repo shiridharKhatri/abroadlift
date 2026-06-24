@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 
 const THEME = {
   primary: "#33BFFF",
@@ -12,7 +13,11 @@ const THEME = {
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
-    <View style={styles.bottomTabContainer}>
+    <BlurView 
+      intensity={88} 
+      tint="light"
+      style={styles.bottomTabContainer}
+    >
       {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
         const label =
@@ -39,7 +44,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         let iconName = 'home';
         if (route.name === 'explore') iconName = 'home';
         if (route.name === 'search') iconName = 'search';
-        if (route.name === 'recent') iconName = 'clock';
+        if (route.name === 'recent') iconName = 'heart';
         if (route.name === 'profile') iconName = 'user';
 
         return (
@@ -67,13 +72,19 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
           </TouchableOpacity>
         );
       })}
-    </View>
+    </BlurView>
   );
 }
 
 export default function TabLayout() {
   return (
-    <Tabs tabBar={props => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
+    <Tabs 
+      tabBar={props => <CustomTabBar {...props} />} 
+      screenOptions={{ 
+        headerShown: false,
+        tabBarTransparent: true,
+      } as any}
+    >
       <Tabs.Screen
         name="explore"
         options={{ title: 'Home' }}
@@ -87,7 +98,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="recent"
-        options={{ title: 'Recent' }}
+        options={{ title: 'Saved' }}
       />
       <Tabs.Screen
         name="profile"
@@ -99,15 +110,26 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   bottomTabContainer: {
+    position: "absolute",
+    bottom: Platform.OS === 'ios' ? 24 : 16,
+    left: 20,
+    right: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: THEME.bgLight,
-    paddingHorizontal: 36,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+    paddingHorizontal: 28,
     paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#F1F5F9",
-    paddingBottom: Platform.OS === 'ios' ? 28 : 16,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+    paddingBottom: Platform.OS === 'ios' ? 14 : 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    overflow: "hidden",
   },
   tabItem: {
     alignItems: "center",
@@ -137,6 +159,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: THEME.primary,
     position: "absolute",
-    bottom: -6,
+    bottom: -4,
   },
 });

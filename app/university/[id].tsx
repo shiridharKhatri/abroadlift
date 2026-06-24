@@ -8,6 +8,7 @@ import {
   Image,
   Platform,
   ScrollView,
+  Share,
   StatusBar,
   StyleSheet,
   Text,
@@ -74,7 +75,7 @@ const TABS = ["Estimates", "Overview", "Gallery", "Courses & Fees"];
 export default function UniversityDetails() {
   const { id, country: countryParam, name } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  const { userData, selectUniversity } = useUser();
+  const { userData, selectUniversity, setUserData } = useUser();
 
   // Resolve the actual country to use for API and display
   const currentCountry = (countryParam && countryParam !== "undefined")
@@ -131,6 +132,40 @@ export default function UniversityDetails() {
     ranking_world: uniData?.ranking_world || "N/A",
     ranking_national: uniData?.ranking_national || "N/A",
     fee_usd: uniData?.tuitionValue || 65000,
+  };
+
+  const isShortlisted = userData.selectedUniversities?.some(
+    (u) => String(u.id) === String(id)
+  );
+
+  const toggleShortlist = () => {
+    if (isShortlisted) {
+      setUserData((prev) => ({
+        ...prev,
+        selectedUniversities: prev.selectedUniversities.filter(
+          (u) => String(u.id) !== String(id)
+        ),
+      }));
+    } else {
+      selectUniversity({
+        id: id as string,
+        name: details.title,
+        location: details.location,
+        image: details.image,
+        course: uniData?.courses?.[0]?.name || "MSc Computer Science",
+        tuition: uniData?.tuition || "$25,000 / yr",
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out ${details.title} in ${details.location} on AbroadLift!`,
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
   };
 
   const renderEstimates = () => {
@@ -582,11 +617,15 @@ export default function UniversityDetails() {
               <Ionicons name="arrow-back" size={22} color="white" />
             </TouchableOpacity>
             <View style={styles.headerRightBtns}>
-              <TouchableOpacity style={styles.headerCircleBtn}>
+              <TouchableOpacity style={styles.headerCircleBtn} onPress={handleShare}>
                 <Ionicons name="share-social-outline" size={22} color="white" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerCircleBtn}>
-                <Ionicons name="heart-outline" size={22} color="white" />
+              <TouchableOpacity style={styles.headerCircleBtn} onPress={toggleShortlist}>
+                <Ionicons 
+                  name={isShortlisted ? "heart" : "heart-outline"} 
+                  size={22} 
+                  color={isShortlisted ? "#FF3B30" : "white"} 
+                />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.headerCircleBtn}
@@ -632,20 +671,12 @@ export default function UniversityDetails() {
         {/* Action Button */}
         <View style={styles.bottomActionWrap}>
           <TouchableOpacity
-            style={styles.shortlistBtn}
-            onPress={() => {
-              selectUniversity({
-                id: id as string,
-                name: details.title,
-                location: details.location,
-                image: details.image,
-                course: uniData?.courses?.[0]?.name || "MSc Computer Science",
-                tuition: uniData?.tuition || "$25,000 / yr",
-              });
-              router.push("/(tabs)/explore");
-            }}
+            style={[styles.shortlistBtn, isShortlisted && styles.shortlistActiveBtn]}
+            onPress={toggleShortlist}
           >
-            <Text style={styles.shortlistBtnText}>Shortlist University</Text>
+            <Text style={[styles.shortlistBtnText, isShortlisted && styles.shortlistActiveBtnText]}>
+              {isShortlisted ? "Remove from Shortlist" : "Shortlist University"}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -1298,6 +1329,14 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 18,
     fontWeight: "900",
+  },
+  shortlistActiveBtn: {
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+  },
+  shortlistActiveBtnText: {
+    color: THEME.textDark,
   },
   noPhotosBox: {
     padding: 40,
