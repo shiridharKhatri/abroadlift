@@ -79,8 +79,12 @@ export default function VerifyOtpScreen() {
         ]);
       } else {
         // purpose is login
-        await login(phoneE164, otpCode);
-        // React context state update will trigger the index.tsx redirect automatically
+        const user = await login(phoneE164, otpCode);
+        if (user.onboardingComplete) {
+          router.replace("/(tabs)/explore");
+        } else {
+          router.replace("/setup/country");
+        }
       }
     } catch (error: any) {
       Alert.alert("Verification Failed", error.message || "Invalid OTP");

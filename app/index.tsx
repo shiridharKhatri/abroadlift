@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useUser } from "./context/UserContext";
 
+import { useIsFocused } from "@react-navigation/native";
+
 const { width, height } = Dimensions.get("window");
 
 const COLORS = {
@@ -28,6 +30,7 @@ const COLORS = {
 export default function Index() {
   const insets = useSafeAreaInsets();
   const { isAuthenticated, isLoading, userData } = useUser();
+  const isFocused = useIsFocused();
 
   const player = useVideoPlayer(require("../assets/homescreen.mp4"), (p) => {
     p.loop = true;
@@ -58,14 +61,14 @@ export default function Index() {
   }, [player]);
 
   React.useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && isFocused) {
       if (userData?.onboardingComplete) {
         router.replace("/(tabs)/explore");
       } else {
         router.replace("/setup/country");
       }
     }
-  }, [isAuthenticated, isLoading, userData?.onboardingComplete]);
+  }, [isAuthenticated, isLoading, userData?.onboardingComplete, isFocused]);
 
   if (isLoading || isAuthenticated) {
     return (
