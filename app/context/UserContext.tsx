@@ -230,14 +230,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   // Wrapper for setUserData that also saves to AsyncStorage
   const setUserData = async (data: UserData | ((prev: UserData) => UserData)) => {
     try {
-      const newData = typeof data === 'function' ? data(userData) : data;
-      _setUserData(newData);
-      await AsyncStorage.setItem('@user_data', JSON.stringify(newData));
+      _setUserData(prev => {
+        const newData = typeof data === 'function' ? data(prev) : data;
+        
+        AsyncStorage.setItem('@user_data', JSON.stringify(newData)).catch(e => 
+          console.error("Error saving user data to storage:", e)
+        );
 
-      // Sync with backend if authenticated and not using a dummy test token
-      if (token && token !== "dummy-jwt-token-for-testing") {
-        apiUpdateProfile(newData, token).catch(e => console.error("Sync error:", e));
-      }
+        if (token && token !== "dummy-jwt-token-for-testing") {
+          apiUpdateProfile(newData, token).catch(e => 
+            console.error("Sync error:", e)
+          );
+        }
+        
+        return newData;
+      });
     } catch (e) {
       console.error("Error saving user data:", e);
     }

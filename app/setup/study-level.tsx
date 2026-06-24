@@ -116,7 +116,11 @@ export default function StudyLevelSelection() {
             ))}
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.scrollContent} 
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.questionText}>What level of study are you planning?</Text>
 
             {/* Education Banner */}
@@ -297,10 +301,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 24,
     backgroundColor: "transparent",
   },

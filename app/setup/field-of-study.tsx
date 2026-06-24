@@ -121,7 +121,11 @@ export default function FieldOfStudySelection() {
             ))}
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.scrollContent} 
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.questionText}>What do you want to study?</Text>
 
             {/* Search Bar */}
@@ -313,10 +317,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 24,
     backgroundColor: "transparent",
   },

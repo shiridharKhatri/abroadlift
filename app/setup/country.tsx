@@ -79,7 +79,8 @@ export default function CountrySelection() {
       </View>
 
       <ScrollView 
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]} 
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.questionText}>Which country are you interested in?</Text>
@@ -261,10 +262,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 24,
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
