@@ -23,6 +23,7 @@ type UserData = {
   intake?: string;
   scholarshipNeeded?: boolean;
   selectedUniversities: any[];
+  onboardingComplete?: boolean;
 };
 
 type UserContextType = {
@@ -55,6 +56,7 @@ const DEFAULT_USER_DATA: UserData = {
   intake: "",
   scholarshipNeeded: false,
   selectedUniversities: [],
+  onboardingComplete: false,
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -96,6 +98,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 englishLevel: profile.englishLevel || "",
                 yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : "",
                 scholarshipNeeded: profile.scholarshipNeeded ?? false,
+                onboardingComplete: data.user?.onboardingComplete ?? profile.onboardingComplete ?? (storedUser ? JSON.parse(storedUser).onboardingComplete : false),
                 selectedUniversities: data.user?.selectedUniversities || (storedUser ? JSON.parse(storedUser).selectedUniversities : []) || [],
               };
               _setUserData(refreshedUser);
@@ -135,6 +138,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         studyLevel: "",
         fieldOfStudy: "",
         selectedUniversities: [],
+        onboardingComplete: false,
       };
       const dummyToken = "dummy-jwt-token-for-testing";
 
@@ -167,6 +171,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         englishLevel: profile.englishLevel || userData.englishLevel,
         yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : userData.yearlyBudget,
         scholarshipNeeded: profile.scholarshipNeeded ?? userData.scholarshipNeeded,
+        onboardingComplete: incomingUser.onboardingComplete ?? profile.onboardingComplete ?? false,
         selectedUniversities: incomingUser.selectedUniversities || userData.selectedUniversities || [],
       };
 
@@ -184,29 +189,26 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   // Register handler
   const register = async (signUpData: any) => {
     try {
-      // For registration, we usually get back the initial user object but need OTP verification
-      // For now, let's just handle the initial response
       const data = await apiRegister(signUpData);
       
-      // If the backend returns a token immediately (or after verification)
-      // Usually register might not login the user immediately if OTP is needed.
-      // But for this task, we'll store what we get.
       if (data.token) {
         setToken(data.token);
         await AsyncStorage.setItem('@auth_token', data.token);
       }
       
+      const registeredUser = {
+        ...DEFAULT_USER_DATA,
+        ...data.user,
+        onboardingComplete: data.user?.onboardingComplete ?? false,
+      };
+
       _setUserData(prev => ({
         ...prev,
-        ...data.user,
+        ...registeredUser,
       }));
-      await AsyncStorage.setItem('@user_data', JSON.stringify(data.user));
+      await AsyncStorage.setItem('@user_data', JSON.stringify(registeredUser));
 
-      // NEW: Automatically log in after registration if token wasn't provided
-      // No, wait, if we got a user object, we can't truly login WITHOUT a token from the backend
-      // But we can call apiLogin here if we have the password.
-      // Instead, we'll let the component handle the auto-login with email and password.
-      return data.user;
+      return registeredUser;
     } catch (error) {
       throw error;
     }
@@ -253,7 +255,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const selectUniversity = (uni: any) => {
     setUserData(prev => ({
         ...prev,
-        selectedUniversities: [uni, ...prev.selectedUniversities.filter(u => u.id !== uni.id)]
+        selectedUniversities: [uni, ...prev.selectedUniversities.filter(u => u.id !== uni.id)],
+        onboardingComplete: true,
     }));
   };
 

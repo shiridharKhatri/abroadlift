@@ -1,6 +1,13 @@
 import { Platform } from 'react-native';
 
 const API_BASE_URL = Platform.OS === 'android' ? `http://10.0.2.2:5052/api` : `http://localhost:5052/api`;
+const API_KEY = "vl0i3A4W7DxG1fJohzI2qmbedgp4EAYT";
+
+const getHeaders = (extraHeaders?: Record<string, string>) => ({
+  "Content-Type": "application/json",
+  "X-API-Key": API_KEY,
+  ...extraHeaders,
+});
 
 export interface UniversityResult {
   id: string | number;
@@ -53,127 +60,185 @@ export interface UniversityDetail extends UniversityResult {
 
 import { fetchWorqnowUniversities, getWorqnowUniversityDetail } from './worqnow';
 
+// Mock in-memory store for profile updates during the session
+let mockProfileStore: any = {
+  name: "John Doe",
+  username: "@johndoe",
+  email: "john.doe@abroadlift.com",
+  phoneE164: "+1234567890",
+  profileImage: null,
+  country: "",
+  flag: "",
+  studyLevel: "",
+  fieldOfStudy: "",
+  recentAcademicField: "",
+  cgpa: "",
+  englishLevel: "",
+  score: "",
+  testType: "IELTS",
+  passoutYear: "",
+  yearlyBudget: "",
+  intake: "",
+  scholarshipNeeded: false,
+  selectedUniversities: [],
+  onboardingComplete: false,
+};
+
 export const login = async (phoneE164: string, otp: string): Promise<any> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/mobile/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phoneE164, otp }),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Login failed');
-    return data;
-  } catch (error) {
-    console.error("Login Error:", error);
-    throw error;
-  }
+  console.log("[Mock API] login called for:", phoneE164);
+  // Return mock successful auth
+  return {
+    token: "dummy-jwt-token-for-testing",
+    user: {
+      id: "mock-user-123",
+      name: mockProfileStore.name,
+      username: mockProfileStore.username,
+      email: mockProfileStore.email,
+      phoneE164: phoneE164,
+      profileImage: mockProfileStore.profileImage,
+      country: mockProfileStore.country,
+      flag: mockProfileStore.flag,
+      studyLevel: mockProfileStore.studyLevel,
+      fieldOfStudy: mockProfileStore.fieldOfStudy,
+      selectedUniversities: [],
+      onboardingComplete: mockProfileStore.onboardingComplete,
+      profile: {
+        nationality: mockProfileStore.country,
+        currentCountry: mockProfileStore.country,
+        degreeLevel: mockProfileStore.studyLevel,
+        gpa: mockProfileStore.cgpa ? parseFloat(mockProfileStore.cgpa) : 0,
+        englishScore: mockProfileStore.score ? parseFloat(mockProfileStore.score) : 0,
+        fieldOfStudy: mockProfileStore.fieldOfStudy,
+        testType: mockProfileStore.testType,
+        recentAcademicField: mockProfileStore.recentAcademicField,
+        passoutYear: mockProfileStore.passoutYear,
+        intake: mockProfileStore.intake,
+        englishLevel: mockProfileStore.englishLevel,
+        yearlyBudget: mockProfileStore.yearlyBudget ? parseFloat(mockProfileStore.yearlyBudget) : 0,
+        scholarshipNeeded: mockProfileStore.scholarshipNeeded,
+        onboardingComplete: mockProfileStore.onboardingComplete,
+      }
+    }
+  };
 };
 
 export const requestOtp = async (phoneData: { phoneE164?: string; countryDialCode?: string; phoneNumber?: string }): Promise<any> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/request-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(phoneData),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Failed to request OTP');
-    return data;
-  } catch (error) {
-    console.error("Request OTP Error:", error);
-    throw error;
-  }
+  console.log("[Mock API] requestOtp called for:", phoneData);
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return {
+    sent: true,
+    channel: "sms"
+  };
 };
 
 export const verifySignupOtp = async (verifyData: { phoneE164?: string; countryDialCode?: string; phoneNumber?: string; otp: string }): Promise<any> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/verify-signup-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(verifyData),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'OTP Verification failed');
-    return data;
-  } catch (error) {
-    console.error("OTP Verification Error:", error);
-    throw error;
-  }
+  console.log("[Mock API] verifySignupOtp called:", verifyData);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return {
+    success: true,
+    token: "dummy-jwt-token-for-testing",
+    user: {
+      id: "mock-user-123",
+      name: "New Student",
+      username: "@student",
+      phoneE164: verifyData.phoneE164 || "+1234567890",
+      selectedUniversities: [],
+      onboardingComplete: false
+    }
+  };
 };
 
 export const register = async (userData: any): Promise<any> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
-    const data = await response.json();
-    if (response.status === 200 && data.existingUser) {
-      // Handle existing user (OTP already sent)
-      return data;
+  console.log("[Mock API] register called:", userData);
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Update mock in-memory store
+  mockProfileStore = {
+    ...mockProfileStore,
+    ...userData,
+  };
+
+  return {
+    token: "dummy-jwt-token-for-testing",
+    user: {
+      id: "mock-user-123",
+      name: mockProfileStore.name,
+      username: mockProfileStore.username,
+      email: mockProfileStore.email,
+      phoneE164: mockProfileStore.phoneE164,
+      profileImage: mockProfileStore.profileImage,
+      country: mockProfileStore.country,
+      flag: mockProfileStore.flag,
+      studyLevel: mockProfileStore.studyLevel,
+      fieldOfStudy: mockProfileStore.fieldOfStudy,
+      selectedUniversities: [],
     }
-    if (!response.ok) throw new Error(data.error || 'Registration failed');
-    return data;
-  } catch (error) {
-    console.error("Registration Error:", error);
-    throw error;
-  }
+  };
 };
 
 export const getProfile = async (token: string): Promise<any> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/profile`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch profile");
-    return data;
-  } catch (error) {
-    console.error("Fetch Profile Error:", error);
-    throw error;
-  }
+  console.log("[Mock API] getProfile called with token:", token);
+  return {
+    profile: {
+      nationality: mockProfileStore.country,
+      currentCountry: mockProfileStore.country,
+      degreeLevel: mockProfileStore.studyLevel,
+      gpa: mockProfileStore.cgpa ? parseFloat(mockProfileStore.cgpa) : null,
+      englishScore: mockProfileStore.score ? parseFloat(mockProfileStore.score) : null,
+      fieldOfStudy: mockProfileStore.fieldOfStudy,
+      testType: mockProfileStore.testType,
+      recentAcademicField: mockProfileStore.recentAcademicField,
+      passoutYear: mockProfileStore.passoutYear,
+      intake: mockProfileStore.intake,
+      englishLevel: mockProfileStore.englishLevel,
+      yearlyBudget: mockProfileStore.yearlyBudget ? parseFloat(mockProfileStore.yearlyBudget) : null,
+      scholarshipNeeded: mockProfileStore.scholarshipNeeded,
+      onboardingComplete: mockProfileStore.onboardingComplete,
+    },
+    user: {
+      id: "mock-user-123",
+      name: mockProfileStore.name,
+      username: mockProfileStore.username,
+      email: mockProfileStore.email,
+      phoneE164: mockProfileStore.phoneE164,
+      profileImage: mockProfileStore.profileImage,
+      selectedUniversities: mockProfileStore.selectedUniversities || [],
+      onboardingComplete: mockProfileStore.onboardingComplete,
+    }
+  };
 };
 
 export const updateProfile = async (userData: any, token: string): Promise<any> => {
-  try {
-    // Map mobile field names to backend field names if they differ
-    const payload = {
-      ...userData,
-      nationality: userData.country,
-      currentCountry: userData.country,
-      degreeLevel: userData.studyLevel,
-      gpa: userData.cgpa,
-      englishScore: userData.score,
-    };
+  console.log("[Mock API] updateProfile called:", userData);
+  
+  mockProfileStore = {
+    ...mockProfileStore,
+    ...userData,
+  };
 
-    const response = await fetch(`${API_BASE_URL}/profile`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Profile update failed");
-    return data;
-  } catch (error) {
-    console.error("Profile Update Error:", error);
-    throw error;
-  }
+  return {
+    success: true,
+    profile: {
+      nationality: mockProfileStore.country,
+      currentCountry: mockProfileStore.country,
+      degreeLevel: mockProfileStore.studyLevel,
+      gpa: mockProfileStore.cgpa ? parseFloat(mockProfileStore.cgpa) : null,
+      englishScore: mockProfileStore.score ? parseFloat(mockProfileStore.score) : null,
+      fieldOfStudy: mockProfileStore.fieldOfStudy,
+      testType: mockProfileStore.testType,
+      recentAcademicField: mockProfileStore.recentAcademicField,
+      passoutYear: mockProfileStore.passoutYear,
+      intake: mockProfileStore.intake,
+      englishLevel: mockProfileStore.englishLevel,
+      yearlyBudget: mockProfileStore.yearlyBudget ? parseFloat(mockProfileStore.yearlyBudget) : null,
+      scholarshipNeeded: mockProfileStore.scholarshipNeeded,
+      onboardingComplete: mockProfileStore.onboardingComplete,
+    }
+  };
 };
 
-const ABROADLIFT_API_BASE = "http://localhost:5052/api";
-const API_KEY = "vl0i3A4W7DxG1fJohzI2qmbedgp4EAYT";
-
-const getHeaders = () => ({
-  "Content-Type": "application/json",
-  "X-API-Key": API_KEY,
-});
+const ABROADLIFT_API_BASE = API_BASE_URL;
 
 export const getScholarships = async (): Promise<any[]> => {
   try {

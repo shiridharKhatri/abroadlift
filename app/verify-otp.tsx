@@ -81,13 +81,23 @@ export default function VerifyOtpScreen() {
         // purpose is login
         const user = await login(phoneE164, otpCode);
         // Navigate based on profile completeness
-        if (!user.country) router.push("/setup/country");
-        else if (!user.studyLevel) router.push("/setup/study-level");
-        else if (!user.fieldOfStudy) router.push("/setup/field-of-study");
-        else if (!user.cgpa || !user.recentAcademicField) router.push("/setup/academics");
-        else if (!user.score && !user.englishLevel) router.push("/setup/english-test");
-        else if (!user.intake) router.push("/setup/target");
-        else router.push("/(tabs)/explore");
+        if (user.onboardingComplete) {
+          router.replace("/(tabs)/explore");
+        } else if (!user.country) {
+          router.push("/setup/country");
+        } else if (!user.studyLevel) {
+          router.push("/setup/study-level");
+        } else if (!user.fieldOfStudy) {
+          router.push("/setup/field-of-study");
+        } else if (!user.cgpa || !user.recentAcademicField) {
+          router.push("/setup/academics");
+        } else if (!user.score && !user.englishLevel) {
+          router.push("/setup/english-test");
+        } else if (!user.intake) {
+          router.push("/setup/target");
+        } else {
+          router.replace("/(tabs)/explore");
+        }
       }
     } catch (error: any) {
       Alert.alert("Verification Failed", error.message || "Invalid OTP");
