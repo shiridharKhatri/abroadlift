@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   Image,
   Modal,
@@ -17,7 +16,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
@@ -54,6 +53,7 @@ const COUNTRIES = [
 export default function DashboardScreen() {
   const { userData, setUserData } = useUser();
   const [showPlanModal, setShowPlanModal] = React.useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = React.useState(false);
   const [modalStep, setModalStep] = React.useState<'options' | 'country'>('options');
   const [recommendedUnis, setRecommendedUnis] = React.useState<UniversityResult[]>([]);
   const [estimatedCost, setEstimatedCost] = React.useState<string>("--");
@@ -182,7 +182,7 @@ export default function DashboardScreen() {
         <View style={styles.topBarIcons}>
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() => Alert.alert("Notifications", "You have no new notifications at this time.")}
+            onPress={() => setShowNotificationsModal(true)}
           >
             <Ionicons name="notifications-outline" size={24} color={THEME.textDark} />
           </TouchableOpacity>
@@ -449,6 +449,68 @@ export default function DashboardScreen() {
         </View>
 
       </ScrollView>
+
+      {/* Notifications Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showNotificationsModal}
+        onRequestClose={() => setShowNotificationsModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowNotificationsModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalIndicator} />
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Notifications</Text>
+              <TouchableOpacity
+                style={styles.modalCloseCircle}
+                onPress={() => setShowNotificationsModal(false)}
+              >
+                <Ionicons name="close" size={20} color={THEME.textDark} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.notificationsList}>
+              <View style={styles.notificationItem}>
+                <View style={[styles.notifIconBox, { backgroundColor: "#EFF6FF" }]}>
+                  <Ionicons name="sparkles-outline" size={18} color={THEME.blue} />
+                </View>
+                <View style={styles.notifTextContent}>
+                  <Text style={styles.notifTitle}>Welcome to AbroadLift!</Text>
+                  <Text style={styles.notifBody}>Start exploring universities and building your roadmap today.</Text>
+                  <Text style={styles.notifTime}>Just now</Text>
+                </View>
+              </View>
+
+              <View style={styles.notificationItem}>
+                <View style={[styles.notifIconBox, { backgroundColor: "#FEF3C7" }]}>
+                  <Ionicons name="person-outline" size={18} color="#D97706" />
+                </View>
+                <View style={styles.notifTextContent}>
+                  <Text style={styles.notifTitle}>Complete Your Profile</Text>
+                  <Text style={styles.notifBody}>Add your academic grades and English scores to estimate admission chances.</Text>
+                  <Text style={styles.notifTime}>2 hours ago</Text>
+                </View>
+              </View>
+
+              <View style={[styles.notificationItem, { borderBottomWidth: 0 }]}>
+                <View style={[styles.notifIconBox, { backgroundColor: "#ECFDF5" }]}>
+                  <Ionicons name="bookmark-outline" size={18} color={THEME.green} />
+                </View>
+                <View style={styles.notifTextContent}>
+                  <Text style={styles.notifTitle}>Shortlist Updated</Text>
+                  <Text style={styles.notifBody}>Conestoga College - Doon has been successfully added to your shortlist.</Text>
+                  <Text style={styles.notifTime}>Yesterday</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Plan Edit Modal */}
       <Modal
@@ -1132,5 +1194,51 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     color: THEME.textGray,
+  },
+  modalCloseCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notificationsList: {
+    flex: 1,
+  },
+  notificationItem: {
+    flexDirection: "row",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    gap: 12,
+  },
+  notifIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notifTextContent: {
+    flex: 1,
+  },
+  notifTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: THEME.textDark,
+    marginBottom: 4,
+  },
+  notifBody: {
+    fontSize: 13,
+    color: THEME.textGray,
+    lineHeight: 18,
+    fontWeight: "500",
+    marginBottom: 6,
+  },
+  notifTime: {
+    fontSize: 11,
+    color: THEME.textGray,
+    fontWeight: "600",
   },
 });
