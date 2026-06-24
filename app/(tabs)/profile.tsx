@@ -10,6 +10,7 @@ import {
   StatusBar,
   Platform,
   Dimensions,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -185,7 +186,10 @@ export default function ProfileTab() {
             <Feather name="chevron-right" size={16} color={THEME.textGray} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => Alert.alert("Notifications", "You have no new notifications at this time.")}
+          >
             <View style={styles.menuItemLeft}>
               <Ionicons name="notifications-outline" size={20} color={THEME.textDark} />
               <Text style={styles.menuItemText}>Notifications</Text>
@@ -193,7 +197,10 @@ export default function ProfileTab() {
             <Feather name="chevron-right" size={16} color={THEME.textGray} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push("/profile/edit")}
+          >
             <View style={styles.menuItemLeft}>
               <Ionicons name="settings-outline" size={20} color={THEME.textDark} />
               <Text style={styles.menuItemText}>Account Settings</Text>
