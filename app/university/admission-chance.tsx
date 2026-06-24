@@ -10,11 +10,13 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
-import { Feather, Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
+import { searchUniversities, calculateAcceptanceChance, UniversityResult } from "../../lib/api";
 
 const { width } = Dimensions.get("window");
 
@@ -28,6 +30,7 @@ const THEME = {
   green: "#10B981",
   white: "#FFFFFF",
   blue: "#3B82F6",
+  red: "#EF4444",
   divider: "#F1F5F9",
 };
 
@@ -39,7 +42,9 @@ const AnalysisItem = ({ label, value, status }: { label: string; value: string; 
       ) : (
         <Ionicons name="warning" size={20} color={THEME.orange} />
       )}
-      <Text style={styles.analysisLabel}>{label}: <Text style={styles.analysisValueText}>{value}</Text></Text>
+      <Text style={styles.analysisLabel}>
+        {label}: <Text style={styles.analysisValueText}>{value}</Text>
+      </Text>
     </View>
     <Feather name="chevron-right" size={16} color={THEME.textGray} />
   </View>
@@ -60,6 +65,113 @@ const FactorItem = ({ label, icon, iconType = 'feather' }: { label: string; icon
 );
 
 export default function AdmissionChanceScreen() {
+  const { userData } = useUser();
+  const [unis, setUnis] = React.useState<UniversityResult[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [activeRiskLevel, setActiveRiskLevel] = React.useState<'Safe' | 'Moderate' | 'Ambitious'>('Safe');
+  const [isProfileExpanded, setIsProfileExpanded] = React.useState(true);
+  const [isFactorsExpanded, setIsFactorsExpanded] = React.useState(false);
+
+  React.useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const results = await searchUniversities("", userData.country || "UK");
+        if (mounted) {
+          setUnis(results);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error loading universities for admission chances:", err);
+        if (mounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [userData.country]);
+
+  // Compute dynamic user admission metrics
+  const gpa = parseFloat(userData.cgpa || "0");
+  const engScore = parseFloat(userData.score || "0");
+
+  let gpaNorm = 0.5;
+  if (gpa > 0) {
+    gpaNorm = gpa / 4.0;
+    if (gpa > 4.5) gpaNorm = gpa / 10.0;
+    if (gpaNorm > 1) gpaNorm = 1;
+  }
+
+  let engNorm = 0.6;
+  if (engScore > 0) {
+    engNorm = engScore / 9.0;
+    if (engNorm > 1) engNorm = 1;
+  }
+
+  const baseProb = 35 + (gpaNorm * 40) + (engNorm * 20);
+  const finalProb = Math.min(98, Math.max(5, Math.round(baseProb)));
+
+  let chanceLabel = "Moderate";
+  if (finalProb >= 80) chanceLabel = "Very High";
+  else if (finalProb >= 65) chanceLabel = "High";
+  else if (finalProb < 45) chanceLabel = "Low";
+
+  // Dynamic values for profile analysis items
+  let gpaVal = "Not Set";
+  let gpaStatus: 'success' | 'warning' = 'warning';
+  if (gpa > 0) {
+    const scale = gpa > 4.5 ? '10.0' : '4.0';
+    const isStrong = gpa >= 3.3 || (gpa > 4.5 && gpa >= 8.0);
+    gpaVal = `${isStrong ? 'Strong' : 'Needs work'} (${userData.cgpa}/${scale})`;
+    gpaStatus = isStrong ? 'success' : 'warning';
+  }
+
+  let engVal = "Not Set";
+  let engStatus: 'success' | 'warning' = 'warning';
+  if (engScore > 0) {
+    const isStrong = engScore >= 6.5;
+    engVal = `${isStrong ? 'Strong' : 'Need improvement'} (${userData.score})`;
+    engStatus = isStrong ? 'success' : 'warning';
+  }
+
+  // Helper to format USD tuition to NPR (1 USD = 134 NPR)
+  const formatTuition = (tuition: string | number) => {
+    if (tuition === undefined || tuition === null) return "N/A";
+    const tuitionStr = String(tuition);
+    if (tuitionStr.toLowerCase().includes("npr")) return tuitionStr;
+    
+    const num = parseInt(tuitionStr.replace(/[^0-9]/g, ""));
+    if (isNaN(num)) return tuitionStr;
+    
+    if (tuitionStr.includes("$")) {
+      const nprVal = num * 134;
+      return `NPR ${nprVal.toLocaleString()}`;
+    }
+    return tuitionStr;
+  };
+
+  // Categorize universities dynamically
+  const categorizedUnis = React.useMemo(() => {
+    const safe: UniversityResult[] = [];
+    const moderate: UniversityResult[] = [];
+    const ambitious: UniversityResult[] = [];
+
+    unis.forEach(uni => {
+      const match = calculateAcceptanceChance(userData, uni);
+      if (match.score >= 80) {
+        safe.push(uni);
+      } else if (match.score >= 60) {
+        moderate.push(uni);
+      } else {
+        ambitious.push(uni);
+      }
+    });
+
+    return { Safe: safe, Moderate: moderate, Ambitious: ambitious };
+  }, [unis, userData]);
+
+  const currentList = categorizedUnis[activeRiskLevel];
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
@@ -85,7 +197,9 @@ export default function AdmissionChanceScreen() {
           <View style={styles.summaryContent}>
             <View style={styles.summaryLeft}>
               <Text style={styles.summaryTitle}>Admission Percentage</Text>
-              <Text style={styles.summaryValue}>75% <Text style={styles.summaryStatus}>- Moderate</Text></Text>
+              <Text style={styles.summaryValue}>
+                {finalProb}% <Text style={styles.summaryStatus}>- {chanceLabel}</Text>
+              </Text>
               <View style={styles.averageBadge}>
                 <View style={styles.orangeDot} />
                 <Text style={styles.averageBadgeText}>Average Cost</Text>
@@ -98,117 +212,149 @@ export default function AdmissionChanceScreen() {
           <View style={styles.summaryDivider} />
           <View style={styles.summaryFooter}>
             <Ionicons name="information-circle-outline" size={16} color={THEME.textGray} />
-            <Text style={styles.summaryFooterText}>Opportunity for some universities. Room for improve.</Text>
+            <Text style={styles.summaryFooterText}>
+              Opportunity for some universities. Room for improve.
+            </Text>
           </View>
         </View>
 
         {/* Profile Analysis */}
         <View style={styles.sectionBox}>
-          <View style={styles.sectionHeader}>
+          <TouchableOpacity 
+            style={styles.sectionHeader}
+            activeOpacity={0.7}
+            onPress={() => setIsProfileExpanded(!isProfileExpanded)}
+          >
             <Text style={styles.sectionTitleText}>Your Profile Analysis</Text>
-            <Feather name="chevron-up" size={20} color={THEME.textGray} />
-          </View>
-          <View style={styles.sectionBody}>
-            <AnalysisItem label="CGPA" value="Strong (3.5/4.0)" status="success" />
-            <AnalysisItem label="IELTS" value="Need improvement (6.0)" status="warning" />
-            <AnalysisItem label="Course Competitiveness" value="" status="success" />
-          </View>
+            <Feather name={isProfileExpanded ? "chevron-up" : "chevron-down"} size={20} color={THEME.textGray} />
+          </TouchableOpacity>
+          
+          {isProfileExpanded && (
+            <View style={styles.sectionBody}>
+              <AnalysisItem label="CGPA" value={gpaVal} status={gpaStatus} />
+              <AnalysisItem label="IELTS" value={engVal} status={engStatus} />
+              <AnalysisItem 
+                label="Course Competitiveness" 
+                value={userData.fieldOfStudy || "General"} 
+                status="success" 
+              />
+            </View>
+          )}
         </View>
 
         {/* Key Admission Factors */}
         <View style={styles.sectionBox}>
-          <View style={styles.sectionHeader}>
+          <TouchableOpacity 
+            style={styles.sectionHeader}
+            activeOpacity={0.7}
+            onPress={() => setIsFactorsExpanded(!isFactorsExpanded)}
+          >
             <Text style={styles.sectionTitleText}>Key Admission Factors</Text>
-            <Feather name="chevron-down" size={20} color={THEME.textGray} />
-          </View>
-          <View style={styles.sectionBody}>
-            <FactorItem label="CGPA" icon="star" iconType="feather" />
-            <FactorItem label="IELTS Score" icon="checkmark-circle-outline" iconType="ionicons" />
-            <FactorItem label="Course Competitiveness" icon="target" iconType="material" />
-          </View>
+            <Feather name={isFactorsExpanded ? "chevron-up" : "chevron-down"} size={20} color={THEME.textGray} />
+          </TouchableOpacity>
+          
+          {isFactorsExpanded && (
+            <View style={styles.sectionBody}>
+              <FactorItem label="CGPA" icon="star" iconType="feather" />
+              <FactorItem label="IELTS Score" icon="checkmark-circle-outline" iconType="ionicons" />
+              <FactorItem label="Course Competitiveness" icon="target" iconType="material" />
+            </View>
+          )}
         </View>
 
         {/* Universities By Risk Level */}
         <Text style={styles.riskTitle}>Universities By Risk Level</Text>
         <View style={styles.riskTabs}>
-          <TouchableOpacity style={[styles.riskTab, styles.riskTabActive]}>
-            <Text style={styles.riskTabTextActive}>Safe</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.riskTab}>
-            <Text style={styles.riskTabText}>Moderate</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.riskTab}>
-            <Text style={styles.riskTabText}>Ambitious</Text>
-          </TouchableOpacity>
+          {(['Safe', 'Moderate', 'Ambitious'] as const).map((level) => (
+            <TouchableOpacity 
+              key={level}
+              style={[styles.riskTab, activeRiskLevel === level && styles.riskTabActive]}
+              onPress={() => setActiveRiskLevel(level)}
+            >
+              <Text style={activeRiskLevel === level ? styles.riskTabTextActive : styles.riskTabText}>
+                {level}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
-          <View style={styles.uniCard}>
-            <View style={styles.uniImageContainer}>
-              <Image
-                source={{ uri: "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=400" }}
-                style={styles.uniImage}
-              />
-              <View style={styles.matchBadge}>
-                <Text style={styles.matchText}>85% Match</Text>
-              </View>
-            </View>
-            <View style={styles.uniCardContent}>
-              <Text style={styles.uniCardName}>University of Melbourne</Text>
-              <View style={styles.uniLocationRow}>
-                <Ionicons name="location" size={14} color={THEME.orange} />
-                <Text style={styles.uniLocationText}>Melbourne, Australia</Text>
-              </View>
-              <View style={styles.uniCostRow}>
-                <Text style={styles.uniCostValue}>NPR 20,500,00<Text style={styles.uniCostUnit}>/ year</Text></Text>
-                <View style={styles.safeBadge}>
-                  <Text style={styles.safeText}>Safe</Text>
-                </View>
-              </View>
-              <View style={styles.uniActions}>
-                <TouchableOpacity style={styles.saveBtn}>
-                  <Text style={styles.saveBtnText}>Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.compareBtn}>
-                  <Text style={styles.compareBtnText}>Compare</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        {loading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color={THEME.primary} />
+            <Text style={styles.loaderText}>Loading matches...</Text>
           </View>
-
-          <View style={styles.uniCard}>
-            <View style={styles.uniImageContainer}>
-              <Image
-                source={{ uri: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=400" }}
-                style={styles.uniImage}
-              />
-              <View style={styles.matchBadge}>
-                <Text style={styles.matchText}>72% Match</Text>
-              </View>
-            </View>
-            <View style={styles.uniCardContent}>
-              <Text style={styles.uniCardName}>University of Toronto</Text>
-              <View style={styles.uniLocationRow}>
-                <Ionicons name="location" size={14} color={THEME.orange} />
-                <Text style={styles.uniLocationText}>Toronto, Canada</Text>
-              </View>
-              <View style={styles.uniCostRow}>
-                <Text style={styles.uniCostValue}>NPR 11,500,00<Text style={styles.uniCostUnit}>/ year</Text></Text>
-                <View style={[styles.safeBadge, { backgroundColor: "#DCFCE7" }]}>
-                  <Text style={[styles.safeText, { color: THEME.green }]}>Safe</Text>
-                </View>
-              </View>
-              <View style={styles.uniActions}>
-                <TouchableOpacity style={styles.saveBtn}>
-                  <Text style={styles.saveBtnText}>Save</Text>
+        ) : currentList.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
+            {currentList.map((uni) => {
+              const match = calculateAcceptanceChance(userData, uni);
+              return (
+                <TouchableOpacity 
+                  key={uni.id} 
+                  style={styles.uniCard}
+                  onPress={() => router.push({
+                    pathname: "/university/[id]",
+                    params: { id: uni.id, country: uni.country, name: uni.name }
+                  })}
+                >
+                  <View style={styles.uniImageContainer}>
+                    <Image source={{ uri: uni.image || "" }} style={styles.uniImage} />
+                    <View style={styles.matchBadge}>
+                      <Text style={styles.matchText}>{match.score}% Match</Text>
+                    </View>
+                  </View>
+                  <View style={styles.uniCardContent}>
+                    <Text style={styles.uniCardName} numberOfLines={1}>{uni.name}</Text>
+                    <View style={styles.uniLocationRow}>
+                      <Ionicons name="location" size={14} color={THEME.orange} />
+                      <Text style={styles.uniLocationText} numberOfLines={1}>{uni.location}</Text>
+                    </View>
+                    <View style={styles.uniCostRow}>
+                      <Text style={styles.uniCostValue}>
+                        {formatTuition(uni.tuition)}
+                        <Text style={styles.uniCostUnit}>/ year</Text>
+                      </Text>
+                      <View style={[
+                        styles.safeBadge,
+                        activeRiskLevel === 'Moderate' && { backgroundColor: "#FEF3C7" },
+                        activeRiskLevel === 'Ambitious' && { backgroundColor: "#FEE2E2" }
+                      ]}>
+                        <Text style={[
+                          styles.safeText,
+                          activeRiskLevel === 'Moderate' && { color: THEME.orange },
+                          activeRiskLevel === 'Ambitious' && { color: THEME.red }
+                        ]}>
+                          {activeRiskLevel}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.uniActions}>
+                      <TouchableOpacity style={styles.saveBtn} activeOpacity={0.7}>
+                        <Text style={styles.saveBtnText}>Save</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={styles.compareBtn} 
+                        activeOpacity={0.7}
+                        onPress={() => router.push({
+                          pathname: "/university/[id]",
+                          params: { id: uni.id, country: uni.country, name: uni.name }
+                        })}
+                      >
+                        <Text style={styles.compareBtnText}>Compare</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.compareBtn}>
-                  <Text style={styles.compareBtnText}>Compare</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+              );
+            })}
+          </ScrollView>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="school-outline" size={48} color={THEME.textGray} />
+            <Text style={styles.emptyText}>
+              No universities categorized as "{activeRiskLevel}" for your current profile.
+            </Text>
           </View>
-        </ScrollView>
+        )}
 
       </ScrollView>
     </SafeAreaView>
@@ -246,10 +392,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     overflow: "hidden",
-  },
-  profileImage: {
-    width: "100%",
-    height: "100%",
   },
   scrollContent: {
     paddingBottom: 40,
@@ -478,7 +620,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     right: 12,
-    backgroundColor: "#DCFCE7",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
@@ -486,7 +628,7 @@ const styles = StyleSheet.create({
   matchText: {
     fontSize: 10,
     fontWeight: "900",
-    color: THEME.green,
+    color: THEME.blue,
   },
   uniCardContent: {
     padding: 16,
@@ -564,5 +706,27 @@ const styles = StyleSheet.create({
     color: THEME.blue,
     fontSize: 13,
     fontWeight: "800",
+  },
+  loaderContainer: {
+    height: 180,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loaderText: {
+    marginTop: 12,
+    color: THEME.textGray,
+    fontWeight: "500",
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    marginTop: 12,
+    textAlign: "center",
+    color: THEME.textGray,
+    paddingHorizontal: 20,
+    lineHeight: 20,
   },
 });
