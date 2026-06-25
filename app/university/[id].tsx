@@ -594,7 +594,7 @@ export default function UniversityDetails() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} alwaysBounceVertical={false}>
           {/* Banner Skeleton */}
           <View style={{ height: 280, width: "100%", position: "relative" }}>
             <Skeleton width="100%" height={280} borderRadius={0} />
@@ -656,7 +656,8 @@ export default function UniversityDetails() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}
-        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+        alwaysBounceVertical={false}
+        contentContainerStyle={{ paddingBottom: 16 + insets.bottom }}
       >
         {/* Banner Section */}
         <View style={styles.bannerContainer}>
