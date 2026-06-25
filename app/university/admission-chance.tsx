@@ -1,23 +1,23 @@
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-  SafeAreaView,
-  StatusBar,
-  Platform,
   ActivityIndicator,
+  Dimensions,
+  Image,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { router } from "expo-router";
-import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
-import { searchUniversities, calculateAcceptanceChance, UniversityResult } from "../../lib/api";
+import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useTheme } from "../context/ThemeContext";
+import { useUser } from "../context/UserContext";
 
 const { width } = Dimensions.get("window");
 
@@ -35,10 +35,31 @@ const THEME = {
   divider: "#F1F5F9",
 };
 
-const AnalysisItem = ({ label, value, status }: { label: string; value: string; status: 'success' | 'warning' }) => {
+const AnalysisItem = ({
+  label,
+  value,
+  status,
+  onPress,
+  hideBorder
+}: {
+  label: string;
+  value: string;
+  status: 'success' | 'warning';
+  onPress?: () => void;
+  hideBorder?: boolean;
+}) => {
   const { colors } = useTheme();
   return (
-    <View style={[styles.analysisItemRow, { borderBottomColor: colors.border }]}>
+    <TouchableOpacity
+      style={[
+        styles.analysisItemRow,
+        { borderBottomColor: colors.border },
+        hideBorder && { borderBottomWidth: 0 }
+      ]}
+      onPress={onPress}
+      disabled={!onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.analysisLeft}>
         {status === 'success' ? (
           <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
@@ -50,24 +71,7 @@ const AnalysisItem = ({ label, value, status }: { label: string; value: string; 
         </Text>
       </View>
       <Feather name="chevron-right" size={16} color={colors.textSecondary} />
-    </View>
-  );
-};
-
-const FactorItem = ({ label, icon, iconType = 'feather' }: { label: string; icon: string; iconType?: 'feather' | 'material' | 'ionicons' }) => {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.factorItemRow, { borderBottomColor: colors.border }]}>
-      <View style={styles.factorLeft}>
-        <View style={[styles.factorIconBox, { backgroundColor: colors.border }]}>
-          {iconType === 'feather' && <Feather name={icon as any} size={18} color="#F97316" />}
-          {iconType === 'material' && <MaterialCommunityIcons name={icon as any} size={18} color="#F97316" />}
-          {iconType === 'ionicons' && <Ionicons name={icon as any} size={18} color="#F97316" />}
-        </View>
-        <Text style={[styles.factorLabel, { color: colors.text }]}>{label}</Text>
-      </View>
-      <Feather name="chevron-right" size={16} color={colors.textSecondary} />
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -78,7 +82,6 @@ export default function AdmissionChanceScreen() {
   const [loading, setLoading] = React.useState(true);
   const [activeRiskLevel, setActiveRiskLevel] = React.useState<'Safe' | 'Moderate' | 'Ambitious'>('Safe');
   const [isProfileExpanded, setIsProfileExpanded] = React.useState(true);
-  const [isFactorsExpanded, setIsFactorsExpanded] = React.useState(false);
 
   React.useEffect(() => {
     let mounted = true;
@@ -147,10 +150,10 @@ export default function AdmissionChanceScreen() {
     if (tuition === undefined || tuition === null) return "N/A";
     const tuitionStr = String(tuition);
     if (tuitionStr.toLowerCase().includes("npr")) return tuitionStr;
-    
+
     const num = parseInt(tuitionStr.replace(/[^0-9]/g, ""));
     if (isNaN(num)) return tuitionStr;
-    
+
     if (tuitionStr.includes("$")) {
       const nprVal = num * 134;
       return `NPR ${nprVal.toLocaleString()}`;
@@ -228,7 +231,7 @@ export default function AdmissionChanceScreen() {
 
         {/* Profile Analysis */}
         <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.sectionHeader, { backgroundColor: colors.card }]}
             activeOpacity={0.7}
             onPress={() => setIsProfileExpanded(!isProfileExpanded)}
@@ -236,36 +239,28 @@ export default function AdmissionChanceScreen() {
             <Text style={[styles.sectionTitleText, { color: colors.text }]}>Your Profile Analysis</Text>
             <Feather name={isProfileExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
           </TouchableOpacity>
-          
+
           {isProfileExpanded && (
             <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-              <AnalysisItem label="CGPA" value={gpaVal} status={gpaStatus} />
-              <AnalysisItem label="IELTS" value={engVal} status={engStatus} />
-              <AnalysisItem 
-                label="Course Competitiveness" 
-                value={userData.fieldOfStudy || "General"} 
-                status="success" 
+              <AnalysisItem
+                label="CGPA"
+                value={gpaVal}
+                status={gpaStatus}
+                onPress={() => router.push("/setup/academics")}
               />
-            </View>
-          )}
-        </View>
-
-        {/* Key Admission Factors */}
-        <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <TouchableOpacity 
-            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
-            activeOpacity={0.7}
-            onPress={() => setIsFactorsExpanded(!isFactorsExpanded)}
-          >
-            <Text style={[styles.sectionTitleText, { color: colors.text }]}>Key Admission Factors</Text>
-            <Feather name={isFactorsExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-          
-          {isFactorsExpanded && (
-            <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-              <FactorItem label="CGPA" icon="star" iconType="feather" />
-              <FactorItem label="IELTS Score" icon="checkmark-circle-outline" iconType="ionicons" />
-              <FactorItem label="Course Competitiveness" icon="target" iconType="material" />
+              <AnalysisItem
+                label="IELTS"
+                value={engVal}
+                status={engStatus}
+                onPress={() => router.push("/setup/english-test")}
+              />
+              <AnalysisItem
+                label="Course Competitiveness"
+                value={userData.fieldOfStudy || "General"}
+                status="success"
+                onPress={() => router.push("/setup/field-of-study")}
+                hideBorder={true}
+              />
             </View>
           )}
         </View>
@@ -274,7 +269,7 @@ export default function AdmissionChanceScreen() {
         <Text style={[styles.riskTitle, { color: colors.text }]}>Universities By Risk Level</Text>
         <View style={[styles.riskTabs, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {(['Safe', 'Moderate', 'Ambitious'] as const).map((level) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={level}
               style={[styles.riskTab, activeRiskLevel === level && { backgroundColor: colors.primary }]}
               onPress={() => setActiveRiskLevel(level)}
@@ -296,8 +291,8 @@ export default function AdmissionChanceScreen() {
             {currentList.map((uni) => {
               const match = calculateAcceptanceChance(userData, uni);
               return (
-                <TouchableOpacity 
-                  key={uni.id} 
+                <TouchableOpacity
+                  key={uni.id}
                   style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => router.push({
                     pathname: "/university/[id]",
@@ -340,8 +335,8 @@ export default function AdmissionChanceScreen() {
                       <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.border }]} activeOpacity={0.7}>
                         <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[styles.compareBtn, { backgroundColor: colors.primary + "15" }]} 
+                      <TouchableOpacity
+                        style={[styles.compareBtn, { backgroundColor: colors.primary + "15" }]}
                         activeOpacity={0.7}
                         onPress={() => router.push({
                           pathname: "/university/[id]",

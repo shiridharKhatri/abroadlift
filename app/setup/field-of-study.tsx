@@ -11,7 +11,7 @@ import {
   TextInput,
   Platform,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -49,6 +49,7 @@ const POPULAR_BADGES = [
 
 export default function FieldOfStudySelection() {
   const { userData, setUserData } = useUser();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [selectedField, setSelectedField] = useState<string | null>(
@@ -200,9 +201,15 @@ export default function FieldOfStudySelection() {
             !isFormValid && { opacity: 0.5 }
           ]}
           disabled={!isFormValid}
-          onPress={() => router.push("/setup/academics")}
+          onPress={() => {
+            if (edit === "true") {
+              router.back();
+            } else {
+              router.push("/setup/academics");
+            }
+          }}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{edit === "true" ? "Save Changes" : "Continue"}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -523,7 +523,9 @@ export default function UniversityDetails() {
               <View style={styles.courseDetails}>
                 <View style={styles.courseDetailItem}>
                   <Ionicons name="time-outline" size={15} color={colors.textSecondary} />
-                  <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>{course.level?.join(", ") || "2 - 4 Years"}</Text>
+                  <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>
+                    {Array.isArray(course.level) ? course.level.join(", ") : (course.level || "2 - 4 Years")}
+                  </Text>
                 </View>
                 <View style={styles.courseDetailItem}>
                   <Ionicons name="briefcase-outline" size={15} color={colors.textSecondary} />

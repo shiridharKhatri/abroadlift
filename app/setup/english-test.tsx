@@ -11,7 +11,7 @@ import {
   TextInput,
   Platform,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -42,6 +42,7 @@ const TEST_TIPS: Record<TestType, string> = {
 
 export default function EnglishTestSelection() {
   const { userData, setUserData } = useUser();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [hasTakenTest, setHasTakenTest] = useState<boolean | null>(
@@ -71,7 +72,11 @@ export default function EnglishTestSelection() {
         testType: hasTakenTest ? testType : "Not Taken",
         englishLevel: hasTakenTest ? "N/A" : englishLevel
     }));
-    router.push("/setup/target");
+    if (edit === "true") {
+      router.back();
+    } else {
+      router.push("/setup/target");
+    }
   };
 
   const isScoreValid = (type: string, val: string) => {
@@ -256,7 +261,7 @@ export default function EnglishTestSelection() {
           disabled={!isFormValid}
           onPress={handleComplete}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{edit === "true" ? "Save Changes" : "Continue"}</Text>
         </TouchableOpacity>
       </View>
     </View>

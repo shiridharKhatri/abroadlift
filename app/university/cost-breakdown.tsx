@@ -146,6 +146,68 @@ export default function CostBreakdownScreen() {
   const safety = qoiData?.safety_index || "N/A";
   const health = qoiData?.health_care_index || "N/A";
 
+  // Tab-dependent values
+  let displayTotalTitle = "Total Estimated Cost (Year 1)";
+  let displayTotalCost = totalFirstYearNpr;
+  
+  let tuitionLabel = "Annual Tuition";
+  let tuitionValue = tuitionUsd * USD_TO_NPR;
+  let tuitionSub = `$${tuitionUsd.toLocaleString()}`;
+
+  let livingLabel = "Annual Total";
+  let livingValue = annualLivingUsd * USD_TO_NPR;
+  let livingSub = `$${annualLivingUsd.toLocaleString()}`;
+
+  let rentLabel = "Rent (Annual Approx)";
+  let rentValue = (monthlyUsd * 0.4) * 12 * USD_TO_NPR;
+  let rentSub = "40% of budget";
+
+  let foodLabel = "Food & Others (Annual)";
+  let foodValue = (monthlyUsd * 0.6) * 12 * USD_TO_NPR;
+  let foodSub = "60% of budget";
+
+  let isYearOnYear = activeTab === "Year on year";
+
+  if (activeTab === "Month on month") {
+    displayTotalTitle = "Total Estimated Cost (Per Month)";
+    displayTotalCost = (tuitionUsd / 12 + monthlyUsd) * USD_TO_NPR;
+
+    tuitionLabel = "Monthly Tuition (Pro-rata)";
+    tuitionValue = (tuitionUsd / 12) * USD_TO_NPR;
+    tuitionSub = `$${Math.round(tuitionUsd / 12).toLocaleString()}`;
+
+    livingLabel = "Monthly Living Expenses";
+    livingValue = monthlyUsd * USD_TO_NPR;
+    livingSub = `$${monthlyUsd.toLocaleString()}`;
+
+    rentLabel = "Rent (Monthly Approx)";
+    rentValue = (monthlyUsd * 0.4) * USD_TO_NPR;
+    rentSub = "40% of budget";
+
+    foodLabel = "Food & Others (Monthly)";
+    foodValue = (monthlyUsd * 0.6) * USD_TO_NPR;
+    foodSub = "60% of budget";
+  } else if (activeTab === "Year on year") {
+    displayTotalTitle = "Total Estimated Cost (3-Year Degree)";
+    displayTotalCost = totalFirstYearNpr * 3.15; // Year 1 + Year 2 (1.05) + Year 3 (1.10)
+
+    tuitionLabel = "3-Year Total Tuition";
+    tuitionValue = tuitionUsd * 3.15 * USD_TO_NPR;
+    tuitionSub = `$${Math.round(tuitionUsd * 3.15).toLocaleString()}`;
+
+    livingLabel = "3-Year Living Expenses";
+    livingValue = annualLivingUsd * 3.15 * USD_TO_NPR;
+    livingSub = `$${Math.round(annualLivingUsd * 3.15).toLocaleString()}`;
+
+    rentLabel = "3-Year Rent (Approx)";
+    rentValue = (monthlyUsd * 0.4) * 12 * 3.15 * USD_TO_NPR;
+    rentSub = "Includes 5% annual inflation";
+
+    foodLabel = "3-Year Food & Others";
+    foodValue = (monthlyUsd * 0.6) * 12 * 3.15 * USD_TO_NPR;
+    foodSub = "Includes 5% annual inflation";
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
@@ -170,8 +232,8 @@ export default function CostBreakdownScreen() {
         <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.summaryContent}>
             <View style={styles.summaryLeft}>
-              <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>Total Estimated Cost (Year 1)</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>{fmtNpr(totalFirstYearNpr)}</Text>
+              <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>{displayTotalTitle}</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{fmtNpr(displayTotalCost)}</Text>
               <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
                 <View style={styles.orangeDot} />
                 <Text style={styles.averageBadgeText}>{currentCountry} Average</Text>
@@ -219,8 +281,15 @@ export default function CostBreakdownScreen() {
             />
             {isExpanded("year-tuition") && (
               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                <CostItem label="Annual Tuition" value={fmtNpr(tuitionUsd * USD_TO_NPR)} subValue={`$${tuitionUsd.toLocaleString()}`} />
+                <CostItem label={tuitionLabel} value={fmtNpr(tuitionValue)} subValue={tuitionSub} />
                 <CostItem label="Study Level" value={uniData?.type || userData.studyLevel || "Masters"} />
+                {isYearOnYear && (
+                  <>
+                    <CostItem label="Year 1 Tuition" value={fmtNpr(tuitionUsd * USD_TO_NPR)} />
+                    <CostItem label="Year 2 Tuition (Est)" value={fmtNpr(tuitionUsd * 1.05 * USD_TO_NPR)} />
+                    <CostItem label="Year 3 Tuition (Est)" value={fmtNpr(tuitionUsd * 1.10 * USD_TO_NPR)} />
+                  </>
+                )}
                 <Text style={[styles.footerInfoText, { color: colors.text }]}>Fees vary by course and university</Text>
               </View>
             )}
@@ -241,9 +310,16 @@ export default function CostBreakdownScreen() {
             />
             {isExpanded("year-living") && (
               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                <CostItem label="Annual Total" value={fmtNpr(annualLivingUsd * USD_TO_NPR)} subValue={`$${annualLivingUsd.toLocaleString()}`} />
-                <CostItem label="Rent (Approx)" value={fmtNpr((monthlyUsd * 0.4) * USD_TO_NPR)} subValue="40% of budget" />
-                <CostItem label="Food & Others" value={fmtNpr((monthlyUsd * 0.6) * USD_TO_NPR)} subValue="60% of budget" />
+                <CostItem label={livingLabel} value={fmtNpr(livingValue)} subValue={livingSub} />
+                <CostItem label={rentLabel} value={fmtNpr(rentValue)} subValue={rentSub} />
+                <CostItem label={foodLabel} value={fmtNpr(foodValue)} subValue={foodSub} />
+                {isYearOnYear && (
+                  <>
+                    <CostItem label="Year 1 Living" value={fmtNpr(annualLivingUsd * USD_TO_NPR)} />
+                    <CostItem label="Year 2 Living (Est)" value={fmtNpr(annualLivingUsd * 1.05 * USD_TO_NPR)} />
+                    <CostItem label="Year 3 Living (Est)" value={fmtNpr(annualLivingUsd * 1.10 * USD_TO_NPR)} />
+                  </>
+                )}
                 <Text style={[styles.footerInfoText, { color: colors.text }]}>Based on average {currentCountry} lifestyle</Text>
               </View>
             )}

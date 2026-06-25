@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -31,6 +31,7 @@ const COLORS = {
 
 export default function AcademicsSetup() {
   const { userData, setUserData } = useUser();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [recentField, setRecentField] = useState(userData.recentAcademicField || "");
@@ -46,7 +47,11 @@ export default function AcademicsSetup() {
       cgpa: cgpa,
       passoutYear: passoutYear,
     }));
-    router.push("/setup/english-test");
+    if (edit === "true") {
+      router.back();
+    } else {
+      router.push("/setup/english-test");
+    }
   };
 
   const isFormValid = 
@@ -196,7 +201,7 @@ export default function AcademicsSetup() {
           onPress={handleContinue}
           disabled={!isFormValid}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{edit === "true" ? "Save Changes" : "Continue"}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

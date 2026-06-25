@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { login as apiLogin, register as apiRegister, updateProfile as apiUpdateProfile } from '../../lib/api';
 
 type UserData = {
@@ -74,10 +74,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       try {
         const storedToken = await AsyncStorage.getItem('@auth_token');
         const storedUser = await AsyncStorage.getItem('@user_data');
-        
+
         if (storedToken) {
           setToken(storedToken);
-          
+
           if (storedToken !== "dummy-jwt-token-for-testing") {
             // NEW: Refresh user data from server if we have a token
             const { getProfile } = require('../../lib/api');
@@ -120,42 +120,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // Login handler
   const login = async (phoneE164: string, otp: string) => {
-    // Check for dummy login bypass for testing
-    if (
-      phoneE164 === "+9779800000000" ||
-      phoneE164 === "+9779999999999" ||
-      phoneE164 === "+11234567890" ||
-      phoneE164 === "+9771234567890"
-    ) {
-      const dummyUser = {
-        id: "dummy-user-id",
-        name: "Test User",
-        username: "@testuser",
-        email: "testuser@abroadlift.com",
-        profileImage: null,
-        country: "",
-        flag: "",
-        studyLevel: "",
-        fieldOfStudy: "",
-        selectedUniversities: [],
-        onboardingComplete: false,
-      };
-      const dummyToken = "dummy-jwt-token-for-testing";
-
-      setToken(dummyToken);
-      _setUserData(dummyUser);
-
-      await AsyncStorage.setItem('@auth_token', dummyToken);
-      await AsyncStorage.setItem('@user_data', JSON.stringify(dummyUser));
-      return dummyUser;
-    }
 
     try {
       const data = await apiLogin(phoneE164, otp);
       // data: { user, token }
       const incomingUser = data.user;
       const profile = incomingUser.profile || {};
-      
+
       const mappedUser = {
         ...userData,
         ...incomingUser,
@@ -190,12 +161,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const register = async (signUpData: any) => {
     try {
       const data = await apiRegister(signUpData);
-      
+
       if (data.token) {
         setToken(data.token);
         await AsyncStorage.setItem('@auth_token', data.token);
       }
-      
+
       const registeredUser = {
         ...DEFAULT_USER_DATA,
         ...data.user,
@@ -221,7 +192,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       _setUserData(DEFAULT_USER_DATA);
       await AsyncStorage.removeItem('@auth_token');
       await AsyncStorage.removeItem('@user_data');
-      
+
       // Redirect to landing page
       router.replace("/");
     } catch (e) {
@@ -234,17 +205,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
       _setUserData(prev => {
         const newData = typeof data === 'function' ? data(prev) : data;
-        
-        AsyncStorage.setItem('@user_data', JSON.stringify(newData)).catch(e => 
+
+        AsyncStorage.setItem('@user_data', JSON.stringify(newData)).catch(e =>
           console.error("Error saving user data to storage:", e)
         );
 
         if (token && token !== "dummy-jwt-token-for-testing") {
-          apiUpdateProfile(newData, token).catch(e => 
+          apiUpdateProfile(newData, token).catch(e =>
             console.error("Sync error:", e)
           );
         }
-        
+
         return newData;
       });
     } catch (e) {
@@ -254,23 +225,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const selectUniversity = (uni: any) => {
     setUserData(prev => ({
-        ...prev,
-        selectedUniversities: [uni, ...prev.selectedUniversities.filter(u => u.id !== uni.id)],
-        onboardingComplete: true,
+      ...prev,
+      selectedUniversities: [uni, ...prev.selectedUniversities.filter(u => u.id !== uni.id)],
+      onboardingComplete: true,
     }));
   };
 
   return (
-    <UserContext.Provider value={{ 
-      userData, 
-      token, 
-      isAuthenticated, 
-      isLoading, 
-      login, 
-      register, 
+    <UserContext.Provider value={{
+      userData,
+      token,
+      isAuthenticated,
+      isLoading,
+      login,
+      register,
       logout,
-      setUserData, 
-      selectUniversity 
+      setUserData,
+      selectUniversity
     }}>
       {children}
     </UserContext.Provider>

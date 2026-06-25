@@ -10,7 +10,7 @@ import {
   StatusBar,
   Platform,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,6 +38,7 @@ const INTAKE_OPTIONS = [
 
 export default function IntakeSetup() {
   const { userData, setUserData } = useUser();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [selectedIntake, setSelectedIntake] = useState(userData.intake || "Fall 2025");
@@ -47,7 +48,11 @@ export default function IntakeSetup() {
       ...prev,
       intake: selectedIntake,
     }));
-    router.push("/setup/university-select");
+    if (edit === "true") {
+      router.back();
+    } else {
+      router.push("/setup/university-select");
+    }
   };
 
   // Get dynamic suggestion based on selected country
@@ -137,7 +142,7 @@ export default function IntakeSetup() {
           style={[styles.continueButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
           onPress={handleContinue}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{edit === "true" ? "Save Changes" : "Continue"}</Text>
         </TouchableOpacity>
       </View>
     </View>

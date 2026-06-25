@@ -1,13 +1,22 @@
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+
+const fetchWithTimeout = async (url: string, options: any = {}, timeoutMs = 2000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+};
 
 const getApiBaseUrl = () => {
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const host = hostUri.split(':')[0];
-    return `http://${host}:5052/api`;
-  }
-  return Platform.OS === 'android' ? `http://10.0.2.2:5052/api` : `http://localhost:5052/api`;
+  return "https://api.abroadlift.com/api";
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -18,6 +27,25 @@ const getHeaders = (extraHeaders?: Record<string, string>) => ({
   "X-API-Key": API_KEY,
   ...extraHeaders,
 });
+
+const getCampusImage = (name: string): string => {
+  const campusImages = [
+    "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1592280771190-3e2e4d571952?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1498243691581-b145c3f54a91?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1527891751199-7225231a68dd?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1607237138185-eedd996e5b00?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800"
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % campusImages.length;
+  return campusImages[index];
+};
 
 export interface UniversityResult {
   id: string | number;
@@ -95,157 +123,181 @@ let mockProfileStore: any = {
 };
 
 export const login = async (phoneE164: string, otp: string): Promise<any> => {
-  console.log("[Mock API] login called for:", phoneE164);
-  // Return mock successful auth
-  return {
-    token: "dummy-jwt-token-for-testing",
-    user: {
-      id: "mock-user-123",
-      name: mockProfileStore.name,
-      username: mockProfileStore.username,
-      email: mockProfileStore.email,
-      phoneE164: phoneE164,
-      profileImage: mockProfileStore.profileImage,
-      country: mockProfileStore.country,
-      flag: mockProfileStore.flag,
-      studyLevel: mockProfileStore.studyLevel,
-      fieldOfStudy: mockProfileStore.fieldOfStudy,
-      selectedUniversities: [],
-      onboardingComplete: mockProfileStore.onboardingComplete,
-      profile: {
-        nationality: mockProfileStore.country,
-        currentCountry: mockProfileStore.country,
-        degreeLevel: mockProfileStore.studyLevel,
-        gpa: mockProfileStore.cgpa ? parseFloat(mockProfileStore.cgpa) : 0,
-        englishScore: mockProfileStore.score ? parseFloat(mockProfileStore.score) : 0,
-        fieldOfStudy: mockProfileStore.fieldOfStudy,
-        testType: mockProfileStore.testType,
-        recentAcademicField: mockProfileStore.recentAcademicField,
-        passoutYear: mockProfileStore.passoutYear,
-        intake: mockProfileStore.intake,
-        englishLevel: mockProfileStore.englishLevel,
-        yearlyBudget: mockProfileStore.yearlyBudget ? parseFloat(mockProfileStore.yearlyBudget) : 0,
-        scholarshipNeeded: mockProfileStore.scholarshipNeeded,
-        onboardingComplete: mockProfileStore.onboardingComplete,
-      }
-    }
-  };
+  console.log("Calling live login API for:", phoneE164);
+  const response = await fetch(`https://abroadlift.com/api/auth/mobile/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ phoneE164, otp }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to login');
+  return data;
 };
 
 export const requestOtp = async (phoneData: { phoneE164?: string; countryDialCode?: string; phoneNumber?: string }): Promise<any> => {
-  console.log("[Mock API] requestOtp called for:", phoneData);
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return {
-    sent: true,
-    channel: "sms"
-  };
+  console.log("Calling live requestOtp API:", phoneData);
+  const response = await fetch(`https://abroadlift.com/api/auth/request-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(phoneData),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to request OTP');
+  return data;
 };
 
 export const verifySignupOtp = async (verifyData: { phoneE164?: string; countryDialCode?: string; phoneNumber?: string; otp: string }): Promise<any> => {
-  console.log("[Mock API] verifySignupOtp called:", verifyData);
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return {
-    success: true,
-    token: "dummy-jwt-token-for-testing",
-    user: {
-      id: "mock-user-123",
-      name: "New Student",
-      username: "@student",
-      phoneE164: verifyData.phoneE164 || "+1234567890",
-      selectedUniversities: [],
-      onboardingComplete: false
-    }
-  };
+  console.log("Calling live verifySignupOtp API:", verifyData);
+  const response = await fetch(`https://abroadlift.com/api/auth/verify-signup-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(verifyData),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to verify OTP');
+  return data;
 };
 
 export const register = async (userData: any): Promise<any> => {
-  console.log("[Mock API] register called:", userData);
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // Update mock in-memory store
-  mockProfileStore = {
-    ...mockProfileStore,
-    ...userData,
-  };
-
-  return {
-    token: "dummy-jwt-token-for-testing",
-    user: {
-      id: "mock-user-123",
-      name: mockProfileStore.name,
-      username: mockProfileStore.username,
-      email: mockProfileStore.email,
-      phoneE164: mockProfileStore.phoneE164,
-      profileImage: mockProfileStore.profileImage,
-      country: mockProfileStore.country,
-      flag: mockProfileStore.flag,
-      studyLevel: mockProfileStore.studyLevel,
-      fieldOfStudy: mockProfileStore.fieldOfStudy,
-      selectedUniversities: [],
-    }
-  };
+  console.log("Calling live register API:", userData);
+  const response = await fetch(`https://abroadlift.com/api/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: userData.name,
+      email: userData.email,
+      countryDialCode: userData.countryDialCode,
+      phoneNumber: userData.phoneNumber,
+      prefersWhatsApp: userData.prefersWhatsApp ?? true,
+      nationality: userData.country,
+      currentCountry: userData.country,
+      gpa: userData.cgpa,
+    }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to register');
+  return data;
 };
 
 export const getProfile = async (token: string): Promise<any> => {
-  console.log("[Mock API] getProfile called with token:", token);
-  return {
-    profile: {
-      nationality: mockProfileStore.country,
-      currentCountry: mockProfileStore.country,
-      degreeLevel: mockProfileStore.studyLevel,
-      gpa: mockProfileStore.cgpa ? parseFloat(mockProfileStore.cgpa) : null,
-      englishScore: mockProfileStore.score ? parseFloat(mockProfileStore.score) : null,
-      fieldOfStudy: mockProfileStore.fieldOfStudy,
-      testType: mockProfileStore.testType,
-      recentAcademicField: mockProfileStore.recentAcademicField,
-      passoutYear: mockProfileStore.passoutYear,
-      intake: mockProfileStore.intake,
-      englishLevel: mockProfileStore.englishLevel,
-      yearlyBudget: mockProfileStore.yearlyBudget ? parseFloat(mockProfileStore.yearlyBudget) : null,
-      scholarshipNeeded: mockProfileStore.scholarshipNeeded,
-      onboardingComplete: mockProfileStore.onboardingComplete,
+  console.log("Calling live getProfile API");
+  const response = await fetch(`https://abroadlift.com/api/profile`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     },
-    user: {
-      id: "mock-user-123",
-      name: mockProfileStore.name,
-      username: mockProfileStore.username,
-      email: mockProfileStore.email,
-      phoneE164: mockProfileStore.phoneE164,
-      profileImage: mockProfileStore.profileImage,
-      selectedUniversities: mockProfileStore.selectedUniversities || [],
-      onboardingComplete: mockProfileStore.onboardingComplete,
-    }
-  };
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to get profile');
+  return data;
 };
 
 export const updateProfile = async (userData: any, token: string): Promise<any> => {
-  console.log("[Mock API] updateProfile called:", userData);
+  console.log("Calling live updateProfile API");
   
-  mockProfileStore = {
-    ...mockProfileStore,
-    ...userData,
+  const payload = {
+    name: userData.name,
+    email: userData.email,
+    nationality: userData.country,
+    currentCountry: userData.country,
+    degreeLevel: userData.studyLevel,
+    gpa: userData.cgpa ? parseFloat(userData.cgpa) : null,
+    englishScore: userData.score ? parseFloat(userData.score) : null,
+    fieldOfStudy: userData.fieldOfStudy,
+    testType: userData.testType,
+    recentAcademicField: userData.recentAcademicField,
+    passoutYear: userData.passoutYear,
+    intake: userData.intake,
+    englishLevel: userData.englishLevel,
+    yearlyBudget: userData.yearlyBudget ? parseFloat(userData.yearlyBudget) : null,
+    scholarshipNeeded: userData.scholarshipNeeded,
+    onboardingComplete: userData.onboardingComplete,
+    selectedUniversities: userData.selectedUniversities
   };
 
-  return {
-    success: true,
-    profile: {
-      nationality: mockProfileStore.country,
-      currentCountry: mockProfileStore.country,
-      degreeLevel: mockProfileStore.studyLevel,
-      gpa: mockProfileStore.cgpa ? parseFloat(mockProfileStore.cgpa) : null,
-      englishScore: mockProfileStore.score ? parseFloat(mockProfileStore.score) : null,
-      fieldOfStudy: mockProfileStore.fieldOfStudy,
-      testType: mockProfileStore.testType,
-      recentAcademicField: mockProfileStore.recentAcademicField,
-      passoutYear: mockProfileStore.passoutYear,
-      intake: mockProfileStore.intake,
-      englishLevel: mockProfileStore.englishLevel,
-      yearlyBudget: mockProfileStore.yearlyBudget ? parseFloat(mockProfileStore.yearlyBudget) : null,
-      scholarshipNeeded: mockProfileStore.scholarshipNeeded,
-      onboardingComplete: mockProfileStore.onboardingComplete,
-    }
-  };
+  const response = await fetch(`https://abroadlift.com/api/profile`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to update profile');
+  return data;
+};
+
+export const getMatch = async (token: string): Promise<any> => {
+  try {
+    const res = await fetch(`https://abroadlift.com/api/match`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const result = await res.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to load match:", error);
+    return null;
+  }
+};
+
+export const getMatches = async (params: { countries?: string; budget?: number; degreeLevel?: string; field?: string }): Promise<any[]> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.countries) queryParams.append("countries", params.countries);
+    if (params.budget) queryParams.append("budget", String(params.budget));
+    if (params.degreeLevel) queryParams.append("degreeLevel", params.degreeLevel);
+    if (params.field) queryParams.append("field", params.field);
+
+    const res = await fetch(`https://abroadlift.com/api/matches?${queryParams.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const result = await res.json();
+    return result.data || result || [];
+  } catch (error) {
+    console.error("Failed to load matches:", error);
+    return [];
+  }
+};
+
+export const saveMatch = async (token: string, matchData: any, formData?: any): Promise<any> => {
+  try {
+    const res = await fetch(`https://abroadlift.com/api/matches/save`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        formData: formData || {},
+        matchData: matchData
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const result = await res.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to save match:", error);
+    throw error;
+  }
 };
 
 const ABROADLIFT_API_BASE = API_BASE_URL;
@@ -290,7 +342,62 @@ export const saveStudentEvaluation = async (profileData: any): Promise<any> => {
   }
 };
 
-const normalizeCountry = (country: string): string => {
+export const getAvailableCountries = async (): Promise<{ id: string; name: string; code: string; flag: string }[]> => {
+  try {
+    const res = await fetchWithTimeout(`https://abroadlift.com/api/schools?allCountries=true`, {
+      method: "GET",
+      headers: getHeaders(),
+    }, 5000);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const result = await res.json();
+    const list = result.data || [];
+    
+    const flagMap: Record<string, string> = {
+      "US": "🇺🇸", "USA": "🇺🇸",
+      "GB": "🇬🇧", "UK": "🇬🇧",
+      "CA": "🇨🇦", "CANADA": "🇨🇦",
+      "AU": "🇦🇺", "AUSTRALIA": "🇦🇺",
+      "DE": "🇩🇪", "GERMANY": "🇩🇪",
+      "FR": "🇫🇷", "FRANCE": "🇫🇷",
+      "JP": "🇯🇵", "JAPAN": "🇯🇵",
+      "IT": "🇮🇹", "ITALY": "🇮🇹",
+      "KR": "🇰🇷", "KOREA": "🇰🇷", "SOUTH KOREA": "🇰🇷",
+      "IN": "🇮🇳", "INDIA": "🇮🇳",
+      "NL": "🇳🇱", "NETHERLANDS": "🇳🇱", "NETHER": "🇳🇱",
+      "BR": "🇧🇷", "BRAZIL": "🇧🇷"
+    };
+
+    return list.map((c: any) => {
+      const code = String(c.code).toUpperCase();
+      const flag = flagMap[code] || flagMap[String(c.name).toUpperCase()] || "🏳️";
+      return {
+        id: String(c.name).toLowerCase(),
+        name: c.name,
+        code: code === "UK" ? "gb" : (code === "USA" ? "us" : code.toLowerCase()),
+        flag: flag
+      };
+    });
+  } catch (error) {
+    console.error("Failed to load available countries:", error);
+    return [
+      { id: "usa", name: "USA", code: "us", flag: "🇺🇸" },
+      { id: "uk", name: "UK", code: "gb", flag: "🇬🇧" },
+      { id: "canada", name: "Canada", code: "ca", flag: "🇨🇦" },
+      { id: "korea", name: "Korea", code: "kr", flag: "🇰🇷" },
+      { id: "nether", name: "Nether", code: "nl", flag: "🇳🇱" },
+      { id: "brazil", name: "Brazil", code: "br", flag: "🇧🇷" },
+      { id: "germany", name: "Germany", code: "de", flag: "🇩🇪" },
+      { id: "india", name: "India", code: "in", flag: "🇮🇳" },
+      { id: "australia", name: "Australia", code: "au", flag: "🇦🇺" },
+      { id: "france", name: "France", code: "fr", flag: "🇫🇷" },
+      { id: "japan", name: "Japan", code: "jp", flag: "🇯🇵" },
+      { id: "italy", name: "Italy", code: "it", flag: "🇮🇹" },
+    ];
+  }
+};
+
+const normalizeCountry = (country: any): string => {
+  if (!country || typeof country !== "string") return "";
   const c = country.toLowerCase().trim();
   if (c === "usa" || c === "us" || c === "united states" || c === "united states of america") return "usa";
   if (c === "uk" || c === "gb" || c === "united kingdom" || c === "great britain") return "uk";
@@ -309,10 +416,10 @@ const normalizeCountry = (country: string): string => {
 
 export const searchUniversities = async (query: string, countries: string = "All"): Promise<UniversityResult[]> => {
   try {
-    const res = await fetch(`${ABROADLIFT_API_BASE}/schools?limit=100`, {
+    const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools?limit=100`, {
       method: "GET",
       headers: getHeaders(),
-    });
+    }, 5000);
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -332,7 +439,7 @@ export const searchUniversities = async (query: string, countries: string = "All
         website: s.website || "",
         country: countryName,
         levels: s.levels || ["Bachelors", "Masters"],
-        image: s.banner?.url || s.logo?.url || s.image || s.image_url || "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
+        image: s.banner?.url || s.logo?.url || s.image || s.image_url || getCampusImage(s.name || "University"),
         logo: s.logo?.url || s.logo?.url_thumbnail || "",
         rank: s.rank || s.ranking || "N/A",
       };
@@ -354,29 +461,17 @@ export const searchUniversities = async (query: string, countries: string = "All
 
     return filtered;
   } catch (error: any) {
-    console.log(`[API Search] Rate limited or offline (${error.message || error}), using local Worqnow fallback.`);
-    const countryToFetch = countries === "All" ? "uk" : countries.toLowerCase();
-    const results = await fetchWorqnowUniversities(countryToFetch);
-
-    let filtered = results;
-    if (query) {
-      const q = query.toLowerCase();
-      filtered = results.filter(u =>
-        u.name.toLowerCase().includes(q) ||
-        u.city?.toLowerCase().includes(q)
-      );
-    }
-
-    return processResults(filtered, countries);
+    console.warn("[API Search] Failed to fetch from AbroadLift API:", error.message || error);
+    return [];
   }
 };
 
 export const getUniversityDetails = async (id: string, country: string): Promise<UniversityDetail | null> => {
   try {
-    const res = await fetch(`${ABROADLIFT_API_BASE}/schools/${id}`, {
+    const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools/${id}`, {
       method: "GET",
       headers: getHeaders(),
-    });
+    }, 2000);
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -387,10 +482,10 @@ export const getUniversityDetails = async (id: string, country: string): Promise
 
     let schoolCourses: any[] = [];
     try {
-      const progRes = await fetch(`${ABROADLIFT_API_BASE}/programs/school/${id}`, {
+      const progRes = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/programs/school/${id}`, {
         method: "GET",
         headers: getHeaders(),
-      });
+      }, 2000);
       if (progRes.ok) {
         const progResult = await progRes.json();
         const programsList = Array.isArray(progResult) ? progResult : (progResult.data || []);
@@ -411,7 +506,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
         }));
       }
     } catch (e) {
-      console.error("Error fetching school programs:", e);
+      console.warn("Error fetching school programs:", e);
     }
 
     const countryName = s.country || country || "USA";
@@ -424,7 +519,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       website: s.website || "",
       country: countryName,
       levels: s.levels || ["Bachelors", "Masters"],
-      image: s.banner?.url || s.logo?.url || s.image || s.image_url || "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
+      image: s.banner?.url || s.logo?.url || s.image || s.image_url || getCampusImage(s.name || "University"),
       rank: s.school_rank || s.rank || s.ranking || "N/A",
       description: s.description || s.about || `The ${s.name} is a renowned institution.`,
       type: s.type || s.institution_type || "Public University",
@@ -445,29 +540,8 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       currency: s.currency || "USD"
     };
   } catch (error) {
-    console.error("Error fetching details from AbroadLift API, falling back to local Worqnow:", error);
-    const actualCountry = (country === "undefined" || !country) ? "uk" : country;
-    const data = await getWorqnowUniversityDetail(id, actualCountry);
-    if (!data) return null;
-
-    const processed = processResults([data], actualCountry)[0];
-
-    return {
-      ...processed,
-      description: data.description || `The ${data.name} is a renowned institution located in ${data.city || data.region || country}. It offers a wide range of academic programs and is known for its commitment to excellence in research and teaching.`,
-      type: data.is_russell_group ? "Russell Group / Research" : (data.type || "Public Research"),
-      established: data.established || "N/A",
-      campus: data.campus || (data.city ? `${data.city} Campus` : "Contact University"),
-      students: data.students || "10,000+",
-      ranking_world: data.ranking_world || "N/A",
-      ranking_national: data.ranking_national || "N/A",
-      courses: data.courses?.map(c => ({
-        ...c,
-        fee: processed.tuition
-      })) || [],
-      scholarships: data.scholarships || [],
-      notes: (data as any).notes || ""
-    };
+    console.warn("[API Details] Failed to fetch details from AbroadLift API:", error);
+    return null;
   }
 };
 
@@ -500,7 +574,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
       name: res.name || "Unknown University",
       course: res.course || "Various Courses", // API returns institutions, not specific courses
       location: res.location || (res.city ? `${res.city}, ${displayCountry}` : `Various Locations, ${displayCountry}`),
-      image: "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800", // Default image
+      image: getCampusImage(res.name || "University"), // Default image
       rank: res.ranking_world ? `#${res.ranking_world} Global` : (res.rank || "N/A"),
       duration: "Check Website",
       tuition: (() => {
@@ -542,7 +616,7 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
       recommended: false,
       website: res.website || "",
       levels: res.courses?.reduce((acc: string[], c: any) => {
-        if (c.level) {
+        if (Array.isArray(c.level)) {
           c.level.forEach((l: string) => {
             const normalized = l.toLowerCase();
             if (normalized.includes("bachelor") && !acc.includes("Bachelors")) acc.push("Bachelors");

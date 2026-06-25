@@ -152,8 +152,15 @@ export default function UniversitySelection() {
   const insets = useSafeAreaInsets();
   const { userData, setUserData, selectUniversity } = useUser();
   const { colors, isDark } = useTheme();
-  const { pendingCountry, pendingFlag } = useLocalSearchParams();
+  const { pendingCountry, pendingFlag, openFilter } = useLocalSearchParams<{ pendingCountry?: string; pendingFlag?: string; openFilter?: string }>();
   const [filterVisible, setFilterVisible] = useState(false);
+  
+  // Open filter modal from other screens if requested
+  useEffect(() => {
+    if (openFilter === "true") {
+      setFilterVisible(true);
+    }
+  }, [openFilter]);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");

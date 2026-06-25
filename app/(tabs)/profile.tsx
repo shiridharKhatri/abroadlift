@@ -99,7 +99,11 @@ export default function ProfileTab() {
 
         <View style={styles.grid}>
           {/* Target Country */}
-          <View style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/setup/country?edit=true")}
+            activeOpacity={0.7}
+          >
             <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }]}>
               <Ionicons name="location-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
             </View>
@@ -107,10 +111,14 @@ export default function ProfileTab() {
             <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
               {userData.flag ? `${userData.flag} ` : ""}{userData.country || "Not Set"}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Study Level */}
-          <View style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/setup/study-level?edit=true")}
+            activeOpacity={0.7}
+          >
             <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#ECFDF5" }]}>
               <Ionicons name="school-outline" size={18} color={isDark ? colors.secondary : THEME.green} />
             </View>
@@ -118,10 +126,14 @@ export default function ProfileTab() {
             <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
               {userData.studyLevel || "Not Set"}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Field of Interest */}
-          <View style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/setup/field-of-study?edit=true")}
+            activeOpacity={0.7}
+          >
             <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#F5F3FF" }]}>
               <Ionicons name="book-outline" size={18} color={isDark ? colors.primary : "#8B5CF6"} />
             </View>
@@ -129,10 +141,14 @@ export default function ProfileTab() {
             <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
               {userData.fieldOfStudy || "Not Set"}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* English Proficiency */}
-          <View style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/setup/english-test?edit=true")}
+            activeOpacity={0.7}
+          >
             <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#FEF3C7" }]}>
               <Ionicons name="language-outline" size={18} color={isDark ? colors.secondary : "#D97706"} />
             </View>
@@ -142,10 +158,14 @@ export default function ProfileTab() {
                 ? `${userData.testType}: ${userData.score || "N/A"}`
                 : userData.englishLevel || "Not Set"}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Academics */}
-          <View style={[styles.gridCard, { width: "100%", backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.gridCard, { width: "100%", backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/setup/academics?edit=true")}
+            activeOpacity={0.7}
+          >
             <View style={styles.rowLayout}>
               <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#FFF1F2" }]}>
                 <MaterialCommunityIcons name="certificate-outline" size={20} color={isDark ? colors.primary : THEME.red} />
@@ -159,10 +179,14 @@ export default function ProfileTab() {
                 </Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Intake & Aid */}
-          <View style={[styles.gridCard, { width: "100%", backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.gridCard, { width: "100%", backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/setup/target?edit=true")}
+            activeOpacity={0.7}
+          >
             <View style={styles.rowLayout}>
               <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#F0FDF4" }]}>
                 <Ionicons name="calendar-outline" size={18} color={isDark ? colors.secondary : "#15803D"} />
@@ -174,7 +198,7 @@ export default function ProfileTab() {
                 </Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Menu/Quick Links */}
@@ -251,7 +275,11 @@ export default function ProfileTab() {
           activeOpacity={1}
           onPress={() => setShowNotificationsModal(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+          <TouchableOpacity 
+            activeOpacity={1} 
+            style={[styles.modalContent, { backgroundColor: colors.background }]}
+            onPress={() => {}}
+          >
             <View style={styles.modalIndicator} />
             <View style={styles.modalHeaderRow}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Notifications</Text>
@@ -297,7 +325,7 @@ export default function ProfileTab() {
                 </View>
               </View>
             </ScrollView>
-          </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 

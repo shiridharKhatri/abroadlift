@@ -9,12 +9,14 @@ import {
   ScrollView,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
+import { getAvailableCountries } from "../../lib/api";
 
 const { width } = Dimensions.get("window");
 
@@ -27,7 +29,7 @@ const COLORS = {
   glassBorder: "rgba(0, 0, 0, 0.05)",
 };
 
-const COUNTRIES = [
+const STATIC_COUNTRIES = [
   { id: "usa", name: "USA", code: "us", flag: "🇺🇸" },
   { id: "uk", name: "UK", code: "gb", flag: "🇬🇧" },
   { id: "canada", name: "Canada", code: "ca", flag: "🇨🇦" },
@@ -44,11 +46,45 @@ const COUNTRIES = [
 
 export default function CountrySelection() {
   const { userData, setUserData } = useUser();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(
-    COUNTRIES.find(c => c.name === userData.country)?.id || null
-  );
+  
+  const [countries, setCountries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setLoading(true);
+    getAvailableCountries().then(data => {
+      if (data && data.length > 0) {
+        setCountries(data);
+        const matching = data.find(c => c.name === userData.country);
+        if (matching) setSelectedCountryId(matching.id);
+      }
+      setLoading(false);
+    }).catch(err => {
+      console.warn("Error fetching dynamic countries:", err);
+      // Fallback to only the 7 actually available countries in DB
+      setCountries([
+        { id: "canada", name: "Canada", code: "ca", flag: "🇨🇦" },
+        { id: "usa", name: "USA", code: "us", flag: "🇺🇸" },
+        { id: "australia", name: "Australia", code: "au", flag: "🇦🇺" },
+        { id: "united kingdom", name: "United Kingdom", code: "gb", flag: "🇬🇧" },
+        { id: "ireland", name: "Ireland", code: "ie", flag: "🇮🇪" },
+        { id: "germany", name: "Germany", code: "de", flag: "🇩🇪" },
+        { id: "malta", name: "Malta", code: "mt", flag: "🇲🇹" },
+      ]);
+      setLoading(false);
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (userData.country && countries.length > 0) {
+      const matching = countries.find(c => c.name === userData.country);
+      if (matching) setSelectedCountryId(matching.id);
+    }
+  }, [userData.country, countries]);
 
   const toggleCountry = (id: string, name: string, flag: string) => {
     setSelectedCountryId(id);
@@ -97,42 +133,51 @@ export default function CountrySelection() {
         </View>
 
         {/* Country Grid */}
-        <View style={styles.grid}>
-          {COUNTRIES.map((country) => (
-            <TouchableOpacity
-              key={country.id}
-              style={[
-                styles.countryItem,
-                selectedCountryId === country.id && styles.selectedItem,
-              ]}
-              onPress={() => toggleCountry(country.id, country.name, country.flag)}
-            >
-              <View style={styles.flagWrapper}>
-                <View style={[
-                  styles.flagContainer,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                  selectedCountryId === country.id && { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.primary + "15" }
-                ]}>
-                  <Image
-                    source={{ uri: `https://flagcdn.com/w160/${country.code}.png` }}
-                    style={styles.flagImage}
-                    resizeMode="cover"
-                  />
-                </View>
-                {selectedCountryId === country.id && (
-                  <View style={[styles.checkBadge, { backgroundColor: colors.background }]}>
-                    <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+        {loading ? (
+          <View style={{ paddingVertical: 60, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={{ color: colors.textSecondary, marginTop: 12, fontSize: 14 }}>
+              Finding available countries...
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {countries.map((country) => (
+              <TouchableOpacity
+                key={country.id}
+                style={[
+                  styles.countryItem,
+                  selectedCountryId === country.id && styles.selectedItem,
+                ]}
+                onPress={() => toggleCountry(country.id, country.name, country.flag)}
+              >
+                <View style={styles.flagWrapper}>
+                  <View style={[
+                    styles.flagContainer,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    selectedCountryId === country.id && { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.primary + "15" }
+                  ]}>
+                    <Image
+                      source={{ uri: `https://flagcdn.com/w160/${country.code}.png` }}
+                      style={styles.flagImage}
+                      resizeMode="cover"
+                    />
                   </View>
-                )}
-              </View>
-              <Text style={[
-                styles.countryName,
-                { color: colors.textSecondary },
-                selectedCountryId === country.id && { color: colors.primary, fontWeight: "800" }
-              ]}>{country.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+                  {selectedCountryId === country.id && (
+                    <View style={[styles.checkBadge, { backgroundColor: colors.background }]}>
+                      <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+                    </View>
+                  )}
+                </View>
+                <Text style={[
+                  styles.countryName,
+                  { color: colors.textSecondary },
+                  selectedCountryId === country.id && { color: colors.primary, fontWeight: "800" }
+                ]}>{country.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {/* Sticky Bottom Button */}
@@ -144,9 +189,15 @@ export default function CountrySelection() {
             !selectedCountryId && { opacity: 0.5 }
           ]}
           disabled={!selectedCountryId}
-          onPress={() => router.push("/setup/study-level")}
+          onPress={() => {
+            if (edit === "true") {
+              router.back();
+            } else {
+              router.push("/setup/study-level");
+            }
+          }}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{edit === "true" ? "Save Changes" : "Continue"}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -212,10 +263,12 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
+    marginHorizontal: -6,
   },
   countryItem: {
-    width: (width - 64) / 4,
+    width: (width - 48 - 36) / 3,
+    marginHorizontal: 6,
     alignItems: "center",
     marginBottom: 24,
   },

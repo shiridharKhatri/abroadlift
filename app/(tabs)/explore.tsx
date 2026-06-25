@@ -205,15 +205,27 @@ export default function DashboardScreen() {
 
         {/* Global Search Bar */}
         <View style={styles.globalSearchContainer}>
-          <View style={[styles.globalSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.globalSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+            activeOpacity={0.8}
+            onPress={() => router.push("/(tabs)/search")}
+          >
             <Feather name="search" size={18} color={colors.textSecondary} />
             <TextInput
               placeholder="Search university or courses"
               style={[styles.globalSearchInput, { color: colors.text }]}
               placeholderTextColor={colors.textSecondary}
+              editable={false}
+              pointerEvents="none"
             />
-          </View>
-          <TouchableOpacity style={styles.filterBtnSmall}>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.filterBtnSmall}
+            onPress={() => router.push({
+              pathname: "/(tabs)/search",
+              params: { openFilter: "true" }
+            })}
+          >
             <Ionicons name="options-outline" size={20} color="white" />
           </TouchableOpacity>
         </View>
@@ -464,7 +476,11 @@ export default function DashboardScreen() {
           activeOpacity={1}
           onPress={() => setShowNotificationsModal(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+          <TouchableOpacity 
+            activeOpacity={1} 
+            style={[styles.modalContent, { backgroundColor: colors.background }]}
+            onPress={() => {}}
+          >
             <View style={[styles.modalIndicator, { backgroundColor: colors.border }]} />
             <View style={styles.modalHeaderRow}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Notifications</Text>
@@ -510,7 +526,7 @@ export default function DashboardScreen() {
                 </View>
               </View>
             </ScrollView>
-          </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -1056,7 +1072,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     flexDirection: "row",
     gap: 10,
-    marginBottom: 40,
+    marginBottom: 20,
   },
   globalSearchBar: {
     flex: 1,
