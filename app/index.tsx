@@ -59,13 +59,13 @@ export default function Index() {
 
   React.useEffect(() => {
     if (!isLoading && isAuthenticated && isFocused) {
-      if (userData?.onboardingComplete) {
+      if (userData?.onboardingComplete || (userData?.country && userData?.studyLevel)) {
         router.replace("/(tabs)/explore");
       } else {
         router.replace("/setup/country");
       }
     }
-  }, [isAuthenticated, isLoading, userData?.onboardingComplete, isFocused]);
+  }, [isAuthenticated, isLoading, userData?.onboardingComplete, userData?.country, userData?.studyLevel, isFocused]);
 
   if (isLoading || isAuthenticated) {
     return (

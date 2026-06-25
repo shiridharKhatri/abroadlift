@@ -82,7 +82,7 @@ export default function VerifyOtpScreen() {
       } else {
         // purpose is login
         const user = await login(phoneE164, otpCode);
-        if (user.onboardingComplete) {
+        if (user.onboardingComplete || (user.country && user.studyLevel)) {
           router.replace("/(tabs)/explore");
         } else {
           router.replace("/setup/country");
