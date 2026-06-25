@@ -1,6 +1,7 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   Alert,
   Dimensions,
@@ -62,6 +63,27 @@ const getFlagUrl = (countryName: string | undefined) => {
   return `https://flagcdn.com/w160/${code}.png`;
 };
 
+const getProfileGradient = (country: string | undefined, isDark: boolean): [string, string] => {
+  const norm = (country || "").toLowerCase().trim();
+  if (isDark) {
+    if (norm === "usa" || norm === "united states") return ["#0F1E36", "#1E1B4B"];
+    if (norm === "uk" || norm === "united kingdom") return ["#111C24", "#1E152A"];
+    if (norm === "canada") return ["#200D0D", "#2E1111"];
+    if (norm === "germany") return ["#1A1A1A", "#261D15"];
+    if (norm === "australia") return ["#0C1322", "#0A1D37"];
+    if (norm === "ireland") return ["#062A14", "#0C2E1F"];
+    return ["#111827", "#1E293B"];
+  } else {
+    if (norm === "usa" || norm === "united states") return ["#1E40AF", "#3B82F6"]; // Blue theme
+    if (norm === "uk" || norm === "united kingdom") return ["#1E1B4B", "#4338CA"]; // Indigo/navy
+    if (norm === "canada") return ["#991B1B", "#EF4444"]; // Red theme
+    if (norm === "germany") return ["#1F2937", "#D97706"]; // Dark grey to deep orange
+    if (norm === "australia") return ["#03254C", "#118AB2"]; // Deep blue/cyan
+    if (norm === "ireland") return ["#064E3B", "#10B981"]; // Emerald green
+    return ["#1E3A8A", "#3B82F6"]; // Default deep blue
+  }
+};
+
 export default function ProfileTab() {
   const { userData, logout } = useUser();
   const { themeMode, isDark, colors, setThemeMode } = useTheme();
@@ -93,32 +115,40 @@ export default function ProfileTab() {
       >
 
         {/* Profile Card / Header Box */}
-        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <LinearGradient
+          colors={getProfileGradient(userData.country, isDark)}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.profileCard, { borderWidth: 0 }]}
+        >
           <View style={styles.avatarWrapper}>
-            <View style={[styles.avatarInner, { borderColor: colors.primary, backgroundColor: colors.background }]}>
+            <View style={[styles.avatarInner, { borderColor: "rgba(255, 255, 255, 0.45)", backgroundColor: "rgba(255, 255, 255, 0.15)" }]}>
               {userData.profileImage ? (
                 <Image source={{ uri: userData.profileImage }} style={styles.avatarImage} />
               ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.background }]}>
-                  <Text style={[styles.avatarLetter, { color: colors.primary }]}>
+                <View style={[styles.avatarPlaceholder, { backgroundColor: "transparent" }]}>
+                  <Text style={[styles.avatarLetter, { color: "#FFFFFF" }]}>
                     {userData.name ? userData.name.charAt(0).toUpperCase() : "S"}
                   </Text>
                 </View>
               )}
             </View>
-            <TouchableOpacity style={[styles.avatarEditBadge, { backgroundColor: colors.primary, borderColor: colors.background }]} onPress={handleEditPress}>
+            <TouchableOpacity style={[styles.avatarEditBadge, { backgroundColor: colors.primary, borderColor: "#FFFFFF" }]} onPress={handleEditPress}>
               <Feather name="camera" size={14} color="white" />
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.profileName, { color: colors.text }]}>{userData.name || "New Student"}</Text>
-          <Text style={[styles.profileUsername, { color: colors.textSecondary }]}>{userData.username || "@student"}</Text>
+          <Text style={[styles.profileName, { color: "#FFFFFF" }]}>{userData.name || "New Student"}</Text>
+          <Text style={[styles.profileUsername, { color: "rgba(255, 255, 255, 0.75)" }]}>{userData.username || "@student"}</Text>
 
-          <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary + "15" }]} onPress={handleEditPress}>
-            <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit Profile</Text>
-            <Feather name="chevron-right" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
+          <TouchableOpacity 
+            style={[styles.editButton, { backgroundColor: "rgba(255, 255, 255, 0.2)", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.15)" }]} 
+            onPress={handleEditPress}
+          >
+            <Text style={[styles.editButtonText, { color: "#FFFFFF" }]}>Edit Profile</Text>
+            <Feather name="chevron-right" size={14} color="#FFFFFF" style={{ marginLeft: 4 }} />
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
         {/* Preferences Grid */}
         <View style={styles.sectionHeader}>

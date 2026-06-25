@@ -190,7 +190,7 @@ export default function AdmissionChanceScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace("/(tabs)/explore"); } }}>
           <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Admission Chance</Text>

@@ -668,7 +668,7 @@ export default function UniversityDetails() {
           />
 
           <View style={[styles.bannerHeader, { paddingTop: insets.top + 10 }]}>
-            <TouchableOpacity style={styles.headerCircleBtn} onPress={() => router.back()}>
+            <TouchableOpacity style={styles.headerCircleBtn} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace("/(tabs)/explore"); } }}>
               <Ionicons name="arrow-back" size={22} color="white" />
             </TouchableOpacity>
             <View style={styles.headerRightBtns}>
