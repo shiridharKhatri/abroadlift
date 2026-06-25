@@ -51,17 +51,83 @@ const COUNTRIES = [
   { id: "india", name: "India", flag: "🇮🇳" },
 ];
 
-const COUNTRY_THEMES: Record<string, { bg: string; border: string; text: string; editBg: string; editText: string }> = {
-  "USA": { bg: "#EFF6FF", border: "#BFDBFE", text: "#1E3A8A", editBg: "#3B82F61C", editText: "#2563EB" },
-  "United Kingdom": { bg: "#EEF2FF", border: "#C7D2FE", text: "#312E81", editBg: "#4F46E51C", editText: "#4F46E5" },
-  "UK": { bg: "#EEF2FF", border: "#C7D2FE", text: "#312E81", editBg: "#4F46E51C", editText: "#4F46E5" },
-  "Canada": { bg: "#FEF2F2", border: "#FECACA", text: "#7F1D1D", editBg: "#EF44441C", editText: "#DC2626" },
-  "Germany": { bg: "#FFFDF0", border: "#FEF3C7", text: "#78350F", editBg: "#F59E0B1C", editText: "#D97706" },
-  "Australia": { bg: "#ECFDF5", border: "#A7F3D0", text: "#064E3B", editBg: "#10B9811C", editText: "#059669" },
-  "Ireland": { bg: "#F0FDF4", border: "#BBF7D0", text: "#14532D", editBg: "#22C55E1C", editText: "#16A34A" },
-  "France": { bg: "#F8FAFC", border: "#E2E8F0", text: "#0F172A", editBg: "#64748B1C", editText: "#475569" },
-  "Japan": { bg: "#FFF5F5", border: "#FFE4E6", text: "#9F1239", editBg: "#F43F5E1C", editText: "#E11D48" },
-  "Korea": { bg: "#F0FDFD", border: "#CCFBF1", text: "#115E59", editBg: "#14B8A61C", editText: "#0D9488" },
+const COUNTRY_THEMES: Record<string, { 
+  colors: [string, string];
+  titleColor: string;
+  countryColor: string;
+  editBg: string;
+  editText: string;
+}> = {
+  "USA": { 
+    colors: ["#1E3A8A", "#3B82F6"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "United Kingdom": { 
+    colors: ["#0F172A", "#1E3A8A"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "UK": { 
+    colors: ["#0F172A", "#1E3A8A"],
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "Canada": { 
+    colors: ["#7F1D1D", "#DC2626"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "Germany": { 
+    colors: ["#1E293B", "#D97706"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "Australia": { 
+    colors: ["#064E3B", "#059669"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "Ireland": { 
+    colors: ["#14532D", "#16A34A"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "France": { 
+    colors: ["#1E3A8A", "#EF4444"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "Japan": { 
+    colors: ["#881337", "#E11D48"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "Korea": { 
+    colors: ["#1E3A8A", "#E11D48"], 
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
 };
 
 const getCountryTheme = (countryName: string | undefined, isDark: boolean, colors: any) => {
@@ -69,21 +135,22 @@ const getCountryTheme = (countryName: string | undefined, isDark: boolean, color
   const theme = COUNTRY_THEMES[normalized];
   if (!theme) {
     return {
-      bg: colors.card,
-      border: colors.border,
-      text: colors.primary,
-      editBg: colors.primary + "15",
-      editText: colors.primary
+      colors: [colors.primary, colors.primary + "CC"] as [string, string],
+      titleColor: "rgba(255,255,255,0.75)",
+      countryColor: "#FFFFFF",
+      editBg: "rgba(255,255,255,0.2)",
+      editText: "#FFFFFF"
     };
   }
 
   if (isDark) {
+    // In dark mode, make the colors slightly darker and less saturated
     return {
-      bg: theme.text + "15",
-      border: theme.text + "35",
-      text: theme.editText,
-      editBg: theme.text + "25",
-      editText: theme.editText
+      colors: [theme.colors[0] + "D0", theme.colors[1] + "B0"] as [string, string],
+      titleColor: "rgba(255,255,255,0.65)",
+      countryColor: "#FFFFFF",
+      editBg: "rgba(255,255,255,0.15)",
+      editText: "#FFFFFF"
     };
   }
 
@@ -272,19 +339,30 @@ export default function DashboardScreen() {
 
         {/* Study Plan Card */}
         <TouchableOpacity
-          style={[styles.studyPlanCard, { backgroundColor: countryTheme.bg, borderColor: countryTheme.border }]}
+          style={styles.studyPlanCard}
           onPress={() => setShowPlanModal(true)}
+          activeOpacity={0.9}
         >
-          <View style={styles.studyPlanInfo}>
-            <Text style={styles.flagEmoji}>{userData.flag || "🗺️"}</Text>
-            <View style={styles.studyPlanTextWrapper}>
-              <Text style={[styles.studyPlanLabel, { color: colors.textSecondary }]}>Study Plan <Text style={[styles.studyCountry, { color: countryTheme.text }]}>{userData.country || "Select country"}</Text></Text>
+          <LinearGradient
+            colors={countryTheme.colors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.studyPlanCardGradient}
+          >
+            <View style={styles.studyPlanInfo}>
+              <View style={styles.flagIconWrapper}>
+                <Text style={styles.flagEmojiLarge}>{userData.flag || "🗺️"}</Text>
+              </View>
+              <View style={styles.studyPlanTextWrapper}>
+                <Text style={styles.studyPlanLabel}>Study Plan</Text>
+                <Text style={styles.studyCountry}>{userData.country || "Select Destination"}</Text>
+              </View>
             </View>
-          </View>
-          <View style={[styles.editButton, { backgroundColor: countryTheme.editBg }]}>
-            <Feather name="edit-2" size={14} color={countryTheme.editText} />
-            <Text style={[styles.editText, { color: countryTheme.editText }]}>Edit</Text>
-          </View>
+            <View style={styles.editButtonGlass}>
+              <Feather name="edit-2" size={14} color="#FFFFFF" />
+              <Text style={styles.editText}>Edit</Text>
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Stats Row */}
@@ -737,49 +815,69 @@ const styles = StyleSheet.create({
   },
   studyPlanCard: {
     marginHorizontal: 20,
-    backgroundColor: THEME.white,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 24,
+    overflow: "hidden",
+    marginBottom: 24,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  studyPlanCardGradient: {
+    padding: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    marginBottom: 24,
   },
   studyPlanInfo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
   },
-  flagEmoji: {
-    fontSize: 20,
-    width: 32,
-    height: 32,
-    textAlign: "center",
-    backgroundColor: "#F8FAFC",
-    borderRadius: 8,
-    lineHeight: 32,
+  flagIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+  },
+  flagEmojiLarge: {
+    fontSize: 24,
   },
   studyPlanTextWrapper: {
+    justifyContent: "center",
   },
   studyPlanLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: THEME.textDark,
+    fontSize: 10,
+    fontWeight: "800",
+    color: "rgba(255, 255, 255, 0.75)",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   studyCountry: {
-    color: THEME.blue,
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    marginTop: 2,
   },
-  editButton: {
+  editButtonGlass: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
   },
   editText: {
     fontSize: 13,
-    fontWeight: "700",
-    color: THEME.blue,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
   statsScroll: {
     paddingHorizontal: 16,
