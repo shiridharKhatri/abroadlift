@@ -244,6 +244,51 @@ export default function DashboardScreen() {
     setVisaReadiness(`${finalVisa}% - ${visaLabel}`);
   };
 
+  const getDynamicNotifications = () => {
+    const list = [];
+    
+    // 1. Welcome Notification
+    list.push({
+      id: "welcome",
+      icon: "sparkles-outline",
+      iconColor: isDark ? colors.primary : THEME.blue,
+      bgColor: isDark ? "#1E293B" : "#EFF6FF",
+      title: `Welcome to AbroadLift, ${userData.name || "Student"}!`,
+      body: "Start exploring universities and building your roadmap today.",
+      time: "Just now"
+    });
+
+    // 2. Profile Status Notification
+    const hasAcademics = userData.cgpa && userData.score;
+    list.push({
+      id: "profile",
+      icon: "person-outline",
+      iconColor: isDark ? colors.secondary : "#D97706",
+      bgColor: isDark ? "#1E293B" : "#FEF3C7",
+      title: hasAcademics ? "Profile Status: Active" : "Complete Your Profile",
+      body: hasAcademics 
+        ? "Your academic grades and test scores are updated. You are ready to view admission chances!"
+        : "Add your academic grades and English test scores to estimate your exact admission chances.",
+      time: hasAcademics ? "1 hour ago" : "2 hours ago"
+    });
+
+    // 3. Shortlist/Target Notification
+    const hasShortlist = userData.selectedUniversities && userData.selectedUniversities.length > 0;
+    list.push({
+      id: "shortlist",
+      icon: "bookmark-outline",
+      iconColor: isDark ? colors.primary : THEME.green,
+      bgColor: isDark ? "#1E293B" : "#ECFDF5",
+      title: hasShortlist ? "Shortlist Updated" : "Explore Universities",
+      body: hasShortlist
+        ? `${userData.selectedUniversities[0].name || "Your selected school"} has been successfully added to your shortlist.`
+        : `Start shortlisting universities in ${userData.country || "your destination"} to track visa readiness.`,
+      time: "Yesterday"
+    });
+
+    return list;
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       let mounted = true;
@@ -758,38 +803,25 @@ export default function DashboardScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} style={styles.notificationsList}>
-              <View style={[styles.notificationItem, { borderBottomColor: colors.border }]}>
-                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }]}>
-                  <Ionicons name="sparkles-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
+              {getDynamicNotifications().map((notif, index) => (
+                <View 
+                  key={notif.id} 
+                  style={[
+                    styles.notificationItem, 
+                    { borderBottomColor: colors.border },
+                    index === 2 && { borderBottomWidth: 0 }
+                  ]}
+                >
+                  <View style={[styles.notifIconBox, { backgroundColor: notif.bgColor }]}>
+                    <Ionicons name={notif.icon as any} size={18} color={notif.iconColor} />
+                  </View>
+                  <View style={styles.notifTextContent}>
+                    <Text style={[styles.notifTitle, { color: colors.text }]}>{notif.title}</Text>
+                    <Text style={[styles.notifBody, { color: colors.textSecondary }]}>{notif.body}</Text>
+                    <Text style={[styles.notifTime, { color: colors.textSecondary }]}>{notif.time}</Text>
+                  </View>
                 </View>
-                <View style={styles.notifTextContent}>
-                  <Text style={[styles.notifTitle, { color: colors.text }]}>Welcome to AbroadLift!</Text>
-                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Start exploring universities and building your roadmap today.</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>Just now</Text>
-                </View>
-              </View>
-
-              <View style={[styles.notificationItem, { borderBottomColor: colors.border }]}>
-                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#FEF3C7" }]}>
-                  <Ionicons name="person-outline" size={18} color={isDark ? colors.secondary : "#D97706"} />
-                </View>
-                <View style={styles.notifTextContent}>
-                  <Text style={[styles.notifTitle, { color: colors.text }]}>Complete Your Profile</Text>
-                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Add your academic grades and English scores to estimate admission chances.</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>2 hours ago</Text>
-                </View>
-              </View>
-
-              <View style={[styles.notificationItem, { borderBottomWidth: 0 }]}>
-                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#ECFDF5" }]}>
-                  <Ionicons name="bookmark-outline" size={18} color={isDark ? colors.primary : THEME.green} />
-                </View>
-                <View style={styles.notifTextContent}>
-                  <Text style={[styles.notifTitle, { color: colors.text }]}>Shortlist Updated</Text>
-                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Conestoga College - Doon has been successfully added to your shortlist.</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>Yesterday</Text>
-                </View>
-              </View>
+              ))}
             </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>
