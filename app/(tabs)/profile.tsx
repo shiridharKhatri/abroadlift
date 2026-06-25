@@ -34,6 +34,34 @@ const THEME = {
   cardBg: "#FFFFFF",
 };
 
+const COUNTRY_CODES: Record<string, string> = {
+  "usa": "us",
+  "united states": "us",
+  "uk": "gb",
+  "united kingdom": "gb",
+  "canada": "ca",
+  "korea": "kr",
+  "south korea": "kr",
+  "netherlands": "nl",
+  "nether": "nl",
+  "brazil": "br",
+  "germany": "de",
+  "india": "in",
+  "australia": "au",
+  "france": "fr",
+  "japan": "jp",
+  "italy": "it",
+  "ireland": "ie",
+  "malta": "mt"
+};
+
+const getFlagUrl = (countryName: string | undefined) => {
+  const normalized = (countryName || "").toLowerCase().trim();
+  const code = COUNTRY_CODES[normalized];
+  if (!code) return null;
+  return `https://flagcdn.com/w160/${code}.png`;
+};
+
 export default function ProfileTab() {
   const { userData, logout } = useUser();
   const { themeMode, isDark, colors, setThemeMode } = useTheme();
@@ -104,12 +132,20 @@ export default function ProfileTab() {
             onPress={() => router.push("/setup/country?edit=true")}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }]}>
-              <Ionicons name="location-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
+            <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }, getFlagUrl(userData.country) && { padding: 0, overflow: 'hidden' }]}>
+              {getFlagUrl(userData.country) ? (
+                <Image 
+                  source={{ uri: getFlagUrl(userData.country)! }} 
+                  style={{ width: '100%', height: '100%', borderRadius: 10 }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Ionicons name="location-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
+              )}
             </View>
             <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Target Country</Text>
             <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
-              {userData.flag ? `${userData.flag} ` : ""}{userData.country || "Not Set"}
+              {userData.country || "Not Set"}
             </Text>
           </TouchableOpacity>
 

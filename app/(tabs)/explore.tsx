@@ -51,6 +51,34 @@ const COUNTRIES = [
   { id: "india", name: "India", flag: "🇮🇳" },
 ];
 
+const COUNTRY_CODES: Record<string, string> = {
+  "usa": "us",
+  "united states": "us",
+  "uk": "gb",
+  "united kingdom": "gb",
+  "canada": "ca",
+  "korea": "kr",
+  "south korea": "kr",
+  "netherlands": "nl",
+  "nether": "nl",
+  "brazil": "br",
+  "germany": "de",
+  "india": "in",
+  "australia": "au",
+  "france": "fr",
+  "japan": "jp",
+  "italy": "it",
+  "ireland": "ie",
+  "malta": "mt"
+};
+
+const getFlagUrl = (countryName: string | undefined) => {
+  const normalized = (countryName || "").toLowerCase().trim();
+  const code = COUNTRY_CODES[normalized];
+  if (!code) return null;
+  return `https://flagcdn.com/w160/${code}.png`;
+};
+
 const COUNTRY_THEMES: Record<string, { 
   colors: [string, string];
   titleColor: string;
@@ -351,7 +379,15 @@ export default function DashboardScreen() {
           >
             <View style={styles.studyPlanInfo}>
               <View style={styles.flagIconWrapper}>
-                <Text style={styles.flagEmojiLarge}>{userData.flag || "🗺️"}</Text>
+                {getFlagUrl(userData.country) ? (
+                  <Image
+                    source={{ uri: getFlagUrl(userData.country)! }}
+                    style={styles.flagImageCircle}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.flagEmojiLarge}>🗺️</Text>
+                )}
               </View>
               <View style={styles.studyPlanTextWrapper}>
                 <Text style={styles.studyPlanLabel}>Study Plan</Text>
@@ -844,6 +880,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.25)",
+    overflow: "hidden",
+  },
+  flagImageCircle: {
+    width: "100%",
+    height: "100%",
   },
   flagEmojiLarge: {
     fontSize: 24,
