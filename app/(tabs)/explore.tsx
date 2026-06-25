@@ -51,9 +51,49 @@ const COUNTRIES = [
   { id: "india", name: "India", flag: "🇮🇳" },
 ];
 
+const COUNTRY_THEMES: Record<string, { bg: string; border: string; text: string; editBg: string; editText: string }> = {
+  "USA": { bg: "#EFF6FF", border: "#BFDBFE", text: "#1E3A8A", editBg: "#3B82F61C", editText: "#2563EB" },
+  "United Kingdom": { bg: "#EEF2FF", border: "#C7D2FE", text: "#312E81", editBg: "#4F46E51C", editText: "#4F46E5" },
+  "UK": { bg: "#EEF2FF", border: "#C7D2FE", text: "#312E81", editBg: "#4F46E51C", editText: "#4F46E5" },
+  "Canada": { bg: "#FEF2F2", border: "#FECACA", text: "#7F1D1D", editBg: "#EF44441C", editText: "#DC2626" },
+  "Germany": { bg: "#FFFDF0", border: "#FEF3C7", text: "#78350F", editBg: "#F59E0B1C", editText: "#D97706" },
+  "Australia": { bg: "#ECFDF5", border: "#A7F3D0", text: "#064E3B", editBg: "#10B9811C", editText: "#059669" },
+  "Ireland": { bg: "#F0FDF4", border: "#BBF7D0", text: "#14532D", editBg: "#22C55E1C", editText: "#16A34A" },
+  "France": { bg: "#F8FAFC", border: "#E2E8F0", text: "#0F172A", editBg: "#64748B1C", editText: "#475569" },
+  "Japan": { bg: "#FFF5F5", border: "#FFE4E6", text: "#9F1239", editBg: "#F43F5E1C", editText: "#E11D48" },
+  "Korea": { bg: "#F0FDFD", border: "#CCFBF1", text: "#115E59", editBg: "#14B8A61C", editText: "#0D9488" },
+};
+
+const getCountryTheme = (countryName: string | undefined, isDark: boolean, colors: any) => {
+  const normalized = (countryName || "").trim();
+  const theme = COUNTRY_THEMES[normalized];
+  if (!theme) {
+    return {
+      bg: colors.card,
+      border: colors.border,
+      text: colors.primary,
+      editBg: colors.primary + "15",
+      editText: colors.primary
+    };
+  }
+
+  if (isDark) {
+    return {
+      bg: theme.text + "15",
+      border: theme.text + "35",
+      text: theme.editText,
+      editBg: theme.text + "25",
+      editText: theme.editText
+    };
+  }
+
+  return theme;
+};
+
 export default function DashboardScreen() {
   const { userData, setUserData } = useUser();
   const { colors, isDark } = useTheme();
+  const countryTheme = getCountryTheme(userData.country, isDark, colors);
   const [showPlanModal, setShowPlanModal] = React.useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = React.useState(false);
   const [modalStep, setModalStep] = React.useState<'options' | 'country'>('options');
@@ -232,18 +272,18 @@ export default function DashboardScreen() {
 
         {/* Study Plan Card */}
         <TouchableOpacity
-          style={[styles.studyPlanCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[styles.studyPlanCard, { backgroundColor: countryTheme.bg, borderColor: countryTheme.border }]}
           onPress={() => setShowPlanModal(true)}
         >
           <View style={styles.studyPlanInfo}>
             <Text style={styles.flagEmoji}>{userData.flag || "🗺️"}</Text>
             <View style={styles.studyPlanTextWrapper}>
-              <Text style={[styles.studyPlanLabel, { color: colors.textSecondary }]}>Study Plan <Text style={[styles.studyCountry, { color: colors.primary }]}>{userData.country || "Select country"}</Text></Text>
+              <Text style={[styles.studyPlanLabel, { color: colors.textSecondary }]}>Study Plan <Text style={[styles.studyCountry, { color: countryTheme.text }]}>{userData.country || "Select country"}</Text></Text>
             </View>
           </View>
-          <View style={[styles.editButton, { backgroundColor: colors.primary + "15" }]}>
-            <Feather name="edit-2" size={14} color={colors.primary} />
-            <Text style={[styles.editText, { color: colors.primary }]}>Edit</Text>
+          <View style={[styles.editButton, { backgroundColor: countryTheme.editBg }]}>
+            <Feather name="edit-2" size={14} color={countryTheme.editText} />
+            <Text style={[styles.editText, { color: countryTheme.editText }]}>Edit</Text>
           </View>
         </TouchableOpacity>
 
