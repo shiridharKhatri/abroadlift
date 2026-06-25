@@ -17,6 +17,7 @@ import { useUser } from "../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { getAvailableCountries } from "../../lib/api";
+import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");
 
@@ -132,13 +133,22 @@ export default function CountrySelection() {
           </Text>
         </View>
 
-        {/* Country Grid */}
         {loading ? (
-          <View style={{ paddingVertical: 60, alignItems: "center", justifyContent: "center" }}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={{ color: colors.textSecondary, marginTop: 12, fontSize: 14 }}>
-              Finding available countries...
-            </Text>
+          <View style={styles.grid}>
+            {[1, 2, 3, 4, 5, 6].map((key) => (
+              <View
+                key={key}
+                style={[
+                  styles.countryItem,
+                  { alignItems: "center", justifyContent: "center" }
+                ]}
+              >
+                <View style={{ width: 70, height: 70, borderRadius: 35, overflow: "hidden", marginBottom: 12 }}>
+                  <Skeleton width={70} height={70} borderRadius={35} />
+                </View>
+                <Skeleton width={60} height={16} borderRadius={4} />
+              </View>
+            ))}
           </View>
         ) : (
           <View style={styles.grid}>

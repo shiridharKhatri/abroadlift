@@ -23,6 +23,7 @@ import { useUser } from "../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { searchUniversities, calculateAcceptanceChance, UniversityResult } from "../../lib/api";
 import { useTheme } from "../context/ThemeContext";
+import { Skeleton } from "../../components/Skeleton";
 
 const { width, height } = Dimensions.get("window");
 
@@ -326,11 +327,30 @@ export default function UniversitySelection() {
             </TouchableOpacity>
           </View>
         </View>
-
         {isLoading ? (
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 40 }}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={{ marginTop: 12, color: colors.textSecondary }}>Searching Universities...</Text>
+          <View style={{ gap: 16 }}>
+            {[1, 2, 3].map((key) => (
+              <View key={key} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, overflow: "hidden" }]}>
+                {/* Image Placeholder */}
+                <View style={{ height: 160, width: "100%" }}>
+                  <Skeleton width="100%" height={160} borderRadius={0} />
+                </View>
+                {/* Details Placeholder */}
+                <View style={{ padding: 16, gap: 12 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Skeleton width={120} height={14} borderRadius={4} />
+                    <Skeleton width={60} height={18} borderRadius={10} />
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    <Skeleton width={36} height={36} borderRadius={12} />
+                    <View style={{ flex: 1, gap: 6 }}>
+                      <Skeleton width="80%" height={16} borderRadius={4} />
+                      <Skeleton width="50%" height={12} borderRadius={4} />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ))}
           </View>
         ) : filteredUniversities.length > 0 ? (
           filteredUniversities.map((uni) => (

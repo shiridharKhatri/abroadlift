@@ -22,6 +22,7 @@ import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useUser } from "../context/UserContext";
 import { useTheme } from "../context/ThemeContext";
+import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");
 
@@ -44,11 +45,8 @@ const COUNTRIES = [
   { id: "canada", name: "Canada", flag: "🇨🇦" },
   { id: "australia", name: "Australia", flag: "🇦🇺" },
   { id: "germany", name: "Germany", flag: "🇩🇪" },
-  { id: "france", name: "France", flag: "🇫🇷" },
-  { id: "japan", name: "Japan", flag: "🇯🇵" },
-  { id: "italy", name: "Italy", flag: "🇮🇹" },
-  { id: "korea", name: "Korea", flag: "🇰🇷" },
-  { id: "india", name: "India", flag: "🇮🇳" },
+  { id: "ireland", name: "Ireland", flag: "🇮🇪" },
+  { id: "malta", name: "Malta", flag: "🇲🇹" },
 ];
 
 const COUNTRY_CODES: Record<string, string> = {
@@ -197,6 +195,7 @@ export default function DashboardScreen() {
   const [acceptanceChance, setAcceptanceChance] = React.useState<string>("--");
   const [visaReadiness, setVisaReadiness] = React.useState<string>("--");
   const [loadingUnis, setLoadingUnis] = React.useState(true);
+  const [showCountryFallback, setShowCountryFallback] = React.useState(false);
 
   const USD_TO_NPR = 134;
 
@@ -253,12 +252,33 @@ export default function DashboardScreen() {
           setLoadingUnis(true);
           const { getCostOfLiving } = require("../../lib/api");
 
-          const [results, costData] = await Promise.all([
-            searchUniversities("", userData.country || "UK"),
-            getCostOfLiving(userData.country || "UK")
-          ]);
+          let costData = null;
+          try {
+            costData = await getCostOfLiving(userData.country || "UK");
+          } catch (err) {
+            console.warn("Failed to fetch cost data:", err);
+          }
+
+          let results: UniversityResult[] = [];
+          let isFallback = false;
+          try {
+            results = await searchUniversities("", userData.country || "UK");
+          } catch (err) {
+            console.warn("Failed to fetch country universities:", err);
+          }
+
+          if (!results || results.length === 0) {
+            try {
+              // Fallback to all global schools if the country search is empty
+              results = await searchUniversities("", "All");
+              isFallback = true;
+            } catch (err) {
+              console.warn("Failed to fetch global universities fallback:", err);
+            }
+          }
 
           if (mounted) {
+            setShowCountryFallback(isFallback);
             // Filter by study level first
             let filtered = results;
             if (userData.studyLevel) {
@@ -289,6 +309,16 @@ export default function DashboardScreen() {
                 tuitionUsd = userData.selectedUniversities[0].tuitionValue || 20000;
               }
 
+              const totalNpr = (annualLivingUsd + tuitionUsd) * USD_TO_NPR;
+              setEstimatedCost(`NPR ${(totalNpr / 1000000).toFixed(1)}M`);
+            } else {
+              // Fallback default calculation if API response or URL is missing
+              const monthlyUsd = 1500;
+              const annualLivingUsd = monthlyUsd * 12;
+              let tuitionUsd = 20000;
+              if (userData.selectedUniversities?.length > 0) {
+                tuitionUsd = userData.selectedUniversities[0].tuitionValue || 20000;
+              }
               const totalNpr = (annualLivingUsd + tuitionUsd) * USD_TO_NPR;
               setEstimatedCost(`NPR ${(totalNpr / 1000000).toFixed(1)}M`);
             }
@@ -404,7 +434,7 @@ export default function DashboardScreen() {
         {/* Stats Row */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
           {/* Estimated Cost Card */}
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.statCard, { backgroundColor: isDark ? "#064E3B20" : "#F0FDF4", borderColor: isDark ? "#064E3B40" : "#DCFCE7" }]}>
             <View>
               <View style={styles.statIconHeader}>
                 <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F3F4F6" }]}>
@@ -412,11 +442,19 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Estimated Cost</Text>
               </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>{estimatedCost} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>/ year</Text></Text>
-              <View style={[styles.statBadge, { backgroundColor: isDark ? "#2C2C2E" : "#F0FDF4" }]}>
-                <View style={styles.affordableDot} />
-                <Text style={[styles.statBadgeText, { color: isDark ? colors.text : THEME.textGray }]}>Affordable</Text>
-              </View>
+              {loadingUnis || estimatedCost === "--" ? (
+                <Skeleton width={120} height={28} borderRadius={6} style={{ marginVertical: 4 }} />
+              ) : (
+                <Text style={[styles.statValue, { color: colors.text }]}>{estimatedCost} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>/ year</Text></Text>
+              )}
+              {loadingUnis || estimatedCost === "--" ? (
+                <Skeleton width={90} height={20} borderRadius={6} style={{ marginVertical: 4 }} />
+              ) : (
+                <View style={[styles.statBadge, { backgroundColor: isDark ? "#2C2C2E" : "#F0FDF4" }]}>
+                  <View style={styles.affordableDot} />
+                  <Text style={[styles.statBadgeText, { color: isDark ? colors.text : THEME.textGray }]}>Affordable</Text>
+                </View>
+              )}
               <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>Tuition + Living</Text>
             </View>
             <TouchableOpacity
@@ -431,7 +469,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* Admission Chances Card */}
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.statCard, { backgroundColor: isDark ? "#9A341220" : "#FFF7ED", borderColor: isDark ? "#9A341240" : "#FFEDD5" }]}>
             <View>
               <View style={styles.statIconHeader}>
                 <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#FFF7ED" }]}>
@@ -439,16 +477,29 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Acceptance Chance</Text>
               </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>{acceptanceChance}</Text>
+              {loadingUnis || acceptanceChance === "--" ? (
+                <Skeleton width={120} height={28} borderRadius={6} style={{ marginVertical: 4 }} />
+              ) : (
+                <Text style={[styles.statValue, { color: colors.text }]}>{acceptanceChance}</Text>
+              )}
 
-              <View style={styles.checkRow}>
-                <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Good GPA</Text>
-              </View>
-              <View style={styles.checkRow}>
-                <Ionicons name="warning" size={16} color={THEME.orange} />
-                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Improve IELTS</Text>
-              </View>
+              {loadingUnis || acceptanceChance === "--" ? (
+                <View style={{ gap: 8, marginVertical: 6 }}>
+                  <Skeleton width={100} height={16} borderRadius={4} />
+                  <Skeleton width={100} height={16} borderRadius={4} />
+                </View>
+              ) : (
+                <>
+                  <View style={styles.checkRow}>
+                    <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
+                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Good GPA</Text>
+                  </View>
+                  <View style={styles.checkRow}>
+                    <Ionicons name="warning" size={16} color={THEME.orange} />
+                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Improve IELTS</Text>
+                  </View>
+                </>
+              )}
             </View>
 
             <TouchableOpacity
@@ -460,7 +511,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* Visa Readiness Card */}
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.statCard, { backgroundColor: isDark ? "#3730A320" : "#EEF2FF", borderColor: isDark ? "#3730A340" : "#E0E7FF" }]}>
             <View>
               <View style={styles.statIconHeader}>
                 <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : THEME.secondary + "15" }]}>
@@ -468,20 +519,33 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Visa Readiness</Text>
               </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>{visaReadiness}</Text>
+              {loadingUnis || visaReadiness === "--" ? (
+                <Skeleton width={120} height={28} borderRadius={6} style={{ marginVertical: 4 }} />
+              ) : (
+                <Text style={[styles.statValue, { color: colors.text }]}>{visaReadiness}</Text>
+              )}
 
-              <View style={[styles.progressBarContainer, { backgroundColor: isDark ? "#2C2C2E" : "#E2E8F0" }]}>
-                <View style={[styles.progressBarFull, { width: "60%", backgroundColor: colors.primary }]} />
-              </View>
+              {loadingUnis || visaReadiness === "--" ? (
+                <View style={{ gap: 8, marginVertical: 6 }}>
+                  <Skeleton width={140} height={8} borderRadius={4} />
+                  <Skeleton width={120} height={16} borderRadius={4} />
+                </View>
+              ) : (
+                <>
+                  <View style={[styles.progressBarContainer, { backgroundColor: isDark ? "#2C2C2E" : "#E2E8F0" }]}>
+                    <View style={[styles.progressBarFull, { width: "60%", backgroundColor: colors.primary }]} />
+                  </View>
 
-              <View style={styles.checkRow}>
-                <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Strong Academics</Text>
-              </View>
-              <View style={styles.checkRow}>
-                <Ionicons name="warning" size={16} color={THEME.orange} />
-                <Text style={[styles.checkText, { color: colors.textSecondary }]}>Financial Proof Weak</Text>
-              </View>
+                  <View style={styles.checkRow}>
+                    <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
+                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Strong Academics</Text>
+                  </View>
+                  <View style={styles.checkRow}>
+                    <Ionicons name="warning" size={16} color={THEME.orange} />
+                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Financial Proof Weak</Text>
+                  </View>
+                </>
+              )}
             </View>
 
             <TouchableOpacity
@@ -525,13 +589,48 @@ export default function DashboardScreen() {
             <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
           </TouchableOpacity>
         </View>
+        {showCountryFallback && (
+          <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: isDark ? "#2C2C2E" : "#FFF7ED",
+            borderColor: isDark ? "#3F3F46" : "#FFEDD5",
+            borderWidth: 1,
+            borderRadius: 16,
+            padding: 12,
+            marginHorizontal: 20,
+            marginBottom: 16,
+            gap: 8
+          }}>
+            <Ionicons name="information-circle" size={18} color={THEME.orange} />
+            <Text style={{
+              flex: 1,
+              fontSize: 12,
+              fontWeight: "600",
+              color: isDark ? colors.text : THEME.orange
+            }}>
+              No universities match {userData.country || "selected destination"} yet. Showing global recommendations instead.
+            </Text>
+          </View>
+        )}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
           {loadingUnis ? (
-            <View style={{ width: width - 40, height: 280, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={{ marginTop: 12, color: colors.textSecondary }}>Loading recommendations...</Text>
-            </View>
+            [1, 2, 3].map((key) => (
+              <View
+                key={key}
+                style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <View style={styles.uniImageContainer}>
+                  <Skeleton width="100%" height={140} borderRadius={0} />
+                </View>
+                <View style={styles.uniCardContent}>
+                  <Skeleton width={180} height={18} borderRadius={4} style={{ marginBottom: 8 }} />
+                  <Skeleton width={140} height={14} borderRadius={4} style={{ marginBottom: 8 }} />
+                  <Skeleton width={80} height={16} borderRadius={4} />
+                </View>
+              </View>
+            ))
           ) : recommendedUnis.length > 0 ? recommendedUnis.map((uni, idx) => (
             <TouchableOpacity
               key={uni.id || idx}
@@ -575,7 +674,7 @@ export default function DashboardScreen() {
                       params: { id: uni.id, country: uni.country, name: uni.name }
                     })}
                   >
-                    <Text style={[styles.compareBtnText, { color: colors.text }]}>View</Text>
+                    <Text style={styles.compareBtnText}>View</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -590,25 +689,37 @@ export default function DashboardScreen() {
         {/* Quick Actions */}
         <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginBottom: 16, color: colors.text }]}>Quick Actions</Text>
         <View style={styles.quickActionsGrid}>
-          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/search")}
+          >
             <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#E0F2FE" }]}>
               <Ionicons name="search" size={20} color={isDark ? colors.primary : THEME.blue} />
             </View>
             <Text style={[styles.quickActionText, { color: colors.text }]}>Compare Universities</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/visa-readiness")}
+          >
             <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F5F3FF" }]}>
               <MaterialCommunityIcons name="file-document-outline" size={20} color={isDark ? colors.secondary : "#8B5CF6"} />
             </View>
             <Text style={[styles.quickActionText, { color: colors.text }]}>View Documents</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/university/admission-chance")}
+          >
             <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#DCFCE7" }]}>
               <MaterialCommunityIcons name="bullseye-arrow" size={20} color={isDark ? colors.primary : THEME.green} />
             </View>
             <Text style={[styles.quickActionText, { color: colors.text }]}>Improve My Chances</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/recent")}
+          >
             <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#FFEDD5" }]}>
               <Ionicons name="bookmark" size={20} color={isDark ? colors.secondary : THEME.orange} />
             </View>
@@ -925,10 +1036,11 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   statCard: {
-    width: 200,
+    width: 210,
     backgroundColor: THEME.white,
     borderRadius: 24,
-    padding: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 20,
     marginHorizontal: 4,
     borderWidth: 1,
     borderColor: "#F1F5F9",
@@ -949,6 +1061,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statTitle: {
+    flex: 1,
     fontSize: 13,
     fontWeight: "800",
     color: THEME.textDark,

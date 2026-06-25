@@ -17,6 +17,7 @@ import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { getCostOfLiving, getRelocationIndex, getUniversityDetails } from "../../lib/api";
 import { ActivityIndicator } from "react-native";
 import { useTheme } from "../context/ThemeContext";
+import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");
 
@@ -121,10 +122,67 @@ export default function CostBreakdownScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center", backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.textSecondary, fontWeight: "600" }}>Calculating Estimates...</Text>
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
+            <Feather name="chevron-left" size={28} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Cost Breakdown</Text>
+          <View style={{ width: 44 }} />
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {/* Summary Card Placeholder */}
+          <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }, { padding: 20 }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View style={{ flex: 1, gap: 10 }}>
+                <Skeleton width="80%" height={16} borderRadius={4} />
+                <Skeleton width="60%" height={24} borderRadius={6} />
+                <Skeleton width={120} height={20} borderRadius={10} />
+              </View>
+              <View style={{ width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center" }}>
+                <Skeleton width={80} height={80} borderRadius={40} />
+              </View>
+            </View>
+          </View>
+
+          {/* Tab Control Placeholder */}
+          <View style={{ flexDirection: "row", gap: 12, marginVertical: 20 }}>
+            <Skeleton width={100} height={36} borderRadius={18} />
+            <Skeleton width={100} height={36} borderRadius={18} />
+            <Skeleton width={100} height={36} borderRadius={18} />
+          </View>
+
+          {/* Breakdown Items Placeholders */}
+          <View style={{ gap: 16 }}>
+            {[1, 2, 3].map((key) => (
+              <View
+                key={key}
+                style={{
+                  height: 60,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                  paddingHorizontal: 16,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between"
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                  <Skeleton width={32} height={32} borderRadius={16} />
+                  <Skeleton width={120} height={16} borderRadius={4} />
+                </View>
+                <Skeleton width={60} height={16} borderRadius={4} />
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 

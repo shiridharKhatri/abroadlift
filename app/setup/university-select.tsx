@@ -23,6 +23,7 @@ import {
 } from "../../lib/api";
 import { useTheme } from "../context/ThemeContext";
 import { useUser } from "../context/UserContext";
+import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");
 
@@ -289,9 +290,24 @@ export default function UniversitySelectionSetup() {
         )}
 
         {loading ? (
-          <View style={styles.centerBox}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Finding universities...</Text>
+          <View style={{ gap: 16 }}>
+            {[1, 2, 3].map((key) => (
+              <View key={key} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, overflow: "hidden" }]}>
+                {/* Image/Gradient Placeholder */}
+                <View style={{ height: 110, width: "100%" }}>
+                  <Skeleton width="100%" height={110} borderRadius={0} />
+                </View>
+                {/* Details Placeholder */}
+                <View style={{ padding: 16, gap: 10 }}>
+                  <Skeleton width="70%" height={16} borderRadius={4} />
+                  <Skeleton width="45%" height={12} borderRadius={4} />
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
+                    <Skeleton width={80} height={32} borderRadius={16} />
+                    <Skeleton width={100} height={32} borderRadius={16} />
+                  </View>
+                </View>
+              </View>
+            ))}
           </View>
         ) : error ? (
           <View style={styles.centerBox}>

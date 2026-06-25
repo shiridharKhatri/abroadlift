@@ -22,6 +22,7 @@ import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { getCostOfLiving, getUniversityDetails, UniversityDetail } from "../../lib/api";
 import { useUser } from "../context/UserContext";
 import { useTheme } from "../context/ThemeContext";
+import { Skeleton } from "../../components/Skeleton";
 
 const { width, height } = Dimensions.get("window");
 
@@ -591,9 +592,58 @@ export default function UniversityDetails() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center", backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.textSecondary, fontWeight: "600" }}>Loading University Details...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Banner Skeleton */}
+          <View style={{ height: 280, width: "100%", position: "relative" }}>
+            <Skeleton width="100%" height={280} borderRadius={0} />
+            <View style={{ position: "absolute", top: 40, left: 20 }}>
+              <Skeleton width={40} height={40} borderRadius={20} />
+            </View>
+            <View style={{ position: "absolute", top: 40, right: 20 }}>
+              <Skeleton width={40} height={40} borderRadius={20} />
+            </View>
+          </View>
+
+          {/* Details Skeleton */}
+          <View style={{ padding: 20 }}>
+            {/* Name/Title */}
+            <Skeleton width="70%" height={28} borderRadius={6} style={{ marginBottom: 12 }} />
+            <Skeleton width="40%" height={16} borderRadius={4} style={{ marginBottom: 20 }} />
+
+            {/* Two Cards side-by-side */}
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 24 }}>
+              <View style={{ width: "48%", height: 180, padding: 16, borderRadius: 24, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, justifyContent: "space-between" }}>
+                <View>
+                  <Skeleton width={32} height={32} borderRadius={16} style={{ marginBottom: 12 }} />
+                  <Skeleton width="80%" height={18} borderRadius={4} style={{ marginBottom: 8 }} />
+                  <Skeleton width="60%" height={14} borderRadius={4} />
+                </View>
+                <Skeleton width="100%" height={36} borderRadius={18} />
+              </View>
+              <View style={{ width: "48%", height: 180, padding: 16, borderRadius: 24, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, justifyContent: "space-between" }}>
+                <View>
+                  <Skeleton width={32} height={32} borderRadius={16} style={{ marginBottom: 12 }} />
+                  <Skeleton width="80%" height={18} borderRadius={4} style={{ marginBottom: 8 }} />
+                  <Skeleton width="60%" height={14} borderRadius={4} />
+                </View>
+                <Skeleton width="100%" height={36} borderRadius={18} />
+              </View>
+            </View>
+
+            {/* Tab controls */}
+            <View style={{ flexDirection: "row", gap: 12, marginBottom: 20 }}>
+              <Skeleton width={80} height={36} borderRadius={18} />
+              <Skeleton width={80} height={36} borderRadius={18} />
+              <Skeleton width={80} height={36} borderRadius={18} />
+            </View>
+
+            {/* Tab content placeholder */}
+            <Skeleton width="100%" height={120} borderRadius={16} style={{ marginBottom: 16 }} />
+            <Skeleton width="100%" height={80} borderRadius={16} />
+          </View>
+        </ScrollView>
       </View>
     );
   }

@@ -18,6 +18,7 @@ import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useTheme } from "../context/ThemeContext";
 import { useUser } from "../context/UserContext";
+import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");
 
@@ -282,10 +283,23 @@ export default function AdmissionChanceScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loaderText, { color: colors.textSecondary }]}>Loading matches...</Text>
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
+            {[1, 2, 3].map((key) => (
+              <View
+                key={key}
+                style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <View style={styles.uniImageContainer}>
+                  <Skeleton width="100%" height={140} borderRadius={0} />
+                </View>
+                <View style={styles.uniCardContent}>
+                  <Skeleton width={180} height={18} borderRadius={4} style={{ marginBottom: 8 }} />
+                  <Skeleton width={140} height={14} borderRadius={4} style={{ marginBottom: 8 }} />
+                  <Skeleton width={80} height={16} borderRadius={4} />
+                </View>
+              </View>
+            ))}
+          </ScrollView>
         ) : currentList.length > 0 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
             {currentList.map((uni) => {
