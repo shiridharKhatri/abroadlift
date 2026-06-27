@@ -347,7 +347,7 @@ export const getAvailableCountries = async (): Promise<{ id: string; name: strin
     const res = await fetchWithTimeout(`https://abroadlift.com/api/schools?allCountries=true`, {
       method: "GET",
       headers: getHeaders(),
-    }, 5000);
+    }, 15000);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const result = await res.json();
     const list = result.data || [];
@@ -414,41 +414,49 @@ const normalizeCountry = (country: any): string => {
   return c;
 };
 
+let cachedSchools: UniversityResult[] | null = null;
+
 export const searchUniversities = async (query: string, countries: string = "All"): Promise<UniversityResult[]> => {
   try {
-    const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools?limit=100`, {
-      method: "GET",
-      headers: getHeaders(),
-    }, 5000);
+    if (!cachedSchools) {
+      const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools?limit=1500`, {
+        method: "GET",
+        headers: getHeaders(),
+      }, 15000);
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const result = await res.json();
+      const schools = result.data || [];
+
+      cachedSchools = schools.map((s: any) => {
+        const countryName = s.country || "USA";
+        return {
+          id: String(s.id || s.school_id || s._id),
+          name: s.name || "Unknown University",
+          location: s.location || s.city || countryName,
+          tuition: s.tuition || s.average_fees || "$25,000 / yr",
+          acceptanceRate: s.acceptanceRate || s.acceptance_rate || 65,
+          website: s.website || "",
+          country: countryName,
+          levels: s.levels || ["Bachelors", "Masters"],
+          image: s.banner?.url || s.logo?.url || s.image || s.image_url || getCampusImage(s.name || "University"),
+          logo: s.logo?.url || s.logo?.url_thumbnail || "",
+          rank: s.rank || s.ranking || "N/A",
+        };
+      });
     }
 
-    const result = await res.json();
-    const schools = result.data || [];
+    if (!cachedSchools) {
+      return [];
+    }
 
-    const mapped: UniversityResult[] = schools.map((s: any) => {
-      const countryName = s.country || "USA";
-      return {
-        id: String(s.id || s.school_id || s._id),
-        name: s.name || "Unknown University",
-        location: s.location || s.city || countryName,
-        tuition: s.tuition || s.average_fees || "$25,000 / yr",
-        acceptanceRate: s.acceptanceRate || s.acceptance_rate || 65,
-        website: s.website || "",
-        country: countryName,
-        levels: s.levels || ["Bachelors", "Masters"],
-        image: s.banner?.url || s.logo?.url || s.image || s.image_url || getCampusImage(s.name || "University"),
-        logo: s.logo?.url || s.logo?.url_thumbnail || "",
-        rank: s.rank || s.ranking || "N/A",
-      };
-    });
-
-    let filtered = mapped;
+    let filtered = cachedSchools;
     if (countries !== "All") {
       const targetCountryNorm = normalizeCountry(countries);
-      filtered = mapped.filter(u => normalizeCountry(u.country) === targetCountryNorm);
+      filtered = cachedSchools.filter(u => normalizeCountry(u.country) === targetCountryNorm);
     }
 
     if (query) {
@@ -520,6 +528,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       country: countryName,
       levels: s.levels || ["Bachelors", "Masters"],
       image: s.banner?.url || s.logo?.url || s.image || s.image_url || getCampusImage(s.name || "University"),
+      logo: s.logo?.url || s.logo?.url_thumbnail || s.logo || "",
       rank: s.school_rank || s.rank || s.ranking || "N/A",
       description: s.description || s.about || `The ${s.name} is a renowned institution.`,
       type: s.type || s.institution_type || "Public University",

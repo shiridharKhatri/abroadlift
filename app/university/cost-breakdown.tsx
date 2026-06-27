@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
+  Image,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -67,7 +68,7 @@ const CostItem = ({ label, value, subValue, footerText }: { label: string; value
 
 export default function CostBreakdownScreen() {
   const { id, country: countryParam } = useLocalSearchParams();
-  const { userData } = useUser();
+  const { userData, setUserData, selectUniversity } = useUser();
   const { colors, isDark } = useTheme();
   const [activeTab, setActiveTab] = React.useState("First year");
   const [loading, setLoading] = React.useState(true);
@@ -127,7 +128,7 @@ export default function CostBreakdownScreen() {
         
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace("/(tabs)/explore"); } }}>
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
             <Feather name="chevron-left" size={28} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Cost Breakdown</Text>
@@ -135,6 +136,15 @@ export default function CostBreakdownScreen() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {/* University Card Placeholder */}
+          <View style={[styles.uniCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Skeleton width={48} height={48} borderRadius={8} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton width="60%" height={16} borderRadius={4} />
+              <Skeleton width="40%" height={12} borderRadius={4} />
+            </View>
+          </View>
+
           {/* Summary Card Placeholder */}
           <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }, { padding: 20 }]}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -272,7 +282,7 @@ export default function CostBreakdownScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace("/(tabs)/explore"); } }}>
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
           <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Cost Breakdown</Text>
@@ -285,6 +295,33 @@ export default function CostBreakdownScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+        {/* University Card */}
+        {uniData && (
+          <View style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            {uniData.logo || uniData.image ? (
+              <Image 
+                source={{ uri: uniData.logo || uniData.image }} 
+                style={[styles.uniLogo, { backgroundColor: isDark ? colors.border : "#F8FAFF" }]} 
+              />
+            ) : (
+              <View style={[styles.uniLogoPlaceholder, { backgroundColor: colors.border }]}>
+                <Ionicons name="school" size={24} color={colors.textSecondary} />
+              </View>
+            )}
+            <View style={styles.uniDetails}>
+              <Text style={[styles.uniName, { color: colors.text }]} numberOfLines={1}>
+                {uniData.name}
+              </Text>
+              <View style={styles.uniLocationRow}>
+                <Ionicons name="location-sharp" size={14} color={THEME.primary} />
+                <Text style={[styles.uniLocation, { color: colors.textSecondary }]}>
+                  {uniData.location}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Summary Card */}
         <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -422,9 +459,45 @@ export default function CostBreakdownScreen() {
             )}
           </View>
 
-          <TouchableOpacity style={[styles.primaryActionButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
-             <Text style={styles.primaryActionText}>Save Plan</Text>
-          </TouchableOpacity>
+          {(() => {
+            const isSaved = userData.selectedUniversities?.some(
+              (u) => String(u.id) === String(id)
+            );
+            return (
+              <TouchableOpacity
+                style={[
+                  styles.primaryActionButton,
+                  {
+                    backgroundColor: isSaved ? colors.textSecondary : colors.primary,
+                    shadowColor: isSaved ? colors.textSecondary : colors.primary
+                  }
+                ]}
+                onPress={() => {
+                  if (isSaved) {
+                    setUserData((prev) => ({
+                      ...prev,
+                      selectedUniversities: prev.selectedUniversities.filter(
+                        (u) => String(u.id) !== String(id)
+                      ),
+                    }));
+                  } else {
+                    selectUniversity({
+                      id: id as string,
+                      name: uniData?.name || "University",
+                      location: uniData?.location || currentCountry,
+                      image: uniData?.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400",
+                      course: uniData?.courses?.[0]?.name || "MSc Computer Science",
+                      tuition: uniData?.tuition || "$25,000 / yr",
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.primaryActionText}>
+                  {isSaved ? "Saved to Profile" : "Save Plan"}
+                </Text>
+              </TouchableOpacity>
+            );
+          })()}
 
           {/* Pre-application Cost */}
           <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -774,5 +847,50 @@ const styles = StyleSheet.create({
     color: THEME.white,
     fontSize: 15,
     fontWeight: "800",
+  },
+  uniCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#F1F5F9",
+    backgroundColor: THEME.white,
+    marginBottom: 16,
+    gap: 12,
+  },
+  uniLogo: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: "#F8FAFF",
+    resizeMode: "contain",
+  },
+  uniLogoPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uniDetails: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  uniName: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: THEME.textDark,
+    marginBottom: 2,
+  },
+  uniLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  uniLocation: {
+    fontSize: 12,
+    color: THEME.textGray,
+    fontWeight: "500",
   },
 });

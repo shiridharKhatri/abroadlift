@@ -184,7 +184,7 @@ const getCountryTheme = (countryName: string | undefined, isDark: boolean, color
 };
 
 export default function DashboardScreen() {
-  const { userData, setUserData } = useUser();
+  const { userData, setUserData, selectUniversity } = useUser();
   const { colors, isDark } = useTheme();
   const countryTheme = getCountryTheme(userData.country, isDark, colors);
   const [showPlanModal, setShowPlanModal] = React.useState(false);
@@ -709,9 +709,42 @@ export default function DashboardScreen() {
                   </View>
                 </View>
                 <View style={styles.uniActions}>
-                  <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary + "15" }]}>
-                    <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
-                  </TouchableOpacity>
+                  {(() => {
+                    const isSaved = userData.selectedUniversities?.some(
+                      (u) => String(u.id) === String(uni.id)
+                    );
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.saveBtn,
+                          { backgroundColor: isSaved ? colors.primary : colors.primary + "15" }
+                        ]}
+                        onPress={() => {
+                          if (isSaved) {
+                            setUserData((prev) => ({
+                              ...prev,
+                              selectedUniversities: prev.selectedUniversities.filter(
+                                (u) => String(u.id) !== String(uni.id)
+                              ),
+                            }));
+                          } else {
+                            selectUniversity({
+                              id: uni.id,
+                              name: uni.name,
+                              location: uni.location || uni.country,
+                              image: uni.image,
+                              course: uni.course || "MSc Computer Science",
+                              tuition: uni.tuition || "$25,000 / yr",
+                            });
+                          }
+                        }}
+                      >
+                        <Text style={[styles.saveBtnText, { color: isSaved ? "white" : colors.primary }]}>
+                          {isSaved ? "Saved" : "Save"}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })()}
                   <TouchableOpacity
                     style={[styles.compareBtn, { borderColor: colors.border }]}
                     onPress={() => router.push({

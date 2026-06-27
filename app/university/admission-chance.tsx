@@ -77,7 +77,7 @@ const AnalysisItem = ({
 };
 
 export default function AdmissionChanceScreen() {
-  const { userData } = useUser();
+  const { userData, setUserData, selectUniversity } = useUser();
   const { colors, isDark } = useTheme();
   const [unis, setUnis] = React.useState<UniversityResult[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -190,7 +190,7 @@ export default function AdmissionChanceScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace("/(tabs)/explore"); } }}>
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
           <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Admission Chance</Text>
@@ -346,9 +346,43 @@ export default function AdmissionChanceScreen() {
                       </View>
                     </View>
                     <View style={styles.uniActions}>
-                      <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.border }]} activeOpacity={0.7}>
-                        <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
-                      </TouchableOpacity>
+                      {(() => {
+                        const isSaved = userData.selectedUniversities?.some(
+                          (u) => String(u.id) === String(uni.id)
+                        );
+                        return (
+                          <TouchableOpacity
+                            style={[
+                              styles.saveBtn,
+                              { backgroundColor: isSaved ? colors.primary : colors.border }
+                            ]}
+                            activeOpacity={0.7}
+                            onPress={() => {
+                              if (isSaved) {
+                                setUserData((prev) => ({
+                                  ...prev,
+                                  selectedUniversities: prev.selectedUniversities.filter(
+                                    (u) => String(u.id) !== String(uni.id)
+                                  ),
+                                }));
+                              } else {
+                                selectUniversity({
+                                  id: uni.id,
+                                  name: uni.name,
+                                  location: uni.location || uni.country,
+                                  image: uni.image,
+                                  course: uni.course || "MSc Computer Science",
+                                  tuition: uni.tuition || "$25,000 / yr",
+                                });
+                              }
+                            }}
+                          >
+                            <Text style={[styles.saveBtnText, { color: isSaved ? "white" : colors.primary }]}>
+                              {isSaved ? "Saved" : "Save"}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })()}
                       <TouchableOpacity
                         style={[styles.compareBtn, { backgroundColor: colors.primary + "15" }]}
                         activeOpacity={0.7}
