@@ -2,7 +2,6 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   Image,
   Platform,
@@ -12,13 +11,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
+import { Skeleton } from "../../components/Skeleton";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useTheme } from "../context/ThemeContext";
 import { useUser } from "../context/UserContext";
-import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");
 
@@ -372,7 +371,7 @@ export default function AdmissionChanceScreen() {
                                   location: uni.location || uni.country,
                                   image: uni.image,
                                   course: uni.course || "MSc Computer Science",
-                                  tuition: uni.tuition || "$25,000 / yr",
+                                  tuition: uni.tuition || "N/A",
                                   tuitionValue: uni.tuitionValue,
                                 });
                               }

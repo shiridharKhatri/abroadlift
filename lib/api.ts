@@ -48,8 +48,8 @@ const getCampusImage = (name: string): string => {
 };
 
 const parseTuitionInfo = (tuitionVal: any, countryName: string): { tuition: string; tuitionValue: number } => {
-  let tuitionValue = 25000;
-  let tuitionString = "";
+  let tuitionValue = 0;
+  let tuitionString = "N/A";
 
   if (typeof tuitionVal === 'number') {
     tuitionValue = tuitionVal;
@@ -60,32 +60,6 @@ const parseTuitionInfo = (tuitionVal: any, countryName: string): { tuition: stri
     if (!isNaN(parsed) && parsed > 0) {
       tuitionValue = parsed;
       tuitionString = tuitionVal.includes('/') ? tuitionVal : `${tuitionVal} / yr`;
-    }
-  }
-
-  if (!tuitionString) {
-    const c = (countryName || "").toUpperCase();
-    if (c.includes("USA") || c.includes("UNITED STATES") || c === "US") {
-      tuitionValue = 35000;
-      tuitionString = "$35,000 / yr";
-    } else if (c.includes("UK") || c.includes("UNITED KINGDOM") || c === "GB") {
-      tuitionValue = 22000;
-      tuitionString = "$22,000 / yr";
-    } else if (c.includes("CANADA") || c === "CA") {
-      tuitionValue = 20000;
-      tuitionString = "$20,000 / yr";
-    } else if (c.includes("AUSTRALIA") || c === "AU") {
-      tuitionValue = 26000;
-      tuitionString = "$26,000 / yr";
-    } else if (c.includes("GERMANY") || c === "DE") {
-      tuitionValue = 2500;
-      tuitionString = "$2,500 / yr";
-    } else if (c.includes("IRELAND") || c === "IE") {
-      tuitionValue = 18000;
-      tuitionString = "$18,000 / yr";
-    } else {
-      tuitionValue = 25000;
-      tuitionString = "$25,000 / yr";
     }
   }
 
@@ -548,7 +522,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
           name: p.name || p.title,
           category: p.category || p.level_text || p.level || "General",
           level: p.level_text ? [p.level_text] : (p.level ? [p.level] : ["Bachelors", "Masters"]),
-          fee: p.tuition ? `$${parseFloat(p.tuition).toLocaleString()}/yr` : (p.fee || s.tuition || s.average_fees || "$25,000 / yr"),
+          fee: p.tuition ? `$${parseFloat(p.tuition).toLocaleString()}/yr` : (p.fee || s.tuition || s.average_fees || "N/A"),
           description: p.description || "",
           other_fees: p.other_fees || [],
           coop_participating: p.coop_participating ?? false,

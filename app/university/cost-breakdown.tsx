@@ -199,7 +199,7 @@ export default function CostBreakdownScreen() {
   // Calculate values
   const monthlyUsd = costData?.monthly_estimate_usd || 1500;
   const annualLivingUsd = monthlyUsd * 12;
-  const tuitionUsd = uniData?.tuitionValue || 20000;
+  const tuitionUsd = uniData?.tuitionValue || 0;
   
   const totalFirstYearNpr = (tuitionUsd + annualLivingUsd) * USD_TO_NPR;
   const fmtNpr = (v: number) => {
@@ -376,13 +376,13 @@ export default function CostBreakdownScreen() {
             />
             {isExpanded("year-tuition") && (
               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                <CostItem label={tuitionLabel} value={fmtNpr(tuitionValue)} subValue={tuitionSub} />
+                <CostItem label={tuitionLabel} value={tuitionUsd > 0 ? fmtNpr(tuitionValue) : "N/A"} subValue={tuitionUsd > 0 ? tuitionSub : undefined} />
                 <CostItem label="Study Level" value={uniData?.type || userData.studyLevel || "Masters"} />
                 {isYearOnYear && (
                   <>
-                    <CostItem label="Year 1 Tuition" value={fmtNpr(tuitionUsd * USD_TO_NPR)} />
-                    <CostItem label="Year 2 Tuition (Est)" value={fmtNpr(tuitionUsd * 1.05 * USD_TO_NPR)} />
-                    <CostItem label="Year 3 Tuition (Est)" value={fmtNpr(tuitionUsd * 1.10 * USD_TO_NPR)} />
+                    <CostItem label="Year 1 Tuition" value={tuitionUsd > 0 ? fmtNpr(tuitionUsd * USD_TO_NPR) : "N/A"} />
+                    <CostItem label="Year 2 Tuition (Est)" value={tuitionUsd > 0 ? fmtNpr(tuitionUsd * 1.05 * USD_TO_NPR) : "N/A"} />
+                    <CostItem label="Year 3 Tuition (Est)" value={tuitionUsd > 0 ? fmtNpr(tuitionUsd * 1.10 * USD_TO_NPR) : "N/A"} />
                   </>
                 )}
                 <Text style={[styles.footerInfoText, { color: colors.text }]}>Fees vary by course and university</Text>
@@ -487,7 +487,7 @@ export default function CostBreakdownScreen() {
                       location: uniData?.location || currentCountry,
                       image: uniData?.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400",
                       course: uniData?.courses?.[0]?.name || "MSc Computer Science",
-                      tuition: uniData?.tuition || "$25,000 / yr",
+                      tuition: uniData?.tuition || "N/A",
                       tuitionValue: uniData?.tuitionValue,
                     });
                   }

@@ -90,7 +90,7 @@ export default function RecentUniversities() {
                   style={StyleSheet.absoluteFillObject}
                 />
                 <View style={[styles.costBadge, { backgroundColor: isDark ? "rgba(0,0,0,0.8)" : "rgba(255, 255, 255, 0.95)" }]}>
-                  <Text style={[styles.costValue, { color: colors.text }]}>{uni.tuition || "$25,000 / yr"}</Text>
+                  <Text style={[styles.costValue, { color: colors.text }]}>{uni.tuition || "N/A"}</Text>
                   <Text style={[styles.costLabel, { color: colors.textSecondary }]}>EST. TUITION</Text>
                 </View>
               </View>

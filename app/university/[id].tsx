@@ -133,7 +133,7 @@ export default function UniversityDetails() {
         students: uniData?.students || fallback.students,
         ranking_world: uniData?.ranking_world || "N/A",
         ranking_national: uniData?.ranking_national || "N/A",
-        fee_usd: uniData?.tuitionValue || 65000,
+        fee_usd: uniData?.tuitionValue || 0,
     };
 
     const isShortlisted = userData.selectedUniversities?.some(
@@ -155,7 +155,7 @@ export default function UniversityDetails() {
                 location: details.location,
                 image: details.image,
                 course: uniData?.courses?.[0]?.name || "MSc Computer Science",
-                tuition: uniData?.tuition || "$25,000 / yr",
+                tuition: uniData?.tuition || "N/A",
                 tuitionValue: uniData?.tuitionValue,
             });
         }
@@ -172,7 +172,7 @@ export default function UniversityDetails() {
     };
 
     const renderEstimates = () => {
-        const tuitionUsd = details.fee_usd || 20000;
+        const tuitionUsd = details.fee_usd || 0;
         const livingUsd = (costData?.monthly_estimate_usd || 1500) * 12;
         const totalNpr = (tuitionUsd + livingUsd) * USD_TO_NPR;
 

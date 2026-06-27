@@ -734,7 +734,7 @@ export default function DashboardScreen() {
                               location: uni.location || uni.country,
                               image: uni.image,
                               course: uni.course || "MSc Computer Science",
-                              tuition: uni.tuition || "$25,000 / yr",
+                              tuition: uni.tuition || "N/A",
                               tuitionValue: uni.tuitionValue,
                             });
                           }
