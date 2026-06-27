@@ -232,6 +232,16 @@ export default function UniversityDetails() {
                     >
                         <Text style={[styles.completeEstimateBtnText, { color: colors.primary }]}>Get Complete Cost Breakdown</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.completeEstimateBtn, { backgroundColor: colors.primary + "15", marginTop: 12 }]}
+                        onPress={() => router.push({
+                            pathname: "/university/compare",
+                            params: { id1: id, country1: currentCountry }
+                        })}
+                    >
+                        <Text style={[styles.completeEstimateBtnText, { color: colors.primary }]}>Compare with another University</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         );
