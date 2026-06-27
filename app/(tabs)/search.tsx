@@ -223,6 +223,36 @@ export default function UniversitySelection() {
       if (mounted) {
         setUniversities(data);
         setIsLoading(false);
+
+        // Fetch real tuition details for the first 10 search results in the background
+        const topResults = data.slice(0, 10);
+        const { getUniversityDetails } = require("../../lib/api");
+        Promise.all(
+          topResults.map(async (uni) => {
+            try {
+              const details = await getUniversityDetails(String(uni.id), uni.country || "USA");
+              if (details) {
+                return {
+                  ...uni,
+                  tuition: details.tuition,
+                  tuitionValue: details.tuitionValue,
+                };
+              }
+            } catch (e) {
+              console.warn("Failed background tuition fetch for search:", uni.name, e);
+            }
+            return uni;
+          })
+        ).then((updatedUnis) => {
+          if (mounted) {
+            setUniversities((prev) => {
+              return prev.map((p) => {
+                const match = updatedUnis.find((u) => String(u.id) === String(p.id));
+                return match ? match : p;
+              });
+            });
+          }
+        });
       }
     };
     // Debounce to prevent rapid multiple calls if state updates sequentially

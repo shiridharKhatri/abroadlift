@@ -500,7 +500,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
     const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools/${id}`, {
       method: "GET",
       headers: getHeaders(),
-    }, 2000);
+    }, 8000);
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -514,7 +514,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       const progRes = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/programs/school/${id}`, {
         method: "GET",
         headers: getHeaders(),
-      }, 2000);
+      }, 8000);
       if (progRes.ok) {
         const progResult = await progRes.json();
         const programsList = Array.isArray(progResult) ? progResult : (progResult.data || []);

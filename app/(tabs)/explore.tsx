@@ -4,7 +4,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   Image,
   Modal,
@@ -19,10 +18,10 @@ import {
   View
 } from "react-native";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
-import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
-import { useUser } from "../context/UserContext";
-import { useTheme } from "../context/ThemeContext";
 import { Skeleton } from "../../components/Skeleton";
+import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
+import { useTheme } from "../context/ThemeContext";
+import { useUser } from "../context/UserContext";
 
 const { width } = Dimensions.get("window");
 
@@ -77,78 +76,78 @@ const getFlagUrl = (countryName: string | undefined) => {
   return `https://flagcdn.com/w160/${code}.png`;
 };
 
-const COUNTRY_THEMES: Record<string, { 
+const COUNTRY_THEMES: Record<string, {
   colors: [string, string];
   titleColor: string;
   countryColor: string;
   editBg: string;
   editText: string;
 }> = {
-  "USA": { 
-    colors: ["#1E3A8A", "#3B82F6"], 
+  "USA": {
+    colors: ["#1E3A8A", "#3B82F6"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "United Kingdom": { 
-    colors: ["#0F172A", "#1E3A8A"], 
-    titleColor: "rgba(255,255,255,0.75)",
-    countryColor: "#FFFFFF",
-    editBg: "rgba(255,255,255,0.2)",
-    editText: "#FFFFFF"
-  },
-  "UK": { 
+  "United Kingdom": {
     colors: ["#0F172A", "#1E3A8A"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "Canada": { 
-    colors: ["#7F1D1D", "#DC2626"], 
+  "UK": {
+    colors: ["#0F172A", "#1E3A8A"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "Germany": { 
-    colors: ["#1E293B", "#D97706"], 
+  "Canada": {
+    colors: ["#7F1D1D", "#DC2626"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "Australia": { 
-    colors: ["#064E3B", "#059669"], 
+  "Germany": {
+    colors: ["#1E293B", "#D97706"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "Ireland": { 
-    colors: ["#14532D", "#16A34A"], 
+  "Australia": {
+    colors: ["#064E3B", "#059669"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "France": { 
-    colors: ["#1E3A8A", "#EF4444"], 
+  "Ireland": {
+    colors: ["#14532D", "#16A34A"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "Japan": { 
-    colors: ["#881337", "#E11D48"], 
+  "France": {
+    colors: ["#1E3A8A", "#EF4444"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
     editText: "#FFFFFF"
   },
-  "Korea": { 
-    colors: ["#1E3A8A", "#E11D48"], 
+  "Japan": {
+    colors: ["#881337", "#E11D48"],
+    titleColor: "rgba(255,255,255,0.75)",
+    countryColor: "#FFFFFF",
+    editBg: "rgba(255,255,255,0.2)",
+    editText: "#FFFFFF"
+  },
+  "Korea": {
+    colors: ["#1E3A8A", "#E11D48"],
     titleColor: "rgba(255,255,255,0.75)",
     countryColor: "#FFFFFF",
     editBg: "rgba(255,255,255,0.2)",
@@ -246,7 +245,7 @@ export default function DashboardScreen() {
 
   const getDynamicNotifications = () => {
     const list = [];
-    
+
     // 1. Welcome Notification
     list.push({
       id: "welcome",
@@ -266,7 +265,7 @@ export default function DashboardScreen() {
       iconColor: isDark ? colors.secondary : "#D97706",
       bgColor: isDark ? "#1E293B" : "#FEF3C7",
       title: hasAcademics ? "Profile Status: Active" : "Complete Your Profile",
-      body: hasAcademics 
+      body: hasAcademics
         ? "Your academic grades and test scores are updated. You are ready to view admission chances!"
         : "Add your academic grades and English test scores to estimate your exact admission chances.",
       time: hasAcademics ? "1 hour ago" : "2 hours ago"
@@ -342,7 +341,31 @@ export default function DashboardScreen() {
               });
             }
 
-            setRecommendedUnis(filtered.slice(0, 5));
+            const recommended = filtered.slice(0, 5);
+            setRecommendedUnis(recommended);
+
+            const { getUniversityDetails } = require("../../lib/api");
+            Promise.all(
+              recommended.map(async (uni) => {
+                try {
+                  const details = await getUniversityDetails(String(uni.id), uni.country || "USA");
+                  if (details) {
+                    return {
+                      ...uni,
+                      tuition: details.tuition,
+                      tuitionValue: details.tuitionValue,
+                    };
+                  }
+                } catch (e) {
+                  console.warn("Failed background tuition fetch for explore:", uni.name, e);
+                }
+                return uni;
+              })
+            ).then((updatedUnis) => {
+              if (mounted) {
+                setRecommendedUnis(updatedUnis);
+              }
+            });
 
             if (costData) {
               const monthlyUsd = costData.monthly_estimate_usd || 1500;
@@ -415,7 +438,7 @@ export default function DashboardScreen() {
 
         {/* Global Search Bar */}
         <View style={styles.globalSearchContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.globalSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
             activeOpacity={0.8}
             onPress={() => router.push("/(tabs)/search")}
@@ -429,7 +452,7 @@ export default function DashboardScreen() {
               pointerEvents="none"
             />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filterBtnSmall}
             onPress={() => router.push({
               pathname: "/(tabs)/search",
@@ -701,7 +724,12 @@ export default function DashboardScreen() {
                   <Text style={[styles.uniLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
                 </View>
                 <View style={styles.uniCostRow}>
-                  <Text style={[styles.uniCostValue, { color: colors.text }]}>{uni.tuition}<Text style={[styles.uniCostUnit, { color: colors.textSecondary }]}>/ year</Text></Text>
+                  <Text style={[styles.uniCostValue, { color: colors.text }]}>
+                    {uni.tuition}
+                    {uni.tuition !== "N/A" && (
+                      <Text style={[styles.uniCostUnit, { color: colors.textSecondary }]}>/ year</Text>
+                    )}
+                  </Text>
                   <View style={[styles.safeBadge, { backgroundColor: uni.acceptanceRate && uni.acceptanceRate > 50 ? "#DCFCE7" : "#FFF7ED" }]}>
                     <Text style={[styles.safeText, { color: uni.acceptanceRate && uni.acceptanceRate > 50 ? THEME.green : THEME.orange }]}>
                       {uni.acceptanceRate && uni.acceptanceRate > 50 ? "Safe" : "Moderate"}
@@ -820,10 +848,10 @@ export default function DashboardScreen() {
           activeOpacity={1}
           onPress={() => setShowNotificationsModal(false)}
         >
-          <TouchableOpacity 
-            activeOpacity={1} 
+          <TouchableOpacity
+            activeOpacity={1}
             style={[styles.modalContent, { backgroundColor: colors.background }]}
-            onPress={() => {}}
+            onPress={() => { }}
           >
             <View style={[styles.modalIndicator, { backgroundColor: colors.border }]} />
             <View style={styles.modalHeaderRow}>
@@ -838,10 +866,10 @@ export default function DashboardScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false} style={styles.notificationsList}>
               {getDynamicNotifications().map((notif, index) => (
-                <View 
-                  key={notif.id} 
+                <View
+                  key={notif.id}
                   style={[
-                    styles.notificationItem, 
+                    styles.notificationItem,
                     { borderBottomColor: colors.border },
                     index === 2 && { borderBottomWidth: 0 }
                   ]}
