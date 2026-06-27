@@ -488,6 +488,7 @@ export default function CostBreakdownScreen() {
                       image: uniData?.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400",
                       course: uniData?.courses?.[0]?.name || "MSc Computer Science",
                       tuition: uniData?.tuition || "$25,000 / yr",
+                      tuitionValue: uniData?.tuitionValue,
                     });
                   }
                 }}

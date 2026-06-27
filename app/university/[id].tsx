@@ -156,6 +156,7 @@ export default function UniversityDetails() {
                 image: details.image,
                 course: uniData?.courses?.[0]?.name || "MSc Computer Science",
                 tuition: uniData?.tuition || "$25,000 / yr",
+                tuitionValue: uniData?.tuitionValue,
             });
         }
     };
