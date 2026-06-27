@@ -224,17 +224,25 @@ export default function UniversityDetails() {
                         Based on your profile, you have a <Text style={{ fontWeight: '800', color: colors.text }}>low chance</Text> of admission. Improve your test scores to increase odds.
                     </Text>
                     <TouchableOpacity
-                        style={[styles.completeEstimateBtn, { backgroundColor: colors.primary + "15" }]}
+                        style={[styles.completeEstimateBtn, { backgroundColor: colors.primary }]}
                         onPress={() => router.push({
                             pathname: "/university/cost-breakdown",
                             params: { id: id, country: currentCountry }
                         })}
                     >
-                        <Text style={[styles.completeEstimateBtnText, { color: colors.primary }]}>Get Complete Cost Breakdown</Text>
+                        <Text style={[styles.completeEstimateBtnText, { color: "#FFFFFF" }]}>Get Complete Cost Breakdown</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.completeEstimateBtn, { backgroundColor: colors.primary + "15", marginTop: 12 }]}
+                        style={[
+                            styles.completeEstimateBtn, 
+                            { 
+                                backgroundColor: "transparent", 
+                                borderWidth: 1.5, 
+                                borderColor: colors.primary, 
+                                marginTop: 12 
+                            }
+                        ]}
                         onPress={() => router.push({
                             pathname: "/university/compare",
                             params: { id1: id, country1: currentCountry }
