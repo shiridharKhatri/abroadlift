@@ -235,12 +235,12 @@ export default function UniversityDetails() {
 
                     <TouchableOpacity
                         style={[
-                            styles.completeEstimateBtn, 
-                            { 
-                                backgroundColor: "transparent", 
-                                borderWidth: 1.5, 
-                                borderColor: colors.primary, 
-                                marginTop: 12 
+                            styles.completeEstimateBtn,
+                            {
+                                backgroundColor: "transparent",
+                                borderWidth: 1.5,
+                                borderColor: colors.primary,
+                                marginTop: 12
                             }
                         ]}
                         onPress={() => router.push({

@@ -47,6 +47,51 @@ const getCampusImage = (name: string): string => {
   return campusImages[index];
 };
 
+const parseTuitionInfo = (tuitionVal: any, countryName: string): { tuition: string; tuitionValue: number } => {
+  let tuitionValue = 25000;
+  let tuitionString = "";
+
+  if (typeof tuitionVal === 'number') {
+    tuitionValue = tuitionVal;
+    tuitionString = `$${tuitionVal.toLocaleString()} / yr`;
+  } else if (typeof tuitionVal === 'string' && tuitionVal.trim() !== "") {
+    const clean = tuitionVal.replace(/[^0-9.]/g, '');
+    const parsed = parseInt(clean, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      tuitionValue = parsed;
+      tuitionString = tuitionVal.includes('/') ? tuitionVal : `${tuitionVal} / yr`;
+    }
+  }
+
+  if (!tuitionString) {
+    const c = (countryName || "").toUpperCase();
+    if (c.includes("USA") || c.includes("UNITED STATES") || c === "US") {
+      tuitionValue = 35000;
+      tuitionString = "$35,000 / yr";
+    } else if (c.includes("UK") || c.includes("UNITED KINGDOM") || c === "GB") {
+      tuitionValue = 22000;
+      tuitionString = "$22,000 / yr";
+    } else if (c.includes("CANADA") || c === "CA") {
+      tuitionValue = 20000;
+      tuitionString = "$20,000 / yr";
+    } else if (c.includes("AUSTRALIA") || c === "AU") {
+      tuitionValue = 26000;
+      tuitionString = "$26,000 / yr";
+    } else if (c.includes("GERMANY") || c === "DE") {
+      tuitionValue = 2500;
+      tuitionString = "$2,500 / yr";
+    } else if (c.includes("IRELAND") || c === "IE") {
+      tuitionValue = 18000;
+      tuitionString = "$18,000 / yr";
+    } else {
+      tuitionValue = 25000;
+      tuitionString = "$25,000 / yr";
+    }
+  }
+
+  return { tuition: tuitionString, tuitionValue };
+};
+
 export interface UniversityResult {
   id: string | number;
   name: string;
@@ -433,11 +478,13 @@ export const searchUniversities = async (query: string, countries: string = "All
 
       cachedSchools = schools.map((s: any) => {
         const countryName = s.country || "USA";
+        const tInfo = parseTuitionInfo(s.tuition || s.average_fees, countryName);
         return {
           id: String(s.id || s.school_id || s._id),
           name: s.name || "Unknown University",
           location: s.location || s.city || countryName,
-          tuition: s.tuition || s.average_fees || "$25,000 / yr",
+          tuition: tInfo.tuition,
+          tuitionValue: tInfo.tuitionValue,
           acceptanceRate: s.acceptanceRate || s.acceptance_rate || 65,
           website: s.website || "",
           country: countryName,
@@ -518,11 +565,13 @@ export const getUniversityDetails = async (id: string, country: string): Promise
     }
 
     const countryName = s.country || country || "USA";
+    const tInfo = parseTuitionInfo(s.tuition || s.average_fees, countryName);
     return {
       id: String(s.id || s.school_id || s._id),
       name: s.name || "Unknown University",
       location: s.location || s.city || countryName,
-      tuition: s.tuition || s.average_fees || "$25,000 / yr",
+      tuition: tInfo.tuition,
+      tuitionValue: tInfo.tuitionValue,
       acceptanceRate: s.acceptanceRate || s.acceptance_rate || 65,
       website: s.website || "",
       country: countryName,
