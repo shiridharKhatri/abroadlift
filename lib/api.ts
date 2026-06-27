@@ -566,12 +566,34 @@ export const getUniversityDetails = async (id: string, country: string): Promise
 
     const countryName = s.country || country || "USA";
     const tInfo = parseTuitionInfo(s.tuition || s.average_fees, countryName);
+    let finalTuition = tInfo.tuition;
+    let finalTuitionValue = tInfo.tuitionValue;
+
+    if (schoolCourses.length > 0) {
+      const tuitions = schoolCourses
+        .map(c => {
+          if (c.fee) {
+            const clean = String(c.fee).replace(/[^0-9.]/g, '');
+            const parsed = parseFloat(clean);
+            return isNaN(parsed) ? 0 : parsed;
+          }
+          return 0;
+        })
+        .filter(t => t > 0);
+
+      if (tuitions.length > 0) {
+        const sum = tuitions.reduce((acc, val) => acc + val, 0);
+        finalTuitionValue = Math.round(sum / tuitions.length);
+        finalTuition = `$${finalTuitionValue.toLocaleString()} / yr`;
+      }
+    }
+
     return {
       id: String(s.id || s.school_id || s._id),
       name: s.name || "Unknown University",
       location: s.location || s.city || countryName,
-      tuition: tInfo.tuition,
-      tuitionValue: tInfo.tuitionValue,
+      tuition: finalTuition,
+      tuitionValue: finalTuitionValue,
       acceptanceRate: s.acceptanceRate || s.acceptance_rate || 65,
       website: s.website || "",
       country: countryName,
