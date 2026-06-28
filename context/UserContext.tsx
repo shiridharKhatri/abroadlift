@@ -82,24 +82,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             // NEW: Refresh user data from server if we have a token
             const { getProfile } = require('../lib/api');
             getProfile(storedToken).then((data: any) => {
+              const storedObj = storedUser ? JSON.parse(storedUser) : DEFAULT_USER_DATA;
               const profile = data.profile || {};
               const refreshedUser = {
-                ...(storedUser ? JSON.parse(storedUser) : DEFAULT_USER_DATA),
+                ...storedObj,
                 ...data,
-                country: profile.nationality || profile.currentCountry || "",
-                studyLevel: profile.degreeLevel || "",
-                cgpa: profile.gpa ? String(profile.gpa) : "",
-                score: profile.englishScore ? String(profile.englishScore) : "",
-                fieldOfStudy: profile.fieldOfStudy || "",
-                testType: profile.testType || "",
-                recentAcademicField: profile.recentAcademicField || "",
-                passoutYear: profile.passoutYear || "",
-                intake: profile.intake || "",
-                englishLevel: profile.englishLevel || "",
-                yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : "",
-                scholarshipNeeded: profile.scholarshipNeeded ?? false,
-                onboardingComplete: data.user?.onboardingComplete ?? profile.onboardingComplete ?? (storedUser ? JSON.parse(storedUser).onboardingComplete : false),
-                selectedUniversities: data.user?.selectedUniversities || (storedUser ? JSON.parse(storedUser).selectedUniversities : []) || [],
+                country: profile.nationality || profile.currentCountry || storedObj.country || "",
+                studyLevel: profile.degreeLevel || storedObj.studyLevel || "",
+                cgpa: profile.gpa ? String(profile.gpa) : (storedObj.cgpa || ""),
+                score: profile.englishScore ? String(profile.englishScore) : (storedObj.score || ""),
+                fieldOfStudy: profile.fieldOfStudy || storedObj.fieldOfStudy || "",
+                testType: profile.testType || storedObj.testType || "",
+                recentAcademicField: profile.recentAcademicField || storedObj.recentAcademicField || "",
+                passoutYear: profile.passoutYear || storedObj.passoutYear || "",
+                intake: profile.intake || storedObj.intake || "",
+                englishLevel: profile.englishLevel || storedObj.englishLevel || "",
+                yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : (storedObj.yearlyBudget || ""),
+                scholarshipNeeded: profile.scholarshipNeeded ?? (storedObj.scholarshipNeeded ?? false),
+                onboardingComplete: data.user?.onboardingComplete ?? profile.onboardingComplete ?? (storedObj.onboardingComplete ?? false),
+                selectedUniversities: data.user?.selectedUniversities || storedObj.selectedUniversities || [],
               };
               _setUserData(refreshedUser);
               AsyncStorage.setItem('@user_data', JSON.stringify(refreshedUser));
