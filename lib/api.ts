@@ -681,41 +681,15 @@ const processResults = (results: any[], searchCountry: string): UniversityResult
 
 export const getCostOfLiving = async (countryCode: string): Promise<any> => {
   try {
-    const rawUrl = process.env.EXPO_PUBLIC_COST_ESTIMSTION_API;
-    // Handle the potential open quote in .env
-    const url = rawUrl?.startsWith('"') ? rawUrl.substring(1) : rawUrl;
-
-    if (!url) {
-      console.warn("Cost of living API URL not found in env");
-      return null;
-    }
-
-    const response = await fetch(url);
+    const response = await fetch(`https://abroadlift.com/api/cost-of-living?countryCode=${countryCode}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     if (!response.ok) throw new Error("Failed to fetch cost of living");
-
     const json = await response.json();
-    const data = json.data || [];
-
-    const normalization: Record<string, string> = {
-      "USA": "US", "UNITED STATES": "US",
-      "UK": "GB", "UNITED KINGDOM": "GB", "GREAT BRITAIN": "GB",
-      "CANADA": "CA", "CAN": "CA",
-      "AUSTRALIA": "AU", "AUS": "AU",
-      "GERMANY": "DE", "GER": "DE",
-      "INDIA": "IN", "IND": "IN",
-      "IRELAND": "IE", "IRL": "IE",
-    };
-
-    const upperCountry = countryCode.toUpperCase();
-    const targetCode = (normalization[upperCountry] || countryCode).toUpperCase();
-
-    let countryData = data.find((d: any) => d.country_code?.toUpperCase() === targetCode);
-
-    // Fallback GB/UK
-    if (!countryData && targetCode === "GB") countryData = data.find((d: any) => d.country_code?.toUpperCase() === "UK");
-    if (!countryData && targetCode === "UK") countryData = data.find((d: any) => d.country_code?.toUpperCase() === "GB");
-
-    return countryData;
+    return json.data || json;
   } catch (error) {
     console.error("Error fetching cost of living:", error);
     return null;
@@ -724,40 +698,81 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
 
 export const getRelocationIndex = async (countryCode: string): Promise<any> => {
   try {
-    const url = process.env.EXPO_PUBLIC_QOI_API;
-    if (!url) {
-      console.warn("Relocation Index (QOI) API URL not found in env");
-      return null;
-    }
-
-    const response = await fetch(url);
+    const response = await fetch(`https://abroadlift.com/api/relocation-index?countryCode=${countryCode}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     if (!response.ok) throw new Error("Failed to fetch relocation index");
-
     const json = await response.json();
-    const data = json.data || [];
-
-    const normalization: Record<string, string> = {
-      "USA": "US", "UNITED STATES": "US",
-      "UK": "GB", "UNITED KINGDOM": "GB", "GREAT BRITAIN": "GB",
-      "CANADA": "CA", "CAN": "CA",
-      "AUSTRALIA": "AU", "AUS": "AU",
-      "GERMANY": "DE", "GER": "DE",
-      "INDIA": "IN", "IND": "IN",
-      "IRELAND": "IE", "IRL": "IE",
-    };
-
-    const upperCountry = countryCode.toUpperCase();
-    const targetCode = (normalization[upperCountry] || countryCode).toLowerCase();
-
-    let countryData = data.find((d: any) => d.country_code?.toLowerCase() === targetCode);
-
-    // Fallback GB/UK
-    if (!countryData && targetCode === "gb") countryData = data.find((d: any) => d.country_code?.toLowerCase() === "uk");
-    if (!countryData && targetCode === "uk") countryData = data.find((d: any) => d.country_code?.toLowerCase() === "gb");
-
-    return countryData;
+    return json.data || json;
   } catch (error) {
     console.error("Error fetching relocation index:", error);
+    return null;
+  }
+};
+
+export const getVisaStatus = async (token: string): Promise<any> => {
+  try {
+    const response = await fetch(`https://abroadlift.com/api/visa`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch visa rate checks");
+    const json = await response.json();
+    return json.data || json;
+  } catch (error) {
+    console.error("Error fetching visa rate checks:", error);
+    return null;
+  }
+};
+
+export const checkVisa = async (
+  token: string,
+  visaData: {
+    nationality: string;
+    destination: string;
+    degreeLevel: string;
+    fundsAvailable: number;
+    ieltsScore: number;
+    pastRejections: boolean;
+  }
+): Promise<any> => {
+  try {
+    const response = await fetch(`https://abroadlift.com/api/visa`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(visaData),
+    });
+    if (!response.ok) throw new Error("Failed to run visa check");
+    const json = await response.json();
+    return json.data || json;
+  } catch (error) {
+    console.error("Error running visa check:", error);
+    throw error;
+  }
+};
+
+export const getVisaGuidance = async (countryCode: string): Promise<any> => {
+  try {
+    const response = await fetch(`https://abroadlift.com/api/visa-guidance?countryCode=${countryCode}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch visa guidance");
+    const json = await response.json();
+    return json.data || json;
+  } catch (error) {
+    console.error("Error fetching visa guidance:", error);
     return null;
   }
 };

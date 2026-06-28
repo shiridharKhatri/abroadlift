@@ -16,6 +16,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProfileAvatar } from "../components/ProfileAvatar";
 import { useTheme } from "../context/ThemeContext";
 
+import { useUser } from "../context/UserContext";
+import { checkVisa, getVisaGuidance } from "../lib/api";
+
 const { width } = Dimensions.get("window");
 
 const COLORS = {
@@ -35,7 +38,15 @@ const COLORS = {
 export default function VisaReadinessPage() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [expandedSections, setExpandedSections] = React.useState<string[]>(["profile-1", "risks", "profile-2"]);
+  const { userData, token } = useUser();
+
+  const [expandedSections, setExpandedSections] = React.useState<string[]>(["profile-1", "risks", "guidance"]);
+  const [loading, setLoading] = React.useState(true);
+  const [score, setScore] = React.useState(60);
+  const [label, setLabel] = React.useState("Needs Work");
+  const [analysisItems, setAnalysisItems] = React.useState<any[]>([]);
+  const [riskItems, setRiskItems] = React.useState<any[]>([]);
+  const [guidanceSteps, setGuidanceSteps] = React.useState<any[]>([]);
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => 
@@ -44,6 +55,95 @@ export default function VisaReadinessPage() {
   };
 
   const isExpanded = (id: string) => expandedSections.includes(id);
+
+  React.useEffect(() => {
+    const runAnalysis = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const nationality = userData.country || "Nepal";
+        const destination = userData.selectedUniversities?.[0]?.country || "USA";
+        const degreeLevel = userData.studyLevel || "Masters";
+        const fundsAvailable = userData.yearlyBudget ? parseFloat(userData.yearlyBudget) : 25000;
+        const ieltsScore = userData.score ? parseFloat(userData.score) : 6.5;
+        const pastRejections = 0;
+
+        const [visaResult, guidanceResult] = await Promise.all([
+          checkVisa(token, {
+            nationality,
+            destination,
+            degreeLevel,
+            fundsAvailable,
+            ieltsScore,
+            pastRejections: pastRejections > 0,
+          }),
+          getVisaGuidance(destination.toLowerCase() === "united kingdom" ? "uk" : destination),
+        ]);
+
+        const rate = visaResult?.successRate ?? 60;
+        setScore(rate);
+
+        if (rate >= 80) setLabel("Excellent");
+        else if (rate >= 65) setLabel("Good");
+        else if (rate >= 50) setLabel("Needs Work");
+        else setLabel("Weak");
+
+        // Build dynamic profile analysis
+        const analysis = [];
+        const gpa = parseFloat(userData.cgpa || "0");
+        if (gpa >= 3.0) {
+          analysis.push({ label: `Strong Academics (GPA: ${gpa})`, type: "success" });
+        } else if (gpa > 0) {
+          analysis.push({ label: `Academics can be improved (GPA: ${gpa})`, type: "warning" });
+        } else {
+          analysis.push({ label: "Academic records not set", type: "warning" });
+        }
+
+        if (ieltsScore >= 6.5) {
+          analysis.push({ label: `Strong English proficiency (Score: ${ieltsScore})`, type: "success" });
+        } else if (ieltsScore > 0) {
+          analysis.push({ label: `English test score is average (Score: ${ieltsScore})`, type: "warning" });
+        } else {
+          analysis.push({ label: "English test score not set", type: "warning" });
+        }
+
+        if (fundsAvailable >= 30000) {
+          analysis.push({ label: "Sufficient financial coverage", type: "success" });
+        } else {
+          analysis.push({ label: "Financial proof could be stronger", type: "warning" });
+        }
+        setAnalysisItems(analysis);
+
+        // Build dynamic risk factors
+        const risks = [];
+        if (fundsAvailable < 20000) {
+          risks.push({ label: `Low available funds: $${fundsAvailable.toLocaleString()}/yr` });
+        }
+        if (pastRejections > 0) {
+          risks.push({ label: "Previous visa refusal recorded" });
+        }
+        if (!userData.selectedUniversities || userData.selectedUniversities.length === 0) {
+          risks.push({ label: "No target university selected yet" });
+        }
+        if (risks.length === 0) {
+          risks.push({ label: "No critical risk factors identified" });
+        }
+        setRiskItems(risks);
+
+        if (guidanceResult && guidanceResult.steps) {
+          setGuidanceSteps(guidanceResult.steps);
+        }
+      } catch (err) {
+        console.error("Error running visa analysis:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    runAnalysis();
+  }, [userData, token]);
 
   const SectionHeader = ({ title, icon, color, iconBg, onToggle, expanded }: { title: string; icon: any; color: string; iconBg: string; onToggle: () => void; expanded: boolean }) => (
     <TouchableOpacity style={[styles.sectionHeader, { backgroundColor: colors.card }]} onPress={onToggle} activeOpacity={0.7}>
@@ -71,6 +171,14 @@ export default function VisaReadinessPage() {
       <Text style={[styles.analysisItemText, { color: colors.text }]}>{label}</Text>
     </View>
   );
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -101,33 +209,31 @@ export default function VisaReadinessPage() {
           <View style={styles.summaryContent}>
             <View style={styles.summaryLeft}>
               <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>Visa Readiness Score</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>60% - Needs Work</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{score}% - {label}</Text>
               <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
                 <View style={styles.orangeDot} />
-                <Text style={styles.averageBadgeText}>Average Cost</Text>
+                <Text style={styles.averageBadgeText}>Dynamic Evaluation</Text>
               </View>
             </View>
             <View style={styles.chartContainer}>
                <View style={[styles.donutBase, { borderColor: isDark ? colors.border : "#E2E8F0" }]}>
-                  <View style={[styles.donutSegment, { borderColor: colors.primary, borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '45deg' }] }]} />
-                  <View style={[styles.donutSegment, { borderColor: COLORS.orange, borderBottomColor: 'transparent', borderRightColor: 'transparent', transform: [{ rotate: '-45deg' }] }]} />
-                  <View style={[styles.donutSegment, { borderColor: '#14B8A6', borderTopColor: 'transparent', borderRightColor: 'transparent', width: 66, height: 66, top: -10, left: -10, transform: [{ rotate: '120deg' }] }]} />
+                  <View style={[styles.donutSegment, { borderColor: colors.primary, borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: `${(score / 100) * 360}deg` }] }]} />
                </View>
             </View>
           </View>
           <View style={[styles.summaryDivider, { backgroundColor: isDark ? colors.border : "#FDEED7" }]} />
           <View style={styles.summaryFooter}>
              <View style={styles.footerIconItem}>
-                <Ionicons name="information-circle-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>Financial Strength</Text>
+                <Ionicons name="cash-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>${(userData.yearlyBudget || "0")}/yr</Text>
              </View>
              <View style={styles.footerIconItem}>
-                <Ionicons name="information-circle-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>Documents</Text>
+                <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>{userData.studyLevel || "N/A"}</Text>
              </View>
              <View style={styles.footerIconItem}>
-                <Ionicons name="information-circle-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>Country Rules</Text>
+                <Ionicons name="flag-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>{userData.country || "N/A"}</Text>
              </View>
           </View>
         </View>
@@ -138,7 +244,7 @@ export default function VisaReadinessPage() {
            {/* Profile Analysis (Blue) */}
            <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
              <SectionHeader 
-                title="Profile Analysis" 
+                title="Profile Strengths" 
                 icon="person-outline" 
                 color="#3B82F6" 
                 iconBg={isDark ? "rgba(59, 130, 246, 0.15)" : "#DBEAFE"} 
@@ -147,10 +253,9 @@ export default function VisaReadinessPage() {
              />
              {isExpanded("profile-1") && (
                <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                 <AnalysisItem label="Strong Academics" type="success" />
-                 <AnalysisItem label="Good Study Plan" type="success" />
-                 <AnalysisItem label="Financial Proof Weak" type="warning" />
-                 <AnalysisItem label="Low Bank Balance" type="warning" />
+                 {analysisItems.map((item, idx) => (
+                   <AnalysisItem key={idx} label={item.label} type={item.type} />
+                 ))}
                </View>
              )}
            </View>
@@ -167,29 +272,31 @@ export default function VisaReadinessPage() {
              />
              {isExpanded("risks") && (
                <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                 <AnalysisItem label="Insufficient Bank Balance" type="warning" />
-                 <AnalysisItem label="Weak Financial Document" type="warning" />
-                 <AnalysisItem label="No Sponsor Proof" type="warning" />
+                 {riskItems.map((item, idx) => (
+                   <AnalysisItem key={idx} label={item.label} type="warning" />
+                 ))}
                </View>
              )}
            </View>
 
-           {/* Profile Analysis (Green) */}
+           {/* Visa Guidance Steps (Green) */}
            <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
              <SectionHeader 
-                title="Profile Analysis" 
+                title={`${userData.selectedUniversities?.[0]?.country || "Destination"} Visa Steps`}
                 icon="checkmark-circle-outline" 
                 color="#059669" 
                 iconBg={isDark ? "rgba(5, 150, 105, 0.15)" : "#D1FAE5"} 
-                onToggle={() => toggleSection("profile-2")}
-                expanded={isExpanded("profile-2")}
+                onToggle={() => toggleSection("guidance")}
+                expanded={isExpanded("guidance")}
              />
-             {isExpanded("profile-2") && (
+             {isExpanded("guidance") && (
                <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                 <AnalysisItem label="Financial Proof" type="success" />
-                 <AnalysisItem label="Academics" type="success" />
-                 <AnalysisItem label="Country Rules" type="success" />
-                 <AnalysisItem label="Documents" type="warning" />
+                 {guidanceSteps.map((step, idx) => (
+                   <AnalysisItem key={idx} label={`${step.title}: ${step.description}`} type="success" />
+                 ))}
+                 {guidanceSteps.length === 0 && (
+                   <AnalysisItem label="Loading target visa rules..." type="warning" />
+                 )}
                </View>
              )}
            </View>
