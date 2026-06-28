@@ -16,8 +16,8 @@ import {
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { Skeleton } from "../../components/Skeleton";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
-import { useTheme } from "../context/ThemeContext";
-import { useUser } from "../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useUser } from "../../context/UserContext";
 
 const { width } = Dimensions.get("window");
 

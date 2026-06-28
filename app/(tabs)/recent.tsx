@@ -14,8 +14,8 @@ import {
 import { router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useUser } from "../context/UserContext";
-import { useTheme } from "../context/ThemeContext";
+import { useUser } from "../../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 

@@ -15,9 +15,9 @@ import {
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useUser } from "./context/UserContext";
+import { useUser } from "../context/UserContext";
 import { verifySignupOtp, requestOtp } from "../lib/api";
-import { useTheme } from "./context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 

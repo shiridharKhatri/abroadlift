@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, ViewStyle } from "react-native";
-import { useTheme } from "../app/context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 interface SkeletonProps {
   width?: any;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useUser } from '../app/context/UserContext';
+import { useUser } from '../context/UserContext';
 
 interface ProfileAvatarProps {
   size: number;

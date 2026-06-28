@@ -14,9 +14,9 @@ import {
 import { router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const COLORS = {
   primary: "#33BFFF", 

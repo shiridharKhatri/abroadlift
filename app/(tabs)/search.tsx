@@ -20,8 +20,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { Skeleton } from "../../components/Skeleton";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
-import { useTheme } from "../context/ThemeContext";
-import { useUser } from "../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useUser } from "../../context/UserContext";
 
 const { width, height } = Dimensions.get("window");
 

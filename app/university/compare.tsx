@@ -18,7 +18,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { getUniversityDetails, searchUniversities, UniversityDetail, UniversityResult } from "../../lib/api";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");

@@ -13,11 +13,11 @@ import {
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { getCostOfLiving, getRelocationIndex, getUniversityDetails } from "../../lib/api";
 import { ActivityIndicator } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");

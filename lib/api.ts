@@ -1,19 +1,15 @@
 
-const fetchWithTimeout = async (url: string, options: any = {}, timeoutMs = 2000) => {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(id);
-    return response;
-  } catch (error) {
-    clearTimeout(id);
-    throw error;
-  }
+const fetchWithTimeout = async (url: string, options: any = {}, timeoutMs = 15000) => {
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
+  );
+  const response = await Promise.race([
+    fetch(url, options),
+    timeoutPromise,
+  ]);
+  return response;
 };
+
 
 const getApiBaseUrl = () => {
   return "https://api.abroadlift.com/api";
@@ -115,7 +111,6 @@ export interface UniversityDetail extends UniversityResult {
   currency?: string;
 }
 
-import { fetchWorqnowUniversities, getWorqnowUniversityDetail } from './worqnow';
 
 // Mock in-memory store for profile updates during the session
 let mockProfileStore: any = {
@@ -222,7 +217,7 @@ export const getProfile = async (token: string): Promise<any> => {
 
 export const updateProfile = async (userData: any, token: string): Promise<any> => {
   console.log("Calling live updateProfile API");
-  
+
   const payload = {
     name: userData.name,
     email: userData.email,
@@ -370,7 +365,7 @@ export const getAvailableCountries = async (): Promise<{ id: string; name: strin
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const result = await res.json();
     const list = result.data || [];
-    
+
     const flagMap: Record<string, string> = {
       "US": "🇺🇸", "USA": "🇺🇸",
       "GB": "🇬🇧", "UK": "🇬🇧",

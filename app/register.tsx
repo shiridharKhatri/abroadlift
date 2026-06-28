@@ -16,8 +16,8 @@ import {
 import { Stack, router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useUser } from "./context/UserContext";
-import { useTheme } from "./context/ThemeContext";
+import { useUser } from "../context/UserContext";
+import { useTheme } from "../context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 

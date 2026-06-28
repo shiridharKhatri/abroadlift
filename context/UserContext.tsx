@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { login as apiLogin, register as apiRegister, updateProfile as apiUpdateProfile } from '../../lib/api';
+import { login as apiLogin, register as apiRegister, updateProfile as apiUpdateProfile } from '../lib/api';
 
 type UserData = {
   id?: string;
@@ -80,7 +80,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
           if (storedToken !== "dummy-jwt-token-for-testing") {
             // NEW: Refresh user data from server if we have a token
-            const { getProfile } = require('../../lib/api');
+            const { getProfile } = require('../lib/api');
             getProfile(storedToken).then((data: any) => {
               const profile = data.profile || {};
               const refreshedUser = {

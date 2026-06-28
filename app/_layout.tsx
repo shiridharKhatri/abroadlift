@@ -1,8 +1,8 @@
 import React from "react";
 import { Stack, useSegments, router } from "expo-router";
 import { StatusBar } from "react-native";
-import { UserProvider, useUser } from "./context/UserContext";
-import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { UserProvider, useUser } from "../context/UserContext";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 
 export default function RootLayout() {
   return (

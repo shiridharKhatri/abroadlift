@@ -21,8 +21,8 @@ import {
   searchUniversities,
   UniversityResult,
 } from "../../lib/api";
-import { useTheme } from "../context/ThemeContext";
-import { useUser } from "../context/UserContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useUser } from "../../context/UserContext";
 import { Skeleton } from "../../components/Skeleton";
 
 const { width } = Dimensions.get("window");

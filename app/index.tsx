@@ -10,7 +10,7 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useUser } from "./context/UserContext";
+import { useUser } from "../context/UserContext";
 
 import { useIsFocused } from "@react-navigation/native";
 
