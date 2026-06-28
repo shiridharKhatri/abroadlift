@@ -1,17 +1,17 @@
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router, Stack } from "expo-router";
 import React from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Platform,
   Dimensions,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ActivityIndicator
 } from "react-native";
-import { router, Stack } from "expo-router";
-import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProfileAvatar } from "../components/ProfileAvatar";
 import { useTheme } from "../context/ThemeContext";
@@ -49,7 +49,7 @@ export default function VisaReadinessPage() {
   const [guidanceSteps, setGuidanceSteps] = React.useState<any[]>([]);
 
   const toggleSection = (id: string) => {
-    setExpandedSections(prev => 
+    setExpandedSections(prev =>
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     );
   };
@@ -199,11 +199,11 @@ export default function VisaReadinessPage() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollInner, { paddingBottom: 40 + insets.bottom }]}
       >
-        
+
         {/* Readiness Summary Card */}
         <View style={[styles.summaryCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF9F2", borderColor: "#FDEED7" }]}>
           <View style={styles.summaryContent}>
@@ -216,90 +216,90 @@ export default function VisaReadinessPage() {
               </View>
             </View>
             <View style={styles.chartContainer}>
-               <View style={[styles.donutBase, { borderColor: isDark ? colors.border : "#E2E8F0" }]}>
-                  <View style={[styles.donutSegment, { borderColor: colors.primary, borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: `${(score / 100) * 360}deg` }] }]} />
-               </View>
+              <View style={[styles.donutBase, { borderColor: isDark ? colors.border : "#E2E8F0" }]}>
+                <View style={[styles.donutSegment, { borderColor: colors.primary, borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: `${(score / 100) * 360}deg` }] }]} />
+              </View>
             </View>
           </View>
           <View style={[styles.summaryDivider, { backgroundColor: isDark ? colors.border : "#FDEED7" }]} />
           <View style={styles.summaryFooter}>
-             <View style={styles.footerIconItem}>
-                <Ionicons name="cash-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>${(userData.yearlyBudget || "0")}/yr</Text>
-             </View>
-             <View style={styles.footerIconItem}>
-                <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>{userData.studyLevel || "N/A"}</Text>
-             </View>
-             <View style={styles.footerIconItem}>
-                <Ionicons name="flag-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>{userData.country || "N/A"}</Text>
-             </View>
+            <View style={styles.footerIconItem}>
+              <Ionicons name="cash-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>${(userData.yearlyBudget || "0")}/yr</Text>
+            </View>
+            <View style={styles.footerIconItem}>
+              <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>{userData.studyLevel || "N/A"}</Text>
+            </View>
+            <View style={styles.footerIconItem}>
+              <Ionicons name="flag-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.footerIconText, { color: colors.textSecondary }]}>{userData.country || "N/A"}</Text>
+            </View>
           </View>
         </View>
 
         {/* Breakdown Sections */}
         <View style={styles.breakdownContainer}>
 
-           {/* Profile Analysis (Blue) */}
-           <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-             <SectionHeader 
-                title="Profile Strengths" 
-                icon="person-outline" 
-                color="#3B82F6" 
-                iconBg={isDark ? "rgba(59, 130, 246, 0.15)" : "#DBEAFE"} 
-                onToggle={() => toggleSection("profile-1")}
-                expanded={isExpanded("profile-1")}
-             />
-             {isExpanded("profile-1") && (
-               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                 {analysisItems.map((item, idx) => (
-                   <AnalysisItem key={idx} label={item.label} type={item.type} />
-                 ))}
-               </View>
-             )}
-           </View>
+          {/* Profile Analysis (Blue) */}
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <SectionHeader
+              title="Profile Strengths"
+              icon="person-outline"
+              color="#3B82F6"
+              iconBg={isDark ? "rgba(59, 130, 246, 0.15)" : "#DBEAFE"}
+              onToggle={() => toggleSection("profile-1")}
+              expanded={isExpanded("profile-1")}
+            />
+            {isExpanded("profile-1") && (
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
+                {analysisItems.map((item, idx) => (
+                  <AnalysisItem key={idx} label={item.label} type={item.type} />
+                ))}
+              </View>
+            )}
+          </View>
 
-           {/* Risk Factors (Orange) */}
-           <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-             <SectionHeader 
-                title="Risk Factors" 
-                icon="warning-outline" 
-                color="#D97706" 
-                iconBg={isDark ? "rgba(217, 119, 6, 0.15)" : "#FEF3C7"} 
-                onToggle={() => toggleSection("risks")}
-                expanded={isExpanded("risks")}
-             />
-             {isExpanded("risks") && (
-               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                 {riskItems.map((item, idx) => (
-                   <AnalysisItem key={idx} label={item.label} type="warning" />
-                 ))}
-               </View>
-             )}
-           </View>
+          {/* Risk Factors (Orange) */}
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <SectionHeader
+              title="Risk Factors"
+              icon="warning-outline"
+              color="#D97706"
+              iconBg={isDark ? "rgba(217, 119, 6, 0.15)" : "#FEF3C7"}
+              onToggle={() => toggleSection("risks")}
+              expanded={isExpanded("risks")}
+            />
+            {isExpanded("risks") && (
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
+                {riskItems.map((item, idx) => (
+                  <AnalysisItem key={idx} label={item.label} type="warning" />
+                ))}
+              </View>
+            )}
+          </View>
 
-           {/* Visa Guidance Steps (Green) */}
-           <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-             <SectionHeader 
-                title={`${userData.selectedUniversities?.[0]?.country || "Destination"} Visa Steps`}
-                icon="checkmark-circle-outline" 
-                color="#059669" 
-                iconBg={isDark ? "rgba(5, 150, 105, 0.15)" : "#D1FAE5"} 
-                onToggle={() => toggleSection("guidance")}
-                expanded={isExpanded("guidance")}
-             />
-             {isExpanded("guidance") && (
-               <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
-                 {guidanceSteps.map((step, idx) => (
-                   <AnalysisItem key={idx} label={`${step.title}: ${step.description}`} type="success" />
-                 ))}
-                 {guidanceSteps.length === 0 && (
-                   <AnalysisItem label="Loading target visa rules..." type="warning" />
-                 )}
-               </View>
-             )}
-           </View>
+          {/* Visa Guidance Steps (Green) */}
+          <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <SectionHeader
+              title={`${userData.selectedUniversities?.[0]?.country || "Destination"} Visa Steps`}
+              icon="checkmark-circle-outline"
+              color="#059669"
+              iconBg={isDark ? "rgba(5, 150, 105, 0.15)" : "#D1FAE5"}
+              onToggle={() => toggleSection("guidance")}
+              expanded={isExpanded("guidance")}
+            />
+            {isExpanded("guidance") && (
+              <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
+                {guidanceSteps.map((step, idx) => (
+                  <AnalysisItem key={idx} label={`${step.title}: ${step.description}`} type="success" />
+                ))}
+                {guidanceSteps.length === 0 && (
+                  <AnalysisItem label="Loading target visa rules..." type="warning" />
+                )}
+              </View>
+            )}
+          </View>
 
         </View>
 
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   summaryCard: {
-    backgroundColor: "#FEF9F2", 
+    backgroundColor: "#FEF9F2",
     borderRadius: 24,
     padding: 20,
     marginBottom: 24,

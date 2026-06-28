@@ -687,7 +687,10 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
         "Content-Type": "application/json",
       },
     });
-    if (!response.ok) throw new Error("Failed to fetch cost of living");
+    if (!response.ok) {
+      console.warn(`Cost of living API returned status ${response.status} for ${countryCode}`);
+      return null;
+    }
     const json = await response.json();
     return json.data || json;
   } catch (error) {
@@ -704,7 +707,10 @@ export const getRelocationIndex = async (countryCode: string): Promise<any> => {
         "Content-Type": "application/json",
       },
     });
-    if (!response.ok) throw new Error("Failed to fetch relocation index");
+    if (!response.ok) {
+      console.warn(`Relocation index API returned status ${response.status} for ${countryCode}`);
+      return null;
+    }
     const json = await response.json();
     return json.data || json;
   } catch (error) {
