@@ -78,38 +78,48 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (storedToken) {
           setToken(storedToken);
 
+          // First, restore local data immediately so routing has something to check
+          const storedObj = storedUser ? JSON.parse(storedUser) : DEFAULT_USER_DATA;
+          _setUserData(storedObj);
+
           if (storedToken !== "dummy-jwt-token-for-testing") {
-            // NEW: Refresh user data from server if we have a token
-            const { getProfile } = require('../lib/api');
-            getProfile(storedToken).then((data: any) => {
-              const storedObj = storedUser ? JSON.parse(storedUser) : DEFAULT_USER_DATA;
+            // Refresh user data from server — AWAIT so isLoading stays true until done
+            try {
+              const { getProfile } = require('../lib/api');
+              const data = await getProfile(storedToken);
               const profile = data.profile || {};
               const refreshedUser = {
                 ...storedObj,
                 ...data,
-                country: profile.nationality || profile.currentCountry || storedObj.country || "",
-                studyLevel: profile.degreeLevel || storedObj.studyLevel || "",
+                // Preserve the locally-stored destination country;
+                // only use backend fields as a last-resort fallback
+                country: storedObj.country || profile.nationality || profile.currentCountry || "",
+                studyLevel: storedObj.studyLevel || profile.degreeLevel || "",
                 cgpa: profile.gpa ? String(profile.gpa) : (storedObj.cgpa || ""),
                 score: profile.englishScore ? String(profile.englishScore) : (storedObj.score || ""),
-                fieldOfStudy: profile.fieldOfStudy || storedObj.fieldOfStudy || "",
-                testType: profile.testType || storedObj.testType || "",
-                recentAcademicField: profile.recentAcademicField || storedObj.recentAcademicField || "",
-                passoutYear: profile.passoutYear || storedObj.passoutYear || "",
-                intake: profile.intake || storedObj.intake || "",
-                englishLevel: profile.englishLevel || storedObj.englishLevel || "",
-                yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : (storedObj.yearlyBudget || ""),
-                scholarshipNeeded: profile.scholarshipNeeded ?? (storedObj.scholarshipNeeded ?? false),
-                onboardingComplete: data.user?.onboardingComplete ?? profile.onboardingComplete ?? (storedObj.onboardingComplete ?? false),
-                selectedUniversities: data.user?.selectedUniversities || storedObj.selectedUniversities || [],
+                fieldOfStudy: storedObj.fieldOfStudy || profile.fieldOfStudy || "",
+                testType: storedObj.testType || profile.testType || "",
+                recentAcademicField: storedObj.recentAcademicField || profile.recentAcademicField || "",
+                passoutYear: storedObj.passoutYear || profile.passoutYear || "",
+                intake: storedObj.intake || profile.intake || "",
+                englishLevel: storedObj.englishLevel || profile.englishLevel || "",
+                yearlyBudget: storedObj.yearlyBudget || (profile.yearlyBudget ? String(profile.yearlyBudget) : ""),
+                scholarshipNeeded: storedObj.scholarshipNeeded ?? profile.scholarshipNeeded ?? false,
+                onboardingComplete: storedObj.onboardingComplete || data.user?.onboardingComplete || profile.onboardingComplete || false,
+                selectedUniversities: storedObj.selectedUniversities?.length > 0
+                  ? storedObj.selectedUniversities
+                  : (data.user?.selectedUniversities || []),
               };
               _setUserData(refreshedUser);
-              AsyncStorage.setItem('@user_data', JSON.stringify(refreshedUser));
-            }).catch((e: any) => console.error("Profile refresh error:", e));
-          } else if (storedUser) {
-            _setUserData(JSON.parse(storedUser));
+              await AsyncStorage.setItem('@user_data', JSON.stringify(refreshedUser));
+            } catch (e: any) {
+              console.warn("Profile refresh failed (using local data):", e);
+              // storedObj already set above — user sees local data
+            }
           }
+        } else if (storedUser) {
+          _setUserData(JSON.parse(storedUser));
         }
-        if (storedUser && !storedToken) _setUserData(JSON.parse(storedUser));
       } catch (e) {
         console.error("Error loading auth data:", e);
       } finally {
@@ -131,20 +141,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const mappedUser = {
         ...userData,
         ...incomingUser,
-        country: profile.nationality || profile.currentCountry || userData.country,
-        studyLevel: profile.degreeLevel || userData.studyLevel,
+        // Preserve locally-selected destination country; backend nationality is a fallback
+        country: userData.country || profile.nationality || profile.currentCountry || "",
+        studyLevel: userData.studyLevel || profile.degreeLevel || "",
         cgpa: profile.gpa ? String(profile.gpa) : userData.cgpa,
         score: profile.englishScore ? String(profile.englishScore) : userData.score,
-        fieldOfStudy: profile.fieldOfStudy || userData.fieldOfStudy,
-        testType: profile.testType || userData.testType,
-        recentAcademicField: profile.recentAcademicField || userData.recentAcademicField,
-        passoutYear: profile.passoutYear || userData.passoutYear,
-        intake: profile.intake || userData.intake,
-        englishLevel: profile.englishLevel || userData.englishLevel,
-        yearlyBudget: profile.yearlyBudget ? String(profile.yearlyBudget) : userData.yearlyBudget,
-        scholarshipNeeded: profile.scholarshipNeeded ?? userData.scholarshipNeeded,
-        onboardingComplete: incomingUser.onboardingComplete ?? profile.onboardingComplete ?? false,
-        selectedUniversities: incomingUser.selectedUniversities || userData.selectedUniversities || [],
+        fieldOfStudy: userData.fieldOfStudy || profile.fieldOfStudy || "",
+        testType: userData.testType || profile.testType || "",
+        recentAcademicField: userData.recentAcademicField || profile.recentAcademicField || "",
+        passoutYear: userData.passoutYear || profile.passoutYear || "",
+        intake: userData.intake || profile.intake || "",
+        englishLevel: userData.englishLevel || profile.englishLevel || "",
+        yearlyBudget: userData.yearlyBudget || (profile.yearlyBudget ? String(profile.yearlyBudget) : ""),
+        scholarshipNeeded: userData.scholarshipNeeded ?? profile.scholarshipNeeded ?? false,
+        onboardingComplete: userData.onboardingComplete || incomingUser.onboardingComplete || profile.onboardingComplete || false,
+        selectedUniversities: userData.selectedUniversities?.length > 0
+          ? userData.selectedUniversities
+          : (incomingUser.selectedUniversities || []),
       };
 
       setToken(data.token);
