@@ -226,7 +226,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         if (token && token !== "dummy-jwt-token-for-testing") {
           apiUpdateProfile(newData, token).catch(e =>
-            console.error("Sync error:", e)
+            console.warn("Background profile sync error (using local data):", e.message || e)
           );
         }
 

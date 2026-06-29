@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import {
     Dimensions,
     Image,
+    Linking,
     Modal,
     Platform,
     ScrollView,
@@ -22,6 +23,7 @@ import { Skeleton } from "../../components/Skeleton";
 import { getCostOfLiving, getUniversityDetails, UniversityDetail } from "../../lib/api";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import MapView, { Marker } from "react-native-maps";
 
 const { width, height } = Dimensions.get("window");
 
@@ -85,6 +87,8 @@ export default function UniversityDetails() {
         : (userData.country || "UK");
     const [selectedTab, setSelectedTab] = useState("Estimates");
     const [courseSearch, setCourseSearch] = useState("");
+    const [levelFilter, setLevelFilter] = useState("All");
+    const [showLevelDropdown, setShowLevelDropdown] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isUniDescriptionExpanded, setIsUniDescriptionExpanded] = useState(false);
     const [uniData, setUniData] = useState<UniversityDetail | null>(null);
@@ -134,6 +138,8 @@ export default function UniversityDetails() {
         ranking_world: uniData?.ranking_world || "N/A",
         ranking_national: uniData?.ranking_national || "N/A",
         fee_usd: uniData?.tuitionValue || 0,
+        latitude: uniData?.latitude,
+        longitude: uniData?.longitude,
     };
 
     const isShortlisted = userData.selectedUniversities?.some(
@@ -425,6 +431,58 @@ export default function UniversityDetails() {
                         <Text style={[styles.factValue, { color: colors.text }]}>{details.students}</Text>
                     </View>
                 </View>
+                {(() => {
+                    const lat = parseFloat(String(details.latitude));
+                    const lng = parseFloat(String(details.longitude));
+                    const hasCoordinates = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+                    if (!hasCoordinates) return null;
+                    return (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
+                                    <Ionicons name="map-outline" size={18} color={colors.primary} />
+                                </View>
+                                <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Campus Location</Text>
+                            </View>
+                            <View style={[styles.mapContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                                <MapView
+                                    style={styles.map}
+                                    initialRegion={{
+                                        latitude: lat,
+                                        longitude: lng,
+                                        latitudeDelta: 0.02,
+                                        longitudeDelta: 0.02,
+                                    }}
+                                    scrollEnabled={true}
+                                    zoomEnabled={true}
+                                    rotateEnabled={false}
+                                    pitchEnabled={false}
+                                >
+                                    <Marker
+                                        coordinate={{ latitude: lat, longitude: lng }}
+                                        title={details.title}
+                                        description={details.location}
+                                    />
+                                </MapView>
+                                <TouchableOpacity
+                                    style={[styles.directionsButton, { backgroundColor: colors.primary }]}
+                                    onPress={() => {
+                                        const url = Platform.select({
+                                            ios: `maps:0,0?q=${details.title}@${lat},${lng}`,
+                                            android: `geo:0,0?q=${lat},${lng}(${details.title})`,
+                                        });
+                                        if (url) {
+                                            Linking.openURL(url).catch(err => console.error("Error opening maps", err));
+                                        }
+                                    }}
+                                >
+                                    <Ionicons name="navigate-outline" size={16} color="#FFF" style={{ marginRight: 6 }} />
+                                    <Text style={styles.directionsButtonText}>Get Directions</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    );
+                })()}
             </View>
         );
     };
@@ -478,23 +536,115 @@ export default function UniversityDetails() {
     const renderCourses = () => {
         const rawCourses = uniData?.courses || [];
 
-        // Filter the courses based on search text
-        const filtered = rawCourses.filter(c =>
-            c.name.toLowerCase().includes(courseSearch.toLowerCase()) ||
-            (c.category && c.category.toLowerCase().includes(courseSearch.toLowerCase()))
-        );
+        const normalizeLevel = (lvl: string): string => {
+            const low = String(lvl).trim().toLowerCase();
+            if (low.includes("bachelor") || low.includes("ug") || low.includes("undergrad")) {
+                return "Bachelors";
+            }
+            if (low.includes("master") || low.includes("pg") || low.includes("postgrad")) {
+                return "Masters";
+            }
+            if (low.includes("doctor") || low.includes("phd") || low.includes("ph.d")) {
+                return "Doctorate";
+            }
+            if (low.includes("diploma")) {
+                return "Diploma";
+            }
+            if (low.includes("certificate")) {
+                return "Certificate";
+            }
+            const formatted = low.charAt(0).toUpperCase() + low.slice(1);
+            if (formatted.length > 15) {
+                return formatted.substring(0, 12) + "...";
+            }
+            return formatted;
+        };
+
+        // Dynamically get the unique levels present in the available courses, cleaned & normalized
+        const uniqueLevels = ["All"];
+        rawCourses.forEach(c => {
+            const levels = Array.isArray(c.level) ? c.level : [c.level || "General"];
+            levels.forEach((lvl: string) => {
+                if (lvl && lvl.trim() !== "") {
+                    const normalized = normalizeLevel(lvl);
+                    if (!uniqueLevels.includes(normalized)) {
+                        uniqueLevels.push(normalized);
+                    }
+                }
+            });
+        });
+
+        // Ensure current filter value exists in dynamic levels, fallback to "All"
+        const activeFilter = uniqueLevels.includes(levelFilter) ? levelFilter : "All";
+
+        // Filter the courses based on search text and dynamic level filter
+        const filtered = rawCourses.filter(c => {
+            const matchesSearch = c.name.toLowerCase().includes(courseSearch.toLowerCase()) ||
+                (c.category && c.category.toLowerCase().includes(courseSearch.toLowerCase()));
+
+            if (activeFilter === "All") return matchesSearch;
+
+            const levels = Array.isArray(c.level) ? c.level : [c.level || ""];
+            const matchesLevel = levels.some((lvl: string) => {
+                return normalizeLevel(lvl) === activeFilter;
+            });
+
+            return matchesSearch && matchesLevel;
+        });
 
         return (
-            <View style={styles.tabContent}>
-                <View style={[styles.courseSearchWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <Ionicons name="search" size={20} color={colors.textSecondary} />
-                    <TextInput
-                        placeholder="Search Courses..."
-                        style={[styles.courseInput, { color: colors.text }]}
-                        placeholderTextColor={colors.textSecondary}
-                        value={courseSearch}
-                        onChangeText={setCourseSearch}
-                    />
+            <View style={[styles.tabContent, { zIndex: 5 }]}>
+                <View style={{ flexDirection: "row", gap: 8, marginBottom: 16, zIndex: 10, position: "relative" }}>
+                    <View style={[styles.courseSearchWrapper, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, marginBottom: 0 }]}>
+                        <Ionicons name="search" size={20} color={colors.textSecondary} />
+                        <TextInput
+                            placeholder="Search Courses..."
+                            style={[styles.courseInput, { color: colors.text }]}
+                            placeholderTextColor={colors.textSecondary}
+                            value={courseSearch}
+                            onChangeText={setCourseSearch}
+                        />
+                    </View>
+                    <View style={{ zIndex: 20 }}>
+                        <TouchableOpacity
+                            style={[styles.filterButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                            onPress={() => setShowLevelDropdown(!showLevelDropdown)}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="filter" size={16} color={colors.primary} />
+                            <Text style={[styles.filterButtonText, { color: colors.text }]}>
+                                {activeFilter === "All" ? "All Levels" : activeFilter}
+                            </Text>
+                            <Ionicons name={showLevelDropdown ? "chevron-up" : "chevron-down"} size={14} color={colors.textSecondary} />
+                        </TouchableOpacity>
+
+                        {showLevelDropdown && (
+                            <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                                {uniqueLevels.map((lvl) => (
+                                    <TouchableOpacity
+                                        key={lvl}
+                                        style={[
+                                            styles.dropdownItem,
+                                            activeFilter === lvl && { backgroundColor: colors.primary + "15" }
+                                        ]}
+                                        onPress={() => {
+                                            setLevelFilter(lvl);
+                                            setShowLevelDropdown(false);
+                                        }}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={[
+                                            styles.dropdownItemText,
+                                            { color: colors.text },
+                                            activeFilter === lvl && { color: colors.primary, fontWeight: "700" }
+                                        ]}>
+                                            {lvl === "All" ? "All Levels" : lvl}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+                    </View>
                 </View>
 
                 {filtered.length > 0 ? (
@@ -783,6 +933,75 @@ export default function UniversityDetails() {
 }
 
 const styles = StyleSheet.create({
+    mapContainer: {
+        height: 200,
+        borderRadius: 24,
+        overflow: "hidden",
+        borderWidth: 1,
+        marginTop: 12,
+        marginBottom: 24,
+        position: "relative",
+    },
+    map: {
+        width: "100%",
+        height: "100%",
+    },
+    directionsButton: {
+        position: "absolute",
+        bottom: 12,
+        right: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    directionsButtonText: {
+        color: "#FFF",
+        fontWeight: "700",
+        fontSize: 12,
+    },
+    filterButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        height: 52,
+        paddingHorizontal: 12,
+        borderRadius: 16,
+        borderWidth: 1,
+        gap: 6,
+    },
+    filterButtonText: {
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    dropdownMenu: {
+        position: "absolute",
+        top: 58,
+        right: 0,
+        width: 140,
+        borderRadius: 16,
+        borderWidth: 1,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+        zIndex: 999,
+        overflow: "hidden",
+    },
+    dropdownItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+    },
+    dropdownItemText: {
+        fontSize: 14,
+        fontWeight: "500",
+    },
     container: {
         flex: 1,
         backgroundColor: "#F8FAFC",
