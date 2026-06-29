@@ -911,13 +911,29 @@ export const getRelocationIndex = async (countryCode: string): Promise<any> => {
     }, 4000);
     if (!response.ok) {
       console.warn(`Relocation index API returned status ${response.status} for ${countryCode}`);
-      return { safety_index: 75, quality_of_life: 80, climate_index: 70 };
+      return {
+        quality_of_life_index: 140,
+        safety_index: 75,
+        health_care_index: 70,
+        purchasing_power_index: 85,
+      };
     }
     const json = await response.json();
-    return json.data || json;
+    const raw = json.data || json || {};
+    return {
+      quality_of_life_index: raw.lifestyle || raw.composite_score || raw.quality_of_life_index || 140,
+      safety_index: raw.safety || raw.safety_index || 75,
+      health_care_index: raw.healthcare || raw.health_care_index || 70,
+      purchasing_power_index: raw.career || raw.purchasing_power_index || 85,
+    };
   } catch (error) {
     console.warn("Error fetching relocation index, using fallback:", error);
-    return { safety_index: 75, quality_of_life: 80, climate_index: 70 };
+    return {
+      quality_of_life_index: 140,
+      safety_index: 75,
+      health_care_index: 70,
+      purchasing_power_index: 85,
+    };
   }
 };
 
