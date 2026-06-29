@@ -740,9 +740,19 @@ export const getUniversityDetails = async (id: string, country: string): Promise
     try {
       const allSch = await getScholarships();
       const schoolGroupId = s.school_group_id;
-      if (schoolGroupId && allSch.length > 0) {
+      if (allSch && allSch.length > 0) {
         scholarships = allSch
-          .filter((sch: any) => Number(sch.school_group_id) === Number(schoolGroupId))
+          .filter((sch: any) => {
+            if (schoolGroupId && Number(sch.school_group_id) === Number(schoolGroupId)) {
+              return true;
+            }
+            const schName = String(sch.school_group_name || sch.school_name || "").toLowerCase();
+            const uName = String(s.name || "").toLowerCase();
+            if (schName !== "" && uName !== "") {
+              return uName.includes(schName) || schName.includes(uName);
+            }
+            return false;
+          })
           .map((sch: any) => ({
             name: sch.title || sch.name || "Entrance Scholarship",
             value: sch.award_amount_from ? `${sch.award_amount_currency_symbol || "$"}${parseFloat(sch.award_amount_from).toLocaleString()}` : "Varies",
