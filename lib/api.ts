@@ -736,6 +736,25 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       }
     }
 
+    let scholarships: any[] = [];
+    try {
+      const allSch = await getScholarships();
+      const schoolGroupId = s.school_group_id;
+      if (schoolGroupId && allSch.length > 0) {
+        scholarships = allSch
+          .filter((sch: any) => Number(sch.school_group_id) === Number(schoolGroupId))
+          .map((sch: any) => ({
+            name: sch.title || sch.name || "Entrance Scholarship",
+            value: sch.award_amount_from ? `${sch.award_amount_currency_symbol || "$"}${parseFloat(sch.award_amount_from).toLocaleString()}` : "Varies",
+            eligibility: sch.eligible_levels ? (Array.isArray(sch.eligible_levels) ? sch.eligible_levels.slice(0, 3).join(", ") : String(sch.eligible_levels)) : "International Students",
+            notes: sch.automatically_applied ? "Automatically Applied" : "Application Required",
+            type: sch.type || "Entrance",
+          }));
+      }
+    } catch (schErr) {
+      console.warn("Failed to load school-specific scholarships:", schErr);
+    }
+
     return {
       id: String(s.id || s.school_id || s._id),
       name: s.name || "Unknown University",
@@ -757,7 +776,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       ranking_world: s.school_rank || s.ranking_world || s.rank || "N/A",
       ranking_national: s.ranking_national || "N/A",
       courses: schoolCourses,
-      scholarships: s.scholarships || [],
+      scholarships: scholarships.length > 0 ? scholarships : (s.scholarships || []),
       photos: s.photos || [],
       address: s.address || "",
       province: s.province || "",
