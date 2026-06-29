@@ -383,85 +383,95 @@ export default function UniversitySelection() {
         ) : filteredUniversities.length > 0 ? (
           filteredUniversities.map((uni) => (
             <View key={uni.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {/* Top part is clickable for details navigation */}
+              {/* Entire card top part is clickable for details navigation */}
               <TouchableOpacity
-                activeOpacity={0.9}
-                style={{ flex: 1 }}
+                activeOpacity={0.95}
                 onPress={() => router.push(`/university/${uni.id}?country=${encodeURIComponent(uni.country)}&name=${encodeURIComponent(uni.name)}`)}
               >
                 <View style={styles.imageContainer}>
                   <Image source={{ uri: uni.image }} style={styles.cardImage} />
                   {uni.rank && uni.rank !== "N/A" && (
                     <View style={styles.rankBadge}>
-                      <BlurView intensity={20} style={styles.rankBlur}>
-                        <Ionicons name="trophy-outline" size={12} color="#004be3" />
-                        <Text style={styles.rankText}>{uni.rank}</Text>
+                      <BlurView intensity={30} tint="light" style={styles.rankBlur}>
+                        <Ionicons name="trophy" size={12} color="#FFF" />
+                        <Text style={[styles.rankText, { color: "#FFF" }]}>{uni.rank}</Text>
                       </BlurView>
                     </View>
                   )}
                 </View>
-
-                <View style={styles.cardInfo}>
-                  <View style={styles.locationRow}>
-                    <View style={styles.locationLeft}>
-                      <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-                      <Text style={[styles.locationText, { color: colors.textSecondary }]}>{uni.location}</Text>
-                    </View>
-                    {uni.recommended && (
-                      <View style={[styles.recommendedBadge, { backgroundColor: colors.primary + "20" }]}>
-                        <Text style={[styles.recommendedText, { color: colors.primary }]}>Matched</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.nameRow}>
-                    <View style={[styles.uniIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC" }]}>
-                      {uni.logo ? (
-                        <Image source={{ uri: uni.logo }} style={styles.uniLogoImage} resizeMode="contain" />
-                      ) : (
-                        <Ionicons name="school" size={20} color={colors.primary} />
-                      )}
-                    </View>
-                    <View style={styles.nameTexts}>
-                      <Text style={[styles.uniName, { color: colors.text }]}>{uni.name}</Text>
-                      <Text style={[styles.courseName, { color: colors.textSecondary }]}>{uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters Program")}</Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                  <View style={styles.detailsGrid}>
-                    <View style={styles.detailItem}>
-                      <Feather name="calendar" size={14} color={colors.textSecondary} />
-                      <View style={styles.detailTextWrapper}>
-                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Duration</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>{uni.duration || "2 - 4 Years"}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.detailItem}>
-                      <Feather name="briefcase" size={14} color={colors.textSecondary} />
-                      <View style={styles.detailTextWrapper}>
-                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Tuition</Text>
-                        <Text style={[styles.detailValue, { color: colors.text }]}>{uni.tuition}</Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <View style={styles.acceptanceRow}>
-                    <View style={styles.acceptanceLabelBox}>
-                      <Ionicons name="stats-chart" size={14} color={colors.textSecondary} />
-                      <Text style={[styles.acceptanceLabel, { color: colors.textSecondary }]}>Acceptance</Text>
-                    </View>
-                    <ProgressTracker percentage={calculateAcceptanceChance(userData, uni).score} />
-                  </View>
-                </View>
               </TouchableOpacity>
 
-              {/* Action Buttons Area */}
-              <View style={[styles.cardInfo, { paddingTop: 0, paddingBottom: 24 }]}>
+              <View style={styles.cardInfo}>
+                {/* Header Section: Logo + Title */}
+                <View style={styles.nameRow}>
+                  <View style={[styles.uniIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC", borderColor: colors.border, borderWidth: 1 }]}>
+                    {uni.logo ? (
+                      <Image source={{ uri: uni.logo }} style={styles.uniLogoImage} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="school" size={20} color={colors.primary} />
+                    )}
+                  </View>
+                  <View style={styles.nameTexts}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <Text style={[styles.uniName, { color: colors.text, flex: 1, marginRight: 8 }]} numberOfLines={2}>
+                        {uni.name}
+                      </Text>
+                      {uni.recommended && (
+                        <View style={[styles.recommendedBadge, { backgroundColor: colors.primary + "15" }]}>
+                          <Text style={[styles.recommendedText, { color: colors.primary }]}>Matched</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={[styles.courseName, { color: colors.textSecondary }]}>
+                      {uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters")}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Location Badge */}
+                <View style={styles.locationRowCompact}>
+                  <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.locationTextCompact, { color: colors.textSecondary }]}>{uni.location}</Text>
+                </View>
+
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                {/* Duration & Tuition Grid */}
+                <View style={styles.detailsGrid}>
+                  <View style={styles.detailItem}>
+                    <View style={[styles.detailIconContainer, { backgroundColor: colors.border + "50" }]}>
+                      <Feather name="calendar" size={14} color={colors.primary} />
+                    </View>
+                    <View style={styles.detailTextWrapper}>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Duration</Text>
+                      <Text style={[styles.detailValue, { color: colors.text }]}>{uni.duration || "2 - 4 Years"}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <View style={[styles.detailIconContainer, { backgroundColor: colors.border + "50" }]}>
+                      <Feather name="dollar-sign" size={14} color={colors.primary} />
+                    </View>
+                    <View style={styles.detailTextWrapper}>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Tuition</Text>
+                      <Text style={[styles.detailValue, { color: colors.text }]}>{uni.tuition}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Acceptance Rate Progress Tracker in a capsule */}
+                <View style={[styles.acceptanceRow, { backgroundColor: isDark ? "#1E293B" : "#F8FAFC", padding: 12, borderRadius: 16, marginBottom: 20 }]}>
+                  <View style={styles.acceptanceLabelBox}>
+                    <Ionicons name="stats-chart" size={14} color={colors.primary} />
+                    <Text style={[styles.acceptanceLabel, { color: colors.text, fontWeight: "700" }]}>Acceptance</Text>
+                  </View>
+                  <ProgressTracker percentage={calculateAcceptanceChance(userData, uni).score} />
+                </View>
+
+                {/* Action Buttons */}
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
                     style={[styles.selectButton, { backgroundColor: colors.primary }]}
+                    activeOpacity={0.8}
                     onPress={() => {
                       if (pendingCountry) {
                         setUserData({
@@ -477,11 +487,12 @@ export default function UniversitySelection() {
                     }}
                   >
                     <Text style={styles.selectButtonText}>Select University</Text>
-                    <Feather name="arrow-right" size={18} color="white" />
+                    <Feather name="arrow-right" size={16} color="white" />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.detailsButton, { borderColor: colors.border }]}
+                    style={[styles.detailsButton, { borderColor: colors.border, backgroundColor: colors.card }]}
+                    activeOpacity={0.7}
                     onPress={() => router.push(`/university/${uni.id}`)}
                   >
                     <Text style={[styles.detailsButtonText, { color: colors.text }]}>View Details</Text>
@@ -788,6 +799,26 @@ const styles = StyleSheet.create({
   },
   cardInfo: {
     padding: 24,
+  },
+  locationRowCompact: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 16,
+  },
+  locationTextCompact: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#64748B",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  detailIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   locationRow: {
     flexDirection: "row",
