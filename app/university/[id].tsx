@@ -140,6 +140,7 @@ export default function UniversityDetails() {
         fee_usd: uniData?.tuitionValue || 0,
         latitude: uniData?.latitude,
         longitude: uniData?.longitude,
+        website: uniData?.website || "",
     };
 
     const isShortlisted = userData.selectedUniversities?.some(
@@ -359,6 +360,22 @@ export default function UniversityDetails() {
                         <Text style={[styles.highlightText, { color: colors.text }]}>Address: {uniData.address}</Text>
                     </View>
                 )}
+                {details.website ? (
+                    <TouchableOpacity
+                        style={styles.highlightItem}
+                        onPress={() => {
+                            Linking.openURL(details.website).catch(err => console.error("Error opening URL", err));
+                        }}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
+                            <Ionicons name="globe-outline" size={12} color={colors.primary} />
+                        </View>
+                        <Text style={[styles.highlightText, { color: colors.primary, textDecorationLine: "underline" }]}>
+                            Website: {details.website}
+                        </Text>
+                    </TouchableOpacity>
+                ) : null}
 
                 <View style={styles.sectionHeader}>
                     <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
