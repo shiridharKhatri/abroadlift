@@ -1,6 +1,7 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   Alert,
   Dimensions,
@@ -93,32 +94,39 @@ export default function ProfileTab() {
       >
 
         {/* Profile Card / Header Box */}
-        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <LinearGradient
+          colors={isDark ? ["#1E293B", "#0F172A"] : ["#1A8A99", "#115E59"]}
+          style={styles.profileCard}
+        >
           <View style={styles.avatarWrapper}>
-            <View style={[styles.avatarInner, { borderColor: colors.primary, backgroundColor: colors.background }]}>
+            <View style={[styles.avatarInner, { borderColor: "#FFF", backgroundColor: "rgba(255,255,255,0.1)" }]}>
               {userData.profileImage ? (
                 <Image source={{ uri: userData.profileImage }} style={styles.avatarImage} />
               ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.background }]}>
-                  <Text style={[styles.avatarLetter, { color: colors.primary }]}>
+                <View style={[styles.avatarPlaceholder, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+                  <Text style={[styles.avatarLetter, { color: "#FFF" }]}>
                     {userData.name ? userData.name.charAt(0).toUpperCase() : "S"}
                   </Text>
                 </View>
               )}
             </View>
-            <TouchableOpacity style={[styles.avatarEditBadge, { backgroundColor: colors.primary, borderColor: colors.background }]} onPress={handleEditPress}>
-              <Feather name="camera" size={14} color="white" />
+            <TouchableOpacity style={[styles.avatarEditBadge, { backgroundColor: "#FFF", borderColor: isDark ? "#1E293B" : "#1A8A99" }]} onPress={handleEditPress}>
+              <Feather name="camera" size={14} color={isDark ? "#1E293B" : "#1A8A99"} />
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.profileName, { color: colors.text }]}>{userData.name || "New Student"}</Text>
-          <Text style={[styles.profileUsername, { color: colors.textSecondary }]}>{userData.username || "@student"}</Text>
+          <Text style={[styles.profileName, { color: "#FFF" }]}>{userData.name || "New Student"}</Text>
+          <Text style={[styles.profileUsername, { color: "rgba(255,255,255,0.75)" }]}>{userData.username || "@student"}</Text>
 
-          <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary + "15" }]} onPress={handleEditPress}>
-            <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit Profile</Text>
-            <Feather name="chevron-right" size={14} color={colors.primary} style={{ marginLeft: 4 }} />
+          <TouchableOpacity 
+            style={[styles.editButton, { backgroundColor: "rgba(255,255,255,0.15)", borderWidth: 1, borderColor: "rgba(255,255,255,0.25)" }]} 
+            onPress={handleEditPress}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.editButtonText, { color: "#FFF" }]}>Edit Profile</Text>
+            <Feather name="chevron-right" size={14} color="#FFF" style={{ marginLeft: 4 }} />
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
         {/* Preferences Grid */}
         <View style={styles.sectionHeader}>
@@ -458,13 +466,17 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
   },
   profileCard: {
-    backgroundColor: THEME.white,
-    borderWidth: 1.5,
-    borderColor: THEME.divider,
     borderRadius: 28,
     padding: 24,
     alignItems: "center",
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
   },
   avatarWrapper: {
     position: "relative",
