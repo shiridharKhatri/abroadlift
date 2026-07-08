@@ -413,6 +413,11 @@ const normalizeCountry = (country: any): string => {
 
 const FALLBACK_UNIVERSITIES: UniversityDetail[] = [];
 
+const costOfLivingCache: Record<string, any> = {};
+const relocationIndexCache: Record<string, any> = {};
+const universityDetailsCache: Record<string, any> = {};
+const costEstimateCache: Record<string, any> = {};
+
 let cachedSchools: UniversityResult[] | null = null;
 
 export const searchUniversities = async (query: string, countries: string = "All"): Promise<UniversityResult[]> => {
@@ -478,6 +483,9 @@ export const searchUniversities = async (query: string, countries: string = "All
 };
 
 export const getUniversityDetails = async (id: string, country: string): Promise<UniversityDetail | null> => {
+  if (universityDetailsCache[id]) {
+    return universityDetailsCache[id];
+  }
   try {
     const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools/${id}`, {
       method: "GET",
@@ -573,7 +581,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       console.warn("Failed to load school-specific scholarships:", schErr);
     }
 
-    return {
+    const detailsResult = {
       id: String(s.id || s.school_id || s._id),
       name: s.name || "Unknown University",
       location: s.location || s.city || countryName,
@@ -606,6 +614,8 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       latitude: s.latitude || s.lalt || s.lat || s.lat_code || (s.coordinates?.latitude),
       longitude: s.longitude || s.lang || s.lng || s.lon || s.lng_code || (s.coordinates?.longitude),
     };
+    universityDetailsCache[id] = detailsResult;
+    return detailsResult;
   } catch (error) {
     console.warn("[API Details] Failed to fetch details from AbroadLift API, checking search cache:", error);
     const cached = cachedSchools?.find(u => String(u.id) === String(id));
@@ -738,6 +748,10 @@ const getLocalCostOfLivingFallback = (countryCode: string) => {
 };
 
 export const getCostEstimate = async (city: string, country: string, tuitionUsd: number): Promise<any> => {
+  const cacheKey = `${city}_${country}_${tuitionUsd}`;
+  if (costEstimateCache[cacheKey]) {
+    return costEstimateCache[cacheKey];
+  }
   try {
     const res = await fetch(`https://abroadlift.com/api/cost-estimate?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&tuition_usd=${tuitionUsd}`, {
       method: "GET",
@@ -747,6 +761,7 @@ export const getCostEstimate = async (city: string, country: string, tuitionUsd:
     });
     if (!res.ok) throw new Error(`HTTP status ${res.status}`);
     const data = await res.json();
+    costEstimateCache[cacheKey] = data;
     return data;
   } catch (error) {
     console.warn("Failed to get cost estimate from API:", error);
@@ -795,6 +810,9 @@ export const getFieldsAndPrograms = async (): Promise<any> => {
 };
 
 export const getCostOfLiving = async (countryCode: string): Promise<any> => {
+  if (costOfLivingCache[countryCode]) {
+    return costOfLivingCache[countryCode];
+  }
   try {
     const response = await fetchWithTimeout(`https://abroadlift.com/api/cost-of-living?countryCode=${countryCode}`, {
       method: "GET",
@@ -814,6 +832,7 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
     if (result && result.annualEstimateUsd && !result.annual_estimate_usd) {
       result.annual_estimate_usd = result.annualEstimateUsd;
     }
+    costOfLivingCache[countryCode] = result;
     return result;
   } catch (error) {
     console.warn("Error fetching cost of living, using fallback:", error);
@@ -822,6 +841,9 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
 };
 
 export const getRelocationIndex = async (countryCode: string): Promise<any> => {
+  if (relocationIndexCache[countryCode]) {
+    return relocationIndexCache[countryCode];
+  }
   try {
     const response = await fetchWithTimeout(`https://abroadlift.com/api/relocation-index?countryCode=${countryCode}`, {
       method: "GET",
@@ -840,12 +862,14 @@ export const getRelocationIndex = async (countryCode: string): Promise<any> => {
     }
     const json = await response.json();
     const raw = json.data || json || {};
-    return {
+    const resultObj = {
       quality_of_life_index: raw.lifestyle || raw.composite_score || raw.quality_of_life_index || 140,
       safety_index: raw.safety || raw.safety_index || 75,
       health_care_index: raw.healthcare || raw.health_care_index || 70,
       purchasing_power_index: raw.career || raw.purchasing_power_index || 85,
     };
+    relocationIndexCache[countryCode] = resultObj;
+    return resultObj;
   } catch (error) {
     console.warn("Error fetching relocation index, using fallback:", error);
     return {
