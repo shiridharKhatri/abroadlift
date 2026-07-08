@@ -224,7 +224,7 @@ export default function UniversitySelection() {
   const hasActiveFilters = (admissionChance !== "All" || matchRating !== "All" || feeRange < 100000 || selectedCountry !== "All");
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -593,7 +593,7 @@ export default function UniversitySelection() {
         </View>
       </Modal>
 
-    </SafeAreaView>
+    </View>
   );
 }
 

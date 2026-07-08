@@ -249,14 +249,34 @@ export default function UniversityDetails() {
 
                 <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.chancesCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={[styles.chancesTitle, { color: colors.text }]}>Your Chances</Text>
-                    <View style={styles.chancesVisual}>
-                        <View style={[styles.circularProgress, { borderColor: colors.border }]}>
-                            <View style={[styles.circularFill, { borderColor: chanceColor, transform: [{ rotate: rotation }] }]} />
-                            <View style={[styles.circularInner, { backgroundColor: colors.background }]}>
-                                <Text style={[styles.percentageText, { color: colors.text }]}>{score}%</Text>
+                    <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center", width: "100%", marginVertical: 12 }}>
+                        {/* Profile-based Admission Match */}
+                        <View style={{ alignItems: "center" }}>
+                            <View style={[styles.circularProgress, { borderColor: colors.border }]}>
+                                <View style={[styles.circularFill, { borderColor: chanceColor, transform: [{ rotate: rotation }] }]} />
+                                <View style={[styles.circularInner, { backgroundColor: colors.background }]}>
+                                    <Text style={[styles.percentageText, { color: colors.text }]}>{score}%</Text>
+                                </View>
                             </View>
+                            <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Admission</Text>
                         </View>
-                        <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Admission</Text>
+
+                        {/* Raw University Acceptance Rate */}
+                        <View style={{ alignItems: "center" }}>
+                            <View style={[styles.circularProgress, { borderColor: colors.border }]}>
+                                <View style={[
+                                    styles.circularFill, 
+                                    { 
+                                        borderColor: '#10B981', 
+                                        transform: [{ rotate: `${Math.round(((uniData?.acceptanceRate || 65) / 100) * 360 - 135)}deg` }] 
+                                    }
+                                ]} />
+                                <View style={[styles.circularInner, { backgroundColor: colors.background }]}>
+                                    <Text style={[styles.percentageText, { color: colors.text }]}>{uniData?.acceptanceRate || 65}%</Text>
+                                </View>
+                            </View>
+                            <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Acceptance</Text>
+                        </View>
                     </View>
                     <Text style={[styles.chancesDescription, { color: colors.textSecondary }]}>
                         Based on your profile, you have a <Text style={{ fontWeight: '800', color: colors.text }}>{chanceDesc}</Text> of admission. {chanceAdvice}
