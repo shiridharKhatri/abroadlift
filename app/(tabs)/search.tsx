@@ -1,6 +1,7 @@
 import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { BlurView } from "expo-blur";
+import { GlassCard, canUseGlassEffect } from "../../components/GlassCard";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -37,93 +38,7 @@ const THEME = {
   white: "#FFFFFF",
 };
 
-const MATCHED_UNIVERSITIES = [
-  {
-    id: "1",
-    name: "University College London",
-    course: "MSc Computer Science",
-    location: "LONDON, UK",
-    image: "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
-    rank: "#1 Global",
-    duration: "1 Year",
-    tuition: "$32,100 / yr",
-    tuitionValue: 32100,
-    acceptanceRate: 75,
-    admissionChance: "High",
-    matchRating: "4.5",
-    country: "UK",
-    city: "London",
-    recommended: true,
-  },
-  {
-    id: "2",
-    name: "Imperial College London",
-    course: "MSc Artificial Intelligence",
-    location: "LONDON, UK",
-    image: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800",
-    rank: "#3 Global",
-    duration: "1 Year",
-    tuition: "$35,500 / yr",
-    tuitionValue: 35500,
-    acceptanceRate: 58,
-    admissionChance: "Moderate",
-    matchRating: "4.5",
-    country: "UK",
-    city: "London",
-    recommended: true,
-  },
-  {
-    id: "3",
-    name: "University of Oxford",
-    course: "MSc Software Engineering",
-    location: "OXFORD, UK",
-    image: "https://images.unsplash.com/photo-1533667586627-9f5cb393304a?auto=format&fit=crop&q=80&w=800",
-    rank: "#2 Global",
-    duration: "1 Year",
-    tuition: "$38,000 / yr",
-    tuitionValue: 38000,
-    acceptanceRate: 25,
-    admissionChance: "Low",
-    matchRating: "4.5",
-    country: "UK",
-    city: "Oxford",
-    recommended: true,
-  },
-  {
-    id: "4",
-    name: "Stanford University",
-    course: "MS Computer Science",
-    location: "Stanford, USA",
-    image: "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
-    rank: "#2 Global",
-    duration: "2 Year",
-    tuition: "$55,000 / yr",
-    tuitionValue: 55000,
-    acceptanceRate: 5,
-    admissionChance: "Low",
-    matchRating: "4.0",
-    country: "USA",
-    city: "Stanford",
-    recommended: false,
-  },
-  {
-    id: "5",
-    name: "University of Toronto",
-    course: "MSc Computer Science",
-    location: "Toronto, Canada",
-    image: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800",
-    rank: "#18 Global",
-    duration: "2 Year",
-    tuition: "$28,000 / yr",
-    tuitionValue: 28000,
-    acceptanceRate: 40,
-    admissionChance: "Moderate",
-    matchRating: "4.0",
-    country: "Canada",
-    city: "Toronto",
-    recommended: false,
-  }
-];
+
 
 const ProgressTracker = ({ percentage }: { percentage: number }) => {
   const getColor = (p: number) => {
@@ -177,6 +92,17 @@ export default function UniversitySelection() {
   // Dynamic API state
   const [universities, setUniversities] = useState<UniversityResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [countriesList, setCountriesList] = useState<string[]>([]);
+
+  useEffect(() => {
+    const { getAvailableCountries } = require("../../lib/api");
+    getAvailableCountries().then((data: any[]) => {
+      if (data && data.length > 0) {
+        const names = Array.from(new Set(data.map((item: any) => item.name)));
+        setCountriesList(["All", ...names]);
+      }
+    });
+  }, []);
   const [focusCount, setFocusCount] = useState(0);
 
   // Trigger search on focus
@@ -308,7 +234,7 @@ export default function UniversitySelection() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Search and Header Section Moved Inside ScrollView */}
-        <View style={[styles.header, { backgroundColor: colors.background, paddingHorizontal: 0, paddingTop: 10 }]}>
+        <View style={[styles.header, { backgroundColor: colors.background, paddingHorizontal: 0, paddingTop: (insets.top || StatusBar.currentHeight || 24) + 20 }]}>
           <View style={styles.headerTopRow}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.title, { color: colors.text }]}>Find Universities That Match Your Profile</Text>
@@ -392,10 +318,10 @@ export default function UniversitySelection() {
                   <Image source={{ uri: uni.image }} style={styles.cardImage} />
                   {uni.rank && uni.rank !== "N/A" && (
                     <View style={styles.rankBadge}>
-                      <BlurView intensity={30} tint="light" style={styles.rankBlur}>
+                      <GlassCard glassEffectStyle="regular" useBlurFallback fallbackBlurIntensity={30} fallbackBlurTint="light" style={styles.rankBlur}>
                         <Ionicons name="trophy" size={12} color="#FFF" />
                         <Text style={[styles.rankText, { color: "#FFF" }]}>{uni.rank}</Text>
-                      </BlurView>
+                      </GlassCard>
                     </View>
                   )}
                 </View>
@@ -633,7 +559,7 @@ export default function UniversitySelection() {
               <View style={[styles.filterSection, { borderBottomColor: colors.border, borderBottomWidth: 0 }]}>
                 <Text style={[styles.filterLabel, { color: colors.text }]}>Country</Text>
                 <View style={styles.chipRow}>
-                  {["All", "UK", "USA", "Canada", "Australia", "Germany", "Ireland", "Netherlands"].map((c) => (
+                  {(countriesList.length > 0 ? countriesList : ["All", "UK", "USA", "Canada", "Australia", "Germany", "Ireland", "Netherlands"]).map((c) => (
                     <TouchableOpacity
                       key={c}
                       style={[

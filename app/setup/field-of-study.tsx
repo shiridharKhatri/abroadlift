@@ -28,7 +28,7 @@ const COLORS = {
   borderLight: "#F1F5F9",
 };
 
-const FIELDS = [
+const STATIC_FIELDS = [
   { id: "engineering", name: "Engineering and Technology" },
   { id: "business", name: "Business & Management (MBA)" },
   { id: "sciences", name: "Computer & Data Sciences" },
@@ -37,7 +37,7 @@ const FIELDS = [
   { id: "medicine", name: "Medicine & Healthcare" },
 ];
 
-const POPULAR_BADGES = [
+const STATIC_POPULAR_BADGES = [
   "Computer Science",
   "Data Science",
   "MBA",
@@ -52,13 +52,43 @@ export default function FieldOfStudySelection() {
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [selectedField, setSelectedField] = useState<string | null>(
-    FIELDS.find(f => f.name === userData.fieldOfStudy)?.id || null
-  );
-  const [customField, setCustomField] = useState(
-    FIELDS.some(f => f.name === userData.fieldOfStudy) ? "" : userData.fieldOfStudy || ""
-  );
+
+  const [fieldsList, setFieldsList] = useState<any[]>([]);
+  const [popularBadges, setPopularBadges] = useState<string[]>([]);
+  const [selectedField, setSelectedField] = useState<string | null>(null);
+  const [customField, setCustomField] = useState("");
   const [search, setSearch] = useState("");
+
+  React.useEffect(() => {
+    const { getFieldsAndPrograms } = require("../../lib/api");
+    getFieldsAndPrograms().then((data: any) => {
+      let activeFields = STATIC_FIELDS;
+      if (data && data.fields) {
+        activeFields = data.fields.map((f: string) => ({
+          id: f.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+          name: f
+        }));
+        setFieldsList(activeFields);
+      }
+
+      if (data && data.programsByField) {
+        const allPrograms = Object.values(data.programsByField).flat() as string[];
+        const unique = Array.from(new Set(allPrograms)).slice(0, 10);
+        setPopularBadges(unique);
+      } else {
+        setPopularBadges(STATIC_POPULAR_BADGES);
+      }
+
+      // Pre-select current
+      const current = activeFields.find((f: any) => f.name === userData.fieldOfStudy);
+      if (current) {
+        setSelectedField(current.id);
+        setCustomField("");
+      } else {
+        setCustomField(userData.fieldOfStudy || "");
+      }
+    });
+  }, [userData.fieldOfStudy]);
 
   const handleSelect = (id: string, name: string) => {
     setSelectedField(id);
@@ -80,7 +110,8 @@ export default function FieldOfStudySelection() {
     setUserData(prev => ({ ...prev, fieldOfStudy: badgeName }));
   };
 
-  const filteredFields = FIELDS.filter(field => 
+  const activeFieldsList = fieldsList.length > 0 ? fieldsList : STATIC_FIELDS;
+  const filteredFields = activeFieldsList.filter(field => 
     field.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -135,7 +166,7 @@ export default function FieldOfStudySelection() {
         <View style={styles.badgesWrapper}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Recommendations</Text>
           <View style={styles.badgeGrid}>
-            {POPULAR_BADGES.map((badge) => {
+            {(popularBadges.length > 0 ? popularBadges : STATIC_POPULAR_BADGES).map((badge) => {
               const isSelected = customField === badge;
               return (
                 <TouchableOpacity

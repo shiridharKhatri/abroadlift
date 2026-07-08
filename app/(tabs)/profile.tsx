@@ -8,7 +8,6 @@ import {
   Image,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -16,8 +15,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
+import { GlassCard, canUseGlassEffect } from "../../components/GlassCard";
 
 const { width } = Dimensions.get("window");
 
@@ -64,6 +65,7 @@ const getFlagUrl = (countryName: string | undefined) => {
 };
 
 export default function ProfileTab() {
+  const insets = useSafeAreaInsets();
   const { userData, logout } = useUser();
   const { themeMode, isDark, colors, setThemeMode } = useTheme();
   const [showNotificationsModal, setShowNotificationsModal] = React.useState(false);
@@ -73,12 +75,54 @@ export default function ProfileTab() {
     router.push("/profile/edit");
   };
 
+  const getDynamicNotifications = () => {
+    const list = [];
+    list.push({
+      id: "welcome",
+      icon: "sparkles-outline",
+      iconColor: isDark ? colors.primary : THEME.blue,
+      bgColor: isDark ? "#1E293B" : "#EFF6FF",
+      title: `Welcome to AbroadLift, ${userData.name || "Student"}!`,
+      body: "Start exploring universities and building your roadmap today.",
+      time: "Just now"
+    });
+
+    const hasAcademics = userData.cgpa && userData.score;
+    list.push({
+      id: "profile",
+      icon: "person-outline",
+      iconColor: isDark ? colors.secondary : "#D97706",
+      bgColor: isDark ? "#1E293B" : "#FEF3C7",
+      title: hasAcademics ? "Profile Status: Active" : "Complete Your Profile",
+      body: hasAcademics
+        ? "Your academic grades and test scores are updated. You are ready to view admission chances!"
+        : "Add your academic grades and English test scores to estimate your exact admission chances.",
+      time: hasAcademics ? "1 hour ago" : "2 hours ago"
+    });
+
+    const hasShortlist = userData.selectedUniversities && userData.selectedUniversities.length > 0;
+    list.push({
+      id: "shortlist",
+      icon: "bookmark-outline",
+      iconColor: isDark ? colors.primary : THEME.green,
+      bgColor: isDark ? "#1E293B" : "#ECFDF5",
+      title: hasShortlist ? "Shortlist Updated" : "Explore Universities",
+      body: hasShortlist
+        ? `${userData.selectedUniversities[0].name || "Your selected school"} has been successfully added to your shortlist.`
+        : `Start shortlisting universities in ${userData.country || "your destination"} to track visa readiness.`,
+      time: "Yesterday"
+    });
+
+    return list;
+  };
+
+  const dynamicNotifications = getDynamicNotifications();
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border, paddingTop: (insets.top || StatusBar.currentHeight || 24) + 20 }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>My Profile</Text>
         <TouchableOpacity
           style={[styles.settingsHeaderBtn, { backgroundColor: colors.card }]}
@@ -136,117 +180,129 @@ export default function ProfileTab() {
         <View style={styles.grid}>
           {/* Target Country */}
           <TouchableOpacity 
-            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push("/setup/country?edit=true")}
             activeOpacity={0.7}
+            style={styles.gridCardWrapper}
           >
-            <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }, getFlagUrl(userData.country) && { padding: 0, overflow: 'hidden' }]}>
-              {getFlagUrl(userData.country) ? (
-                <Image 
-                  source={{ uri: getFlagUrl(userData.country)! }} 
-                  style={{ width: '100%', height: '100%', borderRadius: 10 }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Ionicons name="location-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
-              )}
-            </View>
-            <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Target Country</Text>
-            <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
-              {userData.country || "Not Set"}
-            </Text>
+            <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.gridCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }, getFlagUrl(userData.country) && { padding: 0, overflow: 'hidden' }]}>
+                {getFlagUrl(userData.country) ? (
+                  <Image 
+                    source={{ uri: getFlagUrl(userData.country)! }} 
+                    style={{ width: '100%', height: '100%', borderRadius: 10 }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Ionicons name="location-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
+                )}
+              </View>
+              <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Target Country</Text>
+              <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
+                {userData.country || "Not Set"}
+              </Text>
+            </GlassCard>
           </TouchableOpacity>
 
           {/* Study Level */}
           <TouchableOpacity 
-            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push("/setup/study-level?edit=true")}
             activeOpacity={0.7}
+            style={styles.gridCardWrapper}
           >
-            <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#ECFDF5" }]}>
-              <Ionicons name="school-outline" size={18} color={isDark ? colors.secondary : THEME.green} />
-            </View>
-            <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Study Level</Text>
-            <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
-              {userData.studyLevel || "Not Set"}
-            </Text>
+            <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.gridCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#ECFDF5" }]}>
+                <Ionicons name="school-outline" size={18} color={isDark ? colors.secondary : THEME.green} />
+              </View>
+              <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Study Level</Text>
+              <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
+                {userData.studyLevel || "Not Set"}
+              </Text>
+            </GlassCard>
           </TouchableOpacity>
 
           {/* Field of Interest */}
           <TouchableOpacity 
-            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push("/setup/field-of-study?edit=true")}
             activeOpacity={0.7}
+            style={styles.gridCardWrapper}
           >
-            <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#F5F3FF" }]}>
-              <Ionicons name="book-outline" size={18} color={isDark ? colors.primary : "#8B5CF6"} />
-            </View>
-            <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Field of Interest</Text>
-            <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
-              {userData.fieldOfStudy || "Not Set"}
-            </Text>
+            <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.gridCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#F5F3FF" }]}>
+                <Ionicons name="book-outline" size={18} color={isDark ? colors.primary : "#8B5CF6"} />
+              </View>
+              <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Field of Interest</Text>
+              <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
+                {userData.fieldOfStudy || "Not Set"}
+              </Text>
+            </GlassCard>
           </TouchableOpacity>
 
           {/* English Proficiency */}
           <TouchableOpacity 
-            style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push("/setup/english-test?edit=true")}
             activeOpacity={0.7}
+            style={styles.gridCardWrapper}
           >
-            <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#FEF3C7" }]}>
-              <Ionicons name="language-outline" size={18} color={isDark ? colors.secondary : "#D97706"} />
-            </View>
-            <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>English Score</Text>
-            <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
-              {userData.testType && userData.testType !== "Not Taken"
-                ? `${userData.testType}: ${userData.score || "N/A"}`
-                : userData.englishLevel || "Not Set"}
-            </Text>
+            <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.gridCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#FEF3C7" }]}>
+                <Ionicons name="language-outline" size={18} color={isDark ? colors.secondary : "#D97706"} />
+              </View>
+              <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>English Score</Text>
+              <Text style={[styles.prefValue, { color: colors.text }]} numberOfLines={1}>
+                {userData.testType && userData.testType !== "Not Taken"
+                  ? `${userData.testType}: ${userData.score || "N/A"}`
+                  : userData.englishLevel || "Not Set"}
+              </Text>
+            </GlassCard>
           </TouchableOpacity>
 
           {/* Academics */}
           <TouchableOpacity 
-            style={[styles.gridCard, { width: "100%", backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push("/setup/academics?edit=true")}
             activeOpacity={0.7}
+            style={styles.gridCardFullWrapper}
           >
-            <View style={styles.rowLayout}>
-              <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#FFF1F2" }]}>
-                <MaterialCommunityIcons name="certificate-outline" size={20} color={isDark ? colors.primary : THEME.red} />
+            <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.gridCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.rowLayout}>
+                <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#FFF1F2" }]}>
+                  <MaterialCommunityIcons name="certificate-outline" size={20} color={isDark ? colors.primary : THEME.red} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Academics</Text>
+                  <Text style={[styles.prefValue, { color: colors.text }]}>
+                    {userData.recentAcademicField
+                      ? `${userData.recentAcademicField} • ${userData.cgpa} CGPA${userData.passoutYear ? ` (${userData.passoutYear})` : ""}`
+                      : "Not Set"}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Academics</Text>
-                <Text style={[styles.prefValue, { color: colors.text }]}>
-                  {userData.recentAcademicField
-                    ? `${userData.recentAcademicField} • ${userData.cgpa} CGPA${userData.passoutYear ? ` (${userData.passoutYear})` : ""}`
-                    : "Not Set"}
-                </Text>
-              </View>
-            </View>
+            </GlassCard>
           </TouchableOpacity>
 
           {/* Intake & Aid */}
           <TouchableOpacity 
-            style={[styles.gridCard, { width: "100%", backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push("/setup/target?edit=true")}
             activeOpacity={0.7}
+            style={styles.gridCardFullWrapper}
           >
-            <View style={styles.rowLayout}>
-              <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#F0FDF4" }]}>
-                <Ionicons name="calendar-outline" size={18} color={isDark ? colors.secondary : "#15803D"} />
+            <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.gridCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.rowLayout}>
+                <View style={[styles.iconBox, { backgroundColor: isDark ? "#1E293B" : "#F0FDF4" }]}>
+                  <Ionicons name="calendar-outline" size={18} color={isDark ? colors.secondary : "#15803D"} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Intake & Aid</Text>
+                  <Text style={[styles.prefValue, { color: colors.text }]}>
+                    {userData.intake || "Not Set"} {userData.scholarshipNeeded ? "• Financial Aid Requested" : ""}
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>Intake & Aid</Text>
-                <Text style={[styles.prefValue, { color: colors.text }]}>
-                  {userData.intake || "Not Set"} {userData.scholarshipNeeded ? "• Financial Aid Requested" : ""}
-                </Text>
-              </View>
-            </View>
+            </GlassCard>
           </TouchableOpacity>
         </View>
 
         {/* Menu/Quick Links */}
-        <View style={[styles.menuGroup, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.menuGroup, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity
             style={[styles.menuItem, { borderBottomColor: colors.border }]}
             onPress={() => router.push("/(tabs)/recent")}
@@ -266,7 +322,12 @@ export default function ProfileTab() {
               <Ionicons name="notifications-outline" size={20} color={colors.text} />
               <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
             </View>
-            <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={[styles.badgeCircle, { backgroundColor: colors.primary }]}>
+                <Text style={styles.badgeText}>{dynamicNotifications.length}</Text>
+              </View>
+              <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -303,7 +364,7 @@ export default function ProfileTab() {
             </View>
             <Feather name="chevron-right" size={16} color={THEME.red} />
           </TouchableOpacity>
-        </View>
+        </GlassCard>
 
       </ScrollView>
 
@@ -336,38 +397,18 @@ export default function ProfileTab() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} style={styles.notificationsList}>
-              <View style={[styles.notificationItem, { borderBottomColor: colors.border }]}>
-                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#EFF6FF" }]}>
-                  <Ionicons name="sparkles-outline" size={18} color={isDark ? colors.primary : THEME.blue} />
+              {dynamicNotifications.map((notif, index) => (
+                <View key={notif.id} style={[styles.notificationItem, { borderBottomColor: colors.border }, index === dynamicNotifications.length - 1 && { borderBottomWidth: 0 }]}>
+                  <View style={[styles.notifIconBox, { backgroundColor: notif.bgColor }]}>
+                    <Ionicons name={notif.icon as any} size={18} color={notif.iconColor} />
+                  </View>
+                  <View style={styles.notifTextContent}>
+                    <Text style={[styles.notifTitle, { color: colors.text }]}>{notif.title}</Text>
+                    <Text style={[styles.notifBody, { color: colors.textSecondary }]}>{notif.body}</Text>
+                    <Text style={[styles.notifTime, { color: colors.textSecondary }]}>{notif.time}</Text>
+                  </View>
                 </View>
-                <View style={styles.notifTextContent}>
-                  <Text style={[styles.notifTitle, { color: colors.text }]}>Welcome to AbroadLift!</Text>
-                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Start exploring universities and building your roadmap today.</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>Just now</Text>
-                </View>
-              </View>
-
-              <View style={[styles.notificationItem, { borderBottomColor: colors.border }]}>
-                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#FEF3C7" }]}>
-                  <Ionicons name="person-outline" size={18} color={isDark ? colors.secondary : "#D97706"} />
-                </View>
-                <View style={styles.notifTextContent}>
-                  <Text style={[styles.notifTitle, { color: colors.text }]}>Complete Your Profile</Text>
-                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Add your academic grades and English scores to estimate admission chances.</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>2 hours ago</Text>
-                </View>
-              </View>
-
-              <View style={[styles.notificationItem, { borderBottomWidth: 0 }]}>
-                <View style={[styles.notifIconBox, { backgroundColor: isDark ? "#1E293B" : "#ECFDF5" }]}>
-                  <Ionicons name="bookmark-outline" size={18} color={isDark ? colors.primary : THEME.green} />
-                </View>
-                <View style={styles.notifTextContent}>
-                  <Text style={[styles.notifTitle, { color: colors.text }]}>Shortlist Updated</Text>
-                  <Text style={[styles.notifBody, { color: colors.textSecondary }]}>Conestoga College - Doon has been successfully added to your shortlist.</Text>
-                  <Text style={[styles.notifTime, { color: colors.textSecondary }]}>Yesterday</Text>
-                </View>
-              </View>
+              ))}
             </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -427,7 +468,7 @@ export default function ProfileTab() {
           </View>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -563,8 +604,14 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 28,
   },
-  gridCard: {
+  gridCardWrapper: {
     width: (width - 52) / 2,
+  },
+  gridCardFullWrapper: {
+    width: "100%",
+  },
+  gridCard: {
+    width: "100%",
     backgroundColor: THEME.white,
     borderWidth: 1.5,
     borderColor: THEME.divider,
@@ -708,5 +755,19 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1.5,
+  },
+  badgeCircle: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    marginRight: 6,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "bold",
   },
 });

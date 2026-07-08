@@ -1,5 +1,5 @@
 
-const fetchWithTimeout = async (url: string, options: any = {}, timeoutMs = 4000) => {
+const fetchWithTimeout = async (url: string, options: any = {}, timeoutMs = 15000) => {
   const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
   );
@@ -114,30 +114,6 @@ export interface UniversityDetail extends UniversityResult {
 }
 
 
-// Mock in-memory store for profile updates during the session
-let mockProfileStore: any = {
-  name: "John Doe",
-  username: "@johndoe",
-  email: "john.doe@abroadlift.com",
-  phoneE164: "+1234567890",
-  profileImage: null,
-  country: "",
-  flag: "",
-  studyLevel: "",
-  fieldOfStudy: "",
-  recentAcademicField: "",
-  cgpa: "",
-  englishLevel: "",
-  score: "",
-  testType: "IELTS",
-  passoutYear: "",
-  yearlyBudget: "",
-  intake: "",
-  scholarshipNeeded: false,
-  selectedUniversities: [],
-  onboardingComplete: false,
-};
-
 export const login = async (phoneE164: string, otp: string): Promise<any> => {
   console.log("Calling live login API for:", phoneE164);
   const response = await fetch(`https://abroadlift.com/api/auth/mobile/login`, {
@@ -248,7 +224,7 @@ export const updateProfile = async (userData: any, token: string): Promise<any> 
         "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
-    }, 4000);
+    }, 15000);
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to update profile');
     return data;
@@ -445,7 +421,7 @@ export const searchUniversities = async (query: string, countries: string = "All
       const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools?limit=1500`, {
         method: "GET",
         headers: getHeaders(),
-      }, 4000);
+      }, 15000);
 
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -506,7 +482,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
     const res = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/schools/${id}`, {
       method: "GET",
       headers: getHeaders(),
-    }, 4000);
+    }, 15000);
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -520,7 +496,7 @@ export const getUniversityDetails = async (id: string, country: string): Promise
       const progRes = await fetchWithTimeout(`${ABROADLIFT_API_BASE}/programs/school/${id}`, {
         method: "GET",
         headers: getHeaders(),
-      }, 4000);
+      }, 15000);
       if (progRes.ok) {
         const progResult = await progRes.json();
         const programsList = Array.isArray(progResult) ? progResult : (progResult.data || []);
@@ -761,6 +737,63 @@ const getLocalCostOfLivingFallback = (countryCode: string) => {
   return costMap[code] || { monthly_estimate_usd: 1500, rent_index: 50, groceries_index: 60, restaurant_index: 55, local_purchasing_power: 90 };
 };
 
+export const getCostEstimate = async (city: string, country: string, tuitionUsd: number): Promise<any> => {
+  try {
+    const res = await fetch(`https://abroadlift.com/api/cost-estimate?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&tuition_usd=${tuitionUsd}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP status ${res.status}`);
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.warn("Failed to get cost estimate from API:", error);
+    return null;
+  }
+};
+
+export const getStudyLevels = async (): Promise<{ v: string; l: string }[]> => {
+  try {
+    const res = await fetch(`https://abroadlift.com/api/programs?allLevels=true`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP status ${res.status}`);
+    const data = await res.json();
+    return data.data || [];
+  } catch (error) {
+    console.warn("Failed to get study levels from API:", error);
+    return [
+      { v: "bachelors", l: "Bachelor's Degree" },
+      { v: "masters_degree", l: "Master's Degree" },
+      { v: "doctoral_phd", l: "Doctoral / PhD" },
+      { v: "post_graduate_diploma", l: "Postgraduate Diploma" },
+      { v: "english", l: "English as Second Language (ESL)" },
+    ];
+  }
+};
+
+export const getFieldsAndPrograms = async (): Promise<any> => {
+  try {
+    const res = await fetch(`https://abroadlift.com/api/programs?allFieldsAndPrograms=true`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP status ${res.status}`);
+    const data = await res.json();
+    return data.data || null;
+  } catch (error) {
+    console.warn("Failed to get fields and programs from API:", error);
+    return null;
+  }
+};
+
 export const getCostOfLiving = async (countryCode: string): Promise<any> => {
   try {
     const response = await fetchWithTimeout(`https://abroadlift.com/api/cost-of-living?countryCode=${countryCode}`, {
@@ -768,13 +801,20 @@ export const getCostOfLiving = async (countryCode: string): Promise<any> => {
       headers: {
         "Content-Type": "application/json",
       },
-    }, 4000);
+    }, 15000);
     if (!response.ok) {
       console.warn(`Cost of living API returned status ${response.status} for ${countryCode}`);
       return getLocalCostOfLivingFallback(countryCode);
     }
     const json = await response.json();
-    return json.data || json;
+    const result = json.data || json;
+    if (result && result.monthlyEstimateUsd && !result.monthly_estimate_usd) {
+      result.monthly_estimate_usd = result.monthlyEstimateUsd;
+    }
+    if (result && result.annualEstimateUsd && !result.annual_estimate_usd) {
+      result.annual_estimate_usd = result.annualEstimateUsd;
+    }
+    return result;
   } catch (error) {
     console.warn("Error fetching cost of living, using fallback:", error);
     return getLocalCostOfLivingFallback(countryCode);
@@ -788,7 +828,7 @@ export const getRelocationIndex = async (countryCode: string): Promise<any> => {
       headers: {
         "Content-Type": "application/json",
       },
-    }, 4000);
+    }, 15000);
     if (!response.ok) {
       console.warn(`Relocation index API returned status ${response.status} for ${countryCode}`);
       return {
@@ -957,7 +997,7 @@ export const calculateAcceptanceChance = (user: any, uni: any) => {
   prob += (engNorm - 0.7) * 20;
 
   // 4. Ranking Multiplier (Harder for higher ranked)
-  const rankStr = uni.rank || "";
+  const rankStr = String(uni.rank || "");
   const rankVal = parseInt(rankStr.replace(/[^0-9]/g, ""));
   if (!isNaN(rankVal)) {
     if (rankVal < 100) prob -= 15;
@@ -977,3 +1017,22 @@ export const calculateAcceptanceChance = (user: any, uni: any) => {
 
   return { score: finalScore, label };
 };
+
+export const getAdmissionChance = async (form: any, match: any): Promise<any> => {
+  try {
+    const res = await fetch(`https://abroadlift.com/api/admission-chance`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ form, match }),
+    });
+    if (!res.ok) throw new Error("Failed to post admission chance");
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.warn("Failed to fetch admission chance from API:", error);
+    return null;
+  }
+};
+

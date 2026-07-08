@@ -27,35 +27,54 @@ const COLORS = {
   borderLight: "#F1F5F9",
 };
 
-const STUDY_LEVELS = [
-  { 
-    id: "bachelors", 
-    name: "Bachelor's Degree", 
-    icon: "school-outline", 
+const LEVEL_METADATA: Record<string, { icon: string; provider: string; desc: string }> = {
+  "bachelors": {
+    icon: "school-outline",
     provider: "Ionicons",
     desc: "Ideal for high school / 10+2 graduates looking for foundational degrees. Duration: 3–4 years."
   },
-  { 
-    id: "masters", 
-    name: "Master's Degree", 
-    icon: "book-outline", 
+  "3_year_bachelors": {
+    icon: "school-outline",
+    provider: "Ionicons",
+    desc: "3-Year Bachelor's Degree programs popular in UK, Europe, and Australia."
+  },
+  "masters_degree": {
+    icon: "book-outline",
     provider: "Ionicons",
     desc: "For university graduates aiming for specialization. Duration: 1–2 years."
   },
-  { 
-    id: "phd", 
-    name: "PHD Degree", 
-    icon: "ribbon-outline", 
+  "masters": {
+    icon: "book-outline",
+    provider: "Ionicons",
+    desc: "For university graduates aiming for specialization. Duration: 1–2 years."
+  },
+  "doctoral_phd": {
+    icon: "ribbon-outline",
     provider: "Ionicons",
     desc: "For advanced research candidates. Requires a prior master's degree."
   },
-  { 
-    id: "diploma", 
-    name: "Diploma", 
-    icon: "certificate-outline", 
+  "post_graduate_diploma": {
+    icon: "certificate-outline",
     provider: "MaterialCommunityIcons",
     desc: "Vocational and career-focused programs with faster employment paths. Duration: 1–2 years."
   },
+  "post_graduate_certificate": {
+    icon: "certificate-outline",
+    provider: "MaterialCommunityIcons",
+    desc: "Specialized postgraduate certificates for fast-tracked career growth."
+  },
+  "english": {
+    icon: "language-outline",
+    provider: "Ionicons",
+    desc: "English as Second Language (ESL) preparation programs."
+  }
+};
+
+const STATIC_STUDY_LEVELS = [
+  { id: "bachelors", name: "Bachelor's Degree" },
+  { id: "masters_degree", name: "Master's Degree" },
+  { id: "doctoral_phd", name: "PHD Degree" },
+  { id: "post_graduate_diploma", name: "Diploma" },
 ];
 
 export default function StudyLevelSelection() {
@@ -63,9 +82,39 @@ export default function StudyLevelSelection() {
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [selectedLevel, setSelectedLevel] = useState<string | null>(
-    STUDY_LEVELS.find(l => l.name === userData.studyLevel)?.id || null
-  );
+  
+  const [levelsList, setLevelsList] = useState<any[]>([]);
+  const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const { getStudyLevels } = require("../../lib/api");
+    getStudyLevels().then((data: any[]) => {
+      const formatted = data.map((item: any) => {
+        const meta = LEVEL_METADATA[item.v] || {
+          icon: "school-outline",
+          provider: "Ionicons",
+          desc: "Academic study programs."
+        };
+        return {
+          id: item.v,
+          name: item.l,
+          icon: meta.icon,
+          provider: meta.provider,
+          desc: meta.desc,
+        };
+      });
+      setLevelsList(formatted);
+
+      // Pre-select current level if it matches
+      const current = formatted.find((l: any) => l.name === userData.studyLevel);
+      if (current) {
+        setSelectedLevel(current.id);
+      } else {
+        const fallbackMatch = STATIC_STUDY_LEVELS.find((l: any) => l.name === userData.studyLevel);
+        if (fallbackMatch) setSelectedLevel(fallbackMatch.id);
+      }
+    });
+  }, [userData.studyLevel]);
   
   const handleSelect = (id: string, name: string) => {
     setSelectedLevel(id);
@@ -115,7 +164,13 @@ export default function StudyLevelSelection() {
 
         {/* Level List */}
         <View style={styles.list}>
-          {STUDY_LEVELS.map((level) => {
+          {(levelsList.length > 0 ? levelsList : STATIC_STUDY_LEVELS.map(l => ({
+            id: l.id,
+            name: l.name,
+            icon: "school-outline",
+            provider: "Ionicons",
+            desc: "Academic study programs."
+          }))).map((level) => {
             const isSelected = selectedLevel === level.id;
             return (
               <TouchableOpacity

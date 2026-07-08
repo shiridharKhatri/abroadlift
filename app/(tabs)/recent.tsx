@@ -7,15 +7,16 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
-  StatusBar,
   Platform,
+  StatusBar,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "../../context/ThemeContext";
+import { GlassCard, canUseGlassEffect } from "../../components/GlassCard";
 
 const { width } = Dimensions.get("window");
 
@@ -32,16 +33,16 @@ const THEME = {
 };
 
 export default function RecentUniversities() {
+  const insets = useSafeAreaInsets();
   const { userData } = useUser();
   const { colors, isDark } = useTheme();
   const selectedList = userData.selectedUniversities || [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: (insets.top || StatusBar.currentHeight || 24) + 24 }]}>
         <View style={styles.headerTopRow}>
           <Text style={[styles.title, { color: colors.text }]}>Saved</Text>
           {selectedList.length > 0 && (
@@ -89,10 +90,10 @@ export default function RecentUniversities() {
                   colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.65)"]}
                   style={StyleSheet.absoluteFillObject}
                 />
-                <View style={[styles.costBadge, { backgroundColor: isDark ? "rgba(0,0,0,0.8)" : "rgba(255, 255, 255, 0.95)" }]}>
+                <GlassCard glassEffectStyle="clear" useBlurFallback fallbackBlurIntensity={50} fallbackBlurTint="light" fallbackColor={isDark ? "rgba(0,0,0,0.8)" : "rgba(255, 255, 255, 0.95)"} style={[styles.costBadge, !canUseGlassEffect() && { backgroundColor: isDark ? "rgba(0,0,0,0.8)" : "rgba(255, 255, 255, 0.95)" }]}>
                   <Text style={[styles.costValue, { color: colors.text }]}>{uni.tuition || "N/A"}</Text>
                   <Text style={[styles.costLabel, { color: colors.textSecondary }]}>EST. TUITION</Text>
-                </View>
+                </GlassCard>
               </View>
 
               {/* Card Contents */}
@@ -128,7 +129,7 @@ export default function RecentUniversities() {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -24,6 +24,8 @@ type UserData = {
   scholarshipNeeded?: boolean;
   selectedUniversities: any[];
   onboardingComplete?: boolean;
+  admissionProb?: number | null;
+  visaSuccessProb?: number | null;
 };
 
 type UserContextType = {
@@ -88,6 +90,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
               const { getProfile } = require('../lib/api');
               const data = await getProfile(storedToken);
               const profile = data.profile || {};
+              const dbSelectedUnis = (data.matchingRecords || []).map((rec: any) => {
+                const match = rec.matchData || {};
+                return {
+                  id: String(match.id || rec.id),
+                  name: match.name,
+                  course: match.course || "MSc Computer Science",
+                  location: `${match.city || ""}, ${match.country || ""}`.toUpperCase(),
+                  image: match.image || "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
+                  rank: match.rank || `#${match.rankingWorld || "100"} Global`,
+                  duration: match.duration || "1 Year",
+                  tuition: match.tuition || `$${(match.tuitionFee || 20000).toLocaleString()} / yr`,
+                  tuitionValue: match.tuitionFee || 20000,
+                  acceptanceRate: match.acceptanceRate || 62,
+                  admissionChance: rec.admissionChance || "Moderate",
+                  country: match.country,
+                  city: match.city
+                };
+              });
+
               const refreshedUser = {
                 ...storedObj,
                 ...data,
@@ -106,9 +127,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 yearlyBudget: storedObj.yearlyBudget || (profile.yearlyBudget ? String(profile.yearlyBudget) : ""),
                 scholarshipNeeded: storedObj.scholarshipNeeded ?? profile.scholarshipNeeded ?? false,
                 onboardingComplete: storedObj.onboardingComplete || data.user?.onboardingComplete || profile.onboardingComplete || false,
-                selectedUniversities: storedObj.selectedUniversities?.length > 0
-                  ? storedObj.selectedUniversities
-                  : (data.user?.selectedUniversities || []),
+                selectedUniversities: dbSelectedUnis.length > 0
+                  ? dbSelectedUnis
+                  : (storedObj.selectedUniversities || []),
+                admissionProb: profile.admissionProb ?? null,
+                visaSuccessProb: profile.visaSuccessProb ?? null,
               };
               _setUserData(refreshedUser);
               await AsyncStorage.setItem('@user_data', JSON.stringify(refreshedUser));
@@ -138,6 +161,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const incomingUser = data.user;
       const profile = incomingUser.profile || {};
 
+      const dbSelectedUnis = (incomingUser.matchingRecords || []).map((rec: any) => {
+        const match = rec.matchData || {};
+        return {
+          id: String(match.id || rec.id),
+          name: match.name,
+          course: match.course || "MSc Computer Science",
+          location: `${match.city || ""}, ${match.country || ""}`.toUpperCase(),
+          image: match.image || "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
+          rank: match.rank || `#${match.rankingWorld || "100"} Global`,
+          duration: match.duration || "1 Year",
+          tuition: match.tuition || `$${(match.tuitionFee || 20000).toLocaleString()} / yr`,
+          tuitionValue: match.tuitionFee || 20000,
+          acceptanceRate: match.acceptanceRate || 62,
+          admissionChance: rec.admissionChance || "Moderate",
+          country: match.country,
+          city: match.city
+        };
+      });
+
       const mappedUser = {
         ...userData,
         ...incomingUser,
@@ -155,9 +197,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         yearlyBudget: userData.yearlyBudget || (profile.yearlyBudget ? String(profile.yearlyBudget) : ""),
         scholarshipNeeded: userData.scholarshipNeeded ?? profile.scholarshipNeeded ?? false,
         onboardingComplete: userData.onboardingComplete || incomingUser.onboardingComplete || profile.onboardingComplete || false,
-        selectedUniversities: userData.selectedUniversities?.length > 0
-          ? userData.selectedUniversities
-          : (incomingUser.selectedUniversities || []),
+        selectedUniversities: dbSelectedUnis.length > 0
+          ? dbSelectedUnis
+          : (userData.selectedUniversities || []),
+        admissionProb: profile.admissionProb ?? null,
+        visaSuccessProb: profile.visaSuccessProb ?? null,
       };
 
       setToken(data.token);

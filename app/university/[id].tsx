@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { BlurView } from "expo-blur";
 import {
     Dimensions,
     Image,
@@ -20,9 +21,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { Skeleton } from "../../components/Skeleton";
-import { getCostOfLiving, getUniversityDetails, UniversityDetail } from "../../lib/api";
+import { getCostOfLiving, getUniversityDetails, UniversityDetail, calculateAcceptanceChance } from "../../lib/api";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import { GlassCard, canUseGlassEffect } from "../../components/GlassCard";
 import MapView, { Marker } from "react-native-maps";
 
 const { width, height } = Dimensions.get("window");
@@ -188,9 +190,37 @@ export default function UniversityDetails() {
             return `NPR ${v.toLocaleString()}`;
         };
 
+        // Compute dynamic admission chance
+        const chance = calculateAcceptanceChance(userData, {
+            id: id,
+            acceptanceRate: uniData?.acceptanceRate,
+            rank: details.ranking_world
+        });
+        const score = chance.score;
+        const label = chance.label;
+
+        let chanceColor = "#EF4444"; // Red for Reach
+        let chanceDesc = "low chance";
+        let chanceAdvice = "Improve your test scores to increase odds.";
+        if (label === "Safe") {
+            chanceColor = "#10B981"; // Green
+            chanceDesc = "high chance";
+            chanceAdvice = "Your academic profile is extremely competitive for this university.";
+        } else if (label === "Good") {
+            chanceColor = "#3B82F6"; // Blue
+            chanceDesc = "good chance";
+            chanceAdvice = "Your profile meets or exceeds most requirements.";
+        } else if (label === "Moderate") {
+            chanceColor = "#F59E0B"; // Orange
+            chanceDesc = "moderate chance";
+            chanceAdvice = "Consider improving your grades or test scores to boost your odds.";
+        }
+
+        const rotation = `${Math.round((score / 100) * 360 - 135)}deg`;
+
         return (
             <View style={styles.tabContent}>
-                <View style={[styles.estimateCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.estimateCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={[styles.estimateLabel, { color: colors.textSecondary }]}>ESTIMATED TOTAL COST / YR</Text>
                     <Text style={[styles.estimateValue, { color: colors.text }]}>{fmtNpr(totalNpr)}</Text>
                     <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16, fontWeight: "600" }}>
@@ -215,21 +245,21 @@ export default function UniversityDetails() {
                             <Text style={[styles.legendText, { color: colors.textSecondary }]}>Other</Text>
                         </View>
                     </View>
-                </View>
+                </GlassCard>
 
-                <View style={[styles.chancesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.chancesCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={[styles.chancesTitle, { color: colors.text }]}>Your Chances</Text>
                     <View style={styles.chancesVisual}>
                         <View style={[styles.circularProgress, { borderColor: colors.border }]}>
-                            <View style={[styles.circularFill, { transform: [{ rotate: '45deg' }] }]} />
+                            <View style={[styles.circularFill, { borderColor: chanceColor, transform: [{ rotate: rotation }] }]} />
                             <View style={[styles.circularInner, { backgroundColor: colors.background }]}>
-                                <Text style={[styles.percentageText, { color: colors.text }]}>12%</Text>
+                                <Text style={[styles.percentageText, { color: colors.text }]}>{score}%</Text>
                             </View>
                         </View>
                         <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Admission</Text>
                     </View>
                     <Text style={[styles.chancesDescription, { color: colors.textSecondary }]}>
-                        Based on your profile, you have a <Text style={{ fontWeight: '800', color: colors.text }}>low chance</Text> of admission. Improve your test scores to increase odds.
+                        Based on your profile, you have a <Text style={{ fontWeight: '800', color: colors.text }}>{chanceDesc}</Text> of admission. {chanceAdvice}
                     </Text>
                     <TouchableOpacity
                         style={[styles.completeEstimateBtn, { backgroundColor: colors.primary }]}
@@ -258,7 +288,7 @@ export default function UniversityDetails() {
                     >
                         <Text style={[styles.completeEstimateBtnText, { color: colors.primary }]}>Compare with another University</Text>
                     </TouchableOpacity>
-                </View>
+                </GlassCard>
             </View>
         );
     };
@@ -277,7 +307,7 @@ export default function UniversityDetails() {
                     </View>
                     <Text style={[styles.contentSectionTitle, { color: colors.text }]}>About University</Text>
                 </View>
-                <View style={[styles.overviewTextCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.overviewTextCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={[styles.overviewText, { color: colors.text }]}>{displayedDescription}</Text>
                     {isLongDescription && (
                         <TouchableOpacity
@@ -301,7 +331,7 @@ export default function UniversityDetails() {
                             <Text style={[styles.notesText, { color: colors.text }]}>{uniData.notes}</Text>
                         </View>
                     )}
-                </View>
+                </GlassCard>
 
                 <View style={styles.sectionHeader}>
                     <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
@@ -852,15 +882,18 @@ export default function UniversityDetails() {
                         style={StyleSheet.absoluteFillObject}
                     />
 
-                    <View style={[styles.bannerHeader, { paddingTop: insets.top + 10 }]}>
+                     <View style={[styles.bannerHeader, { paddingTop: insets.top + 10 }]}>
                         <TouchableOpacity style={styles.headerCircleBtn} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace("/(tabs)/explore"); } }}>
+                            <BlurView intensity={25} tint="light" style={StyleSheet.absoluteFillObject} />
                             <Ionicons name="arrow-back" size={22} color="white" />
                         </TouchableOpacity>
                         <View style={styles.headerRightBtns}>
                             <TouchableOpacity style={styles.headerCircleBtn} onPress={handleShare}>
+                                <BlurView intensity={25} tint="light" style={StyleSheet.absoluteFillObject} />
                                 <Ionicons name="share-social-outline" size={22} color="white" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.headerCircleBtn} onPress={toggleShortlist}>
+                                <BlurView intensity={25} tint="light" style={StyleSheet.absoluteFillObject} />
                                 <Ionicons
                                     name={isShortlisted ? "heart" : "heart-outline"}
                                     size={22}
@@ -871,6 +904,7 @@ export default function UniversityDetails() {
                                 style={styles.headerCircleBtn}
                                 onPress={() => router.push("/(tabs)/profile")}
                             >
+                                <BlurView intensity={25} tint="light" style={StyleSheet.absoluteFillObject} />
                                 <ProfileAvatar size={40} color="rgba(255,255,255,0.7)" />
                             </TouchableOpacity>
                         </View>
@@ -1046,7 +1080,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: "rgba(255,255,255,0.2)",
+        backgroundColor: "rgba(255,255,255,0.08)",
         justifyContent: "center",
         alignItems: "center",
         overflow: "hidden",

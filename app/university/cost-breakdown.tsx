@@ -15,7 +15,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUser } from "../../context/UserContext";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
-import { getCostOfLiving, getRelocationIndex, getUniversityDetails } from "../../lib/api";
+import { getCostEstimate, getCostOfLiving, getRelocationIndex, getUniversityDetails } from "../../lib/api";
 import { ActivityIndicator } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { Skeleton } from "../../components/Skeleton";
@@ -87,7 +87,7 @@ export default function CostBreakdownScreen() {
     "roi"
   ]);
 
-  const USD_TO_NPR = 134;
+  const [costEstimate, setCostEstimate] = React.useState<any>(null);
 
   const currentCountry = (countryParam as string) || userData.country || "UK";
 
@@ -95,15 +95,33 @@ export default function CostBreakdownScreen() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [cost, qoi, uni] = await Promise.all([
-          getCostOfLiving(currentCountry),
-          getRelocationIndex(currentCountry),
-          id ? getUniversityDetails(id as string, currentCountry) : Promise.resolve(null)
+        let uni = null;
+        let resolvedCountry = currentCountry;
+        if (id) {
+          uni = await getUniversityDetails(id as string, currentCountry);
+          if (uni && uni.country) {
+            resolvedCountry = uni.country;
+          }
+        }
+
+        const [cost, qoi] = await Promise.all([
+          getCostOfLiving(resolvedCountry),
+          getRelocationIndex(resolvedCountry),
         ]);
         
         setCostData(cost);
         setQoiData(qoi);
         setUniData(uni);
+
+        // Also fetch cost estimate for live exchange rate
+        const tuitionForEstimate = uni?.tuitionValue || 20000;
+        const city = uni?.location?.split(",")[0]?.trim() || "";
+        try {
+          const estimate = await getCostEstimate(city, resolvedCountry, tuitionForEstimate);
+          if (estimate) setCostEstimate(estimate);
+        } catch (e) {
+          console.warn("Cost estimate fetch failed:", e);
+        }
       } catch (error) {
         console.error("Error fetching cost data:", error);
       } finally {
@@ -196,11 +214,29 @@ export default function CostBreakdownScreen() {
     );
   }
 
-  // Calculate values
-  const monthlyUsd = costData?.monthly_estimate_usd || 1500;
-  const annualLivingUsd = monthlyUsd * 12;
+  const actualCountry = uniData?.country || currentCountry;
+
+  // Use live exchange rate from cost estimate, fallback to static
+  const USD_TO_NPR = costEstimate?.exchange_rate || 134;
+
+  // Calculate values — use real breakdown if available
+  const monthlyUsd = costData?.monthly_estimate_usd || costData?.monthlyEstimateUsd || 1500;
+  const annualLivingUsd = costData?.annual_estimate_usd || costData?.annualEstimateUsd || monthlyUsd * 12;
   const tuitionUsd = uniData?.tuitionValue || 0;
   
+  // Use real breakdown from API if available
+  const breakdown = costData?.breakdown || {};
+  const monthlyBreakdown = costData?.monthlyBreakdown || {};
+  const annualRent = breakdown.rent || Math.round(monthlyUsd * 0.4 * 12);
+  const annualFood = breakdown.food || Math.round(monthlyUsd * 0.25 * 12);
+  const annualTransport = breakdown.transport || Math.round(monthlyUsd * 0.1 * 12);
+  const annualInsurance = breakdown.insurance || Math.round(monthlyUsd * 0.05 * 12);
+  const annualOther = breakdown.other || (annualLivingUsd - annualRent - annualFood - annualTransport - annualInsurance);
+
+  const monthlyRent = monthlyBreakdown.rent || Math.round(annualRent / 12);
+  const monthlyFood = monthlyBreakdown.food || Math.round(annualFood / 12);
+  const monthlyTransport = monthlyBreakdown.transport || Math.round(annualTransport / 12);
+
   const totalFirstYearNpr = (tuitionUsd + annualLivingUsd) * USD_TO_NPR;
   const fmtNpr = (v: number) => {
      if (v >= 100000) return `NPR ${(v / 100000).toFixed(1)} Lakhs`;
@@ -209,10 +245,10 @@ export default function CostBreakdownScreen() {
 
   const fmtCurrency = (v: number) => v.toLocaleString();
 
-  // ROI / QOI mapping
-  const qualityOfLife = qoiData?.quality_of_life_index || "N/A";
-  const safety = qoiData?.safety_index || "N/A";
-  const health = qoiData?.health_care_index || "N/A";
+  // ROI / QOI mapping — use real relocation index data
+  const qualityOfLife = qoiData?.lifestyle || qoiData?.quality_of_life_index || "N/A";
+  const safety = qoiData?.safety || qoiData?.safety_index || "N/A";
+  const health = qoiData?.healthcare || qoiData?.health_care_index || "N/A";
 
   // Tab-dependent values
   let displayTotalTitle = "Total Estimated Cost (Year 1)";
@@ -226,13 +262,13 @@ export default function CostBreakdownScreen() {
   let livingValue = annualLivingUsd * USD_TO_NPR;
   let livingSub = `$${annualLivingUsd.toLocaleString()}`;
 
-  let rentLabel = "Rent (Annual Approx)";
-  let rentValue = (monthlyUsd * 0.4) * 12 * USD_TO_NPR;
-  let rentSub = "40% of budget";
+  let rentLabel = "Rent (Annual)";
+  let rentValue = annualRent * USD_TO_NPR;
+  let rentSub = `$${annualRent.toLocaleString()}`;
 
-  let foodLabel = "Food & Others (Annual)";
-  let foodValue = (monthlyUsd * 0.6) * 12 * USD_TO_NPR;
-  let foodSub = "60% of budget";
+  let foodLabel = "Food & Groceries (Annual)";
+  let foodValue = annualFood * USD_TO_NPR;
+  let foodSub = `$${annualFood.toLocaleString()}`;
 
   let isYearOnYear = activeTab === "Year on year";
 
@@ -248,13 +284,13 @@ export default function CostBreakdownScreen() {
     livingValue = monthlyUsd * USD_TO_NPR;
     livingSub = `$${monthlyUsd.toLocaleString()}`;
 
-    rentLabel = "Rent (Monthly Approx)";
-    rentValue = (monthlyUsd * 0.4) * USD_TO_NPR;
-    rentSub = "40% of budget";
+    rentLabel = "Rent (Monthly)";
+    rentValue = monthlyRent * USD_TO_NPR;
+    rentSub = `$${monthlyRent.toLocaleString()}`;
 
-    foodLabel = "Food & Others (Monthly)";
-    foodValue = (monthlyUsd * 0.6) * USD_TO_NPR;
-    foodSub = "60% of budget";
+    foodLabel = "Food & Groceries (Monthly)";
+    foodValue = monthlyFood * USD_TO_NPR;
+    foodSub = `$${monthlyFood.toLocaleString()}`;
   } else if (activeTab === "Year on year") {
     displayTotalTitle = "Total Estimated Cost (3-Year Degree)";
     displayTotalCost = totalFirstYearNpr * 3.15; // Year 1 + Year 2 (1.05) + Year 3 (1.10)
@@ -267,12 +303,12 @@ export default function CostBreakdownScreen() {
     livingValue = annualLivingUsd * 3.15 * USD_TO_NPR;
     livingSub = `$${Math.round(annualLivingUsd * 3.15).toLocaleString()}`;
 
-    rentLabel = "3-Year Rent (Approx)";
-    rentValue = (monthlyUsd * 0.4) * 12 * 3.15 * USD_TO_NPR;
+    rentLabel = "3-Year Rent";
+    rentValue = annualRent * 3.15 * USD_TO_NPR;
     rentSub = "Includes 5% annual inflation";
 
     foodLabel = "3-Year Food & Others";
-    foodValue = (monthlyUsd * 0.6) * 12 * 3.15 * USD_TO_NPR;
+    foodValue = annualFood * 3.15 * USD_TO_NPR;
     foodSub = "Includes 5% annual inflation";
   }
 
@@ -331,7 +367,7 @@ export default function CostBreakdownScreen() {
               <Text style={[styles.summaryValue, { color: colors.text }]}>{fmtNpr(displayTotalCost)}</Text>
               <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
                 <View style={styles.orangeDot} />
-                <Text style={styles.averageBadgeText}>{currentCountry} Average</Text>
+                <Text style={styles.averageBadgeText}>{actualCountry} Average</Text>
               </View>
             </View>
             <View style={styles.chartContainer}>
@@ -415,7 +451,7 @@ export default function CostBreakdownScreen() {
                     <CostItem label="Year 3 Living (Est)" value={fmtNpr(annualLivingUsd * 1.10 * USD_TO_NPR)} />
                   </>
                 )}
-                <Text style={[styles.footerInfoText, { color: colors.text }]}>Based on average {currentCountry} lifestyle</Text>
+                <Text style={[styles.footerInfoText, { color: colors.text }]}>Based on average {actualCountry} lifestyle</Text>
               </View>
             )}
           </View>
@@ -484,7 +520,7 @@ export default function CostBreakdownScreen() {
                     selectUniversity({
                       id: id as string,
                       name: uniData?.name || "University",
-                      location: uniData?.location || currentCountry,
+                      location: uniData?.location || actualCountry,
                       image: uniData?.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400",
                       course: uniData?.courses?.[0]?.name || "MSc Computer Science",
                       tuition: uniData?.tuition || "N/A",

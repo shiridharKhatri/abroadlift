@@ -29,19 +29,44 @@ const COLORS = {
   cardBorder: "#E2E8F0",
 };
 
-const INTAKE_OPTIONS = [
-  { id: "spring_2026", label: "Spring 2026", sub: "January Intake" },
-  { id: "summer_2026", label: "Summer 2026", sub: "May Intake" },
-  { id: "fall_2025", label: "Fall 2025", sub: "September Intake" },
-  { id: "not_sure", label: "Not Sure", sub: "We'll suggest" },
-];
+const generateIntakeOptions = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
+
+  const options = [];
+
+  // If before September, offer Fall of this year
+  if (currentMonth < 8) {
+    options.push({ id: `fall_${currentYear}`, label: `Fall ${currentYear}`, sub: "September Intake" });
+  }
+
+  // Spring of next year (January)
+  options.push({ id: `spring_${currentYear + 1}`, label: `Spring ${currentYear + 1}`, sub: "January Intake" });
+
+  // Summer of next year (May)
+  options.push({ id: `summer_${currentYear + 1}`, label: `Summer ${currentYear + 1}`, sub: "May Intake" });
+
+  // Fall of next year (September)
+  options.push({ id: `fall_${currentYear + 1}`, label: `Fall ${currentYear + 1}`, sub: "September Intake" });
+
+  // Spring of year after next
+  options.push({ id: `spring_${currentYear + 2}`, label: `Spring ${currentYear + 2}`, sub: "January Intake" });
+
+  // Not sure option
+  options.push({ id: "not_sure", label: "Not Sure", sub: "We'll suggest" });
+
+  return options;
+};
+
+const INTAKE_OPTIONS = generateIntakeOptions();
 
 export default function IntakeSetup() {
   const { userData, setUserData } = useUser();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [selectedIntake, setSelectedIntake] = useState(userData.intake || "Fall 2025");
+  const [selectedIntake, setSelectedIntake] = useState(userData.intake || INTAKE_OPTIONS[0]?.label || "Not Sure");
 
   const handleContinue = () => {
     setUserData(prev => ({

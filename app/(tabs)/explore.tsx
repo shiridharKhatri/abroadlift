@@ -8,7 +8,6 @@ import {
   Image,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -17,11 +16,13 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { canUseGlassEffect, GlassCard } from "../../components/GlassCard";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { Skeleton } from "../../components/Skeleton";
-import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 
 const { width } = Dimensions.get("window");
 
@@ -183,9 +184,32 @@ const getCountryTheme = (countryName: string | undefined, isDark: boolean, color
 };
 
 export default function DashboardScreen() {
+  const insets = useSafeAreaInsets();
   const { userData, setUserData, selectUniversity } = useUser();
   const { colors, isDark } = useTheme();
   const countryTheme = getCountryTheme(userData.country, isDark, colors);
+
+  // Compute dynamic user admission metrics locally for the dashboard view
+  const gpa = parseFloat(userData.cgpa || "0");
+  const engScore = parseFloat(userData.score || "0");
+
+  let gpaStatus: 'success' | 'warning' = 'warning';
+  let gpaText = 'Set GPA';
+  if (gpa > 0) {
+    const isStrong = gpa >= 3.3 || (gpa > 4.5 && gpa >= 8.0);
+    gpaStatus = isStrong ? 'success' : 'warning';
+    gpaText = isStrong ? 'Good GPA' : 'Improve GPA';
+  }
+
+  let engStatus: 'success' | 'warning' = 'warning';
+  let engText = 'Set English Score';
+  if (engScore > 0) {
+    const isStrong = engScore >= 6.5;
+    engStatus = isStrong ? 'success' : 'warning';
+    const testLabel = userData.testType && userData.testType !== 'Not Taken' ? userData.testType : 'IELTS';
+    engText = isStrong ? `Good ${testLabel}` : `Improve ${testLabel}`;
+  }
+
   const [showPlanModal, setShowPlanModal] = React.useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = React.useState(false);
   const [modalStep, setModalStep] = React.useState<'options' | 'country'>('options');
@@ -195,48 +219,94 @@ export default function DashboardScreen() {
   const [visaReadiness, setVisaReadiness] = React.useState<string>("--");
   const [loadingUnis, setLoadingUnis] = React.useState(true);
   const [showCountryFallback, setShowCountryFallback] = React.useState(false);
+  const [countriesList, setCountriesList] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const { getAvailableCountries } = require("../../lib/api");
+    getAvailableCountries().then((data: any) => {
+      if (data && data.length > 0) {
+        setCountriesList(data);
+      }
+    });
+  }, []);
 
   const USD_TO_NPR = 134;
 
-  const calculateDynamicMetrics = (user: any) => {
+  const calculateDynamicMetrics = async (user: any) => {
     // 1. Acceptance Chance calculation
     const gpa = parseFloat(user.cgpa || "0");
     const engScore = parseFloat(user.score || "0");
 
-    // Normalize GPA
     let gpaNorm = gpa / 4.0;
     if (gpa > 4.5) gpaNorm = gpa / 10.0;
     if (gpaNorm > 1) gpaNorm = 1;
 
-    // Normalize English (assuming IELTS 0-9)
     let engNorm = engScore / 9.0;
     if (engNorm > 1) engNorm = 1;
 
-    // Base probability
-    let prob = 35 + (gpaNorm * 40) + (engNorm * 20);
+    // Use server values if available, otherwise calculate locally
+    let finalProb = user.admissionProb;
+    let chanceLabel = "";
 
-    // Rank Factor
+    // Call POST api/admission-chance endpoint to get the exact score matching the site
     if (user.selectedUniversities?.length > 0) {
-      const rankStr = user.selectedUniversities[0].rank || "";
-      const rankVal = parseInt(rankStr.replace(/[^0-9]/g, ""));
-      if (!isNaN(rankVal)) {
-        if (rankVal < 50) prob -= 20;
-        else if (rankVal < 200) prob -= 10;
-        else if (rankVal > 500) prob += 10;
+      const selUni = user.selectedUniversities[0];
+      const { getAdmissionChance } = require("../../lib/api");
+      try {
+        const res = await getAdmissionChance(
+          {
+            gpa: user.cgpa || "0",
+            testType: user.testType || "IELTS",
+            testScore: user.score || "0",
+            backlogs: "0",
+            studyGap: "0"
+          },
+          {
+            admissionRate: selUni.acceptanceRate || 62,
+            tuitionFee: selUni.tuitionValue || 20000,
+            rankingWorld: parseInt(String(selUni.rank || "").replace(/[^0-9]/g, "")) || undefined,
+            englishReq: 6.5,
+            gpaRequirement: 3.0,
+            internationalPercentage: 18,
+            countryCode: selUni.country || "US",
+            name: selUni.name
+          }
+        );
+        if (res && typeof res.admissionPct === 'number') {
+          finalProb = res.admissionPct;
+          chanceLabel = res.band?.label || "Moderate";
+        }
+      } catch (err) {
+        console.warn("Failed to get admission chance from endpoint:", err);
       }
     }
 
-    const finalProb = Math.min(98, Math.max(5, Math.round(prob)));
-    let chanceLabel = "Moderate";
-    if (finalProb >= 80) chanceLabel = "Very High";
-    else if (finalProb >= 65) chanceLabel = "High";
-    else if (finalProb < 45) chanceLabel = "Low";
+    if (typeof finalProb !== 'number') {
+      const baseProb = 35 + (gpaNorm * 40) + (engNorm * 20);
+      finalProb = Math.min(98, Math.max(5, Math.round(baseProb)));
+    }
+
+    if (!chanceLabel) {
+      chanceLabel = "Moderate";
+      if (finalProb >= 80) chanceLabel = "Very High";
+      else if (finalProb >= 65) chanceLabel = "High";
+      else if (finalProb < 45) chanceLabel = "Low";
+    }
 
     setAcceptanceChance(`${finalProb}% - ${chanceLabel}`);
 
-    // 2. Visa Readiness (Placeholder dynamic)
-    let visaScore = 50 + (gpaNorm * 20) + (engNorm * 10);
-    const finalVisa = Math.min(95, Math.round(visaScore));
+    // 2. Visa Readiness (Use server-computed visaSuccessProb if available)
+    const finalVisa = typeof user.visaSuccessProb === 'number'
+      ? user.visaSuccessProb
+      : (() => {
+          let localVisaProb = 60;
+          if (user.passportReady) localVisaProb += 10;
+          if (user.docsReady) localVisaProb += 10;
+          const balance = parseFloat(user.bankBalance || "0");
+          if (balance > 3000000) localVisaProb += 15;
+          return Math.min(98, localVisaProb);
+        })();
+
     let visaLabel = "Good";
     if (finalVisa < 65) visaLabel = "Needs Work";
     else if (finalVisa > 85) visaLabel = "Strong";
@@ -367,26 +437,37 @@ export default function DashboardScreen() {
               }
             });
 
-            if (costData) {
-              const monthlyUsd = costData.monthly_estimate_usd || 1500;
-              const annualLivingUsd = monthlyUsd * 12;
+            let tuitionUsd = 20000;
+            let city = "";
+            let country = userData.country || "US";
 
-              // Tuition logic: use selected uni if available, else regional average
-              let tuitionUsd = 20000;
-              if (userData.selectedUniversities?.length > 0) {
-                tuitionUsd = userData.selectedUniversities[0].tuitionValue || 20000;
+            if (userData.selectedUniversities?.length > 0) {
+              const selUni = userData.selectedUniversities[0];
+              tuitionUsd = selUni.tuitionValue || 20000;
+              city = selUni.city || "";
+              country = selUni.country || userData.country || "US";
+            }
+
+            const { getCostEstimate } = require("../../lib/api");
+            let costEstimateResult = null;
+            try {
+              costEstimateResult = await getCostEstimate(city, country, tuitionUsd);
+            } catch (err) {
+              console.warn("Failed to fetch cost estimate:", err);
+            }
+
+            if (costEstimateResult && costEstimateResult.total_npr) {
+              const totalNpr = costEstimateResult.total_npr;
+              if (totalNpr >= 10000000) {
+                setEstimatedCost(`NPR ${(totalNpr / 10000000).toFixed(1)} Crore`);
+              } else if (totalNpr >= 100000) {
+                setEstimatedCost(`NPR ${(totalNpr / 100000).toFixed(1)} Lakhs`);
+              } else {
+                setEstimatedCost(`NPR ${totalNpr.toLocaleString()}`);
               }
-
-              const totalNpr = (annualLivingUsd + tuitionUsd) * USD_TO_NPR;
-              setEstimatedCost(`NPR ${(totalNpr / 1000000).toFixed(1)}M`);
             } else {
-              // Fallback default calculation if API response or URL is missing
-              const monthlyUsd = 1500;
+              const monthlyUsd = costData?.monthly_estimate_usd || costData?.monthlyEstimateUsd || 1500;
               const annualLivingUsd = monthlyUsd * 12;
-              let tuitionUsd = 20000;
-              if (userData.selectedUniversities?.length > 0) {
-                tuitionUsd = userData.selectedUniversities[0].tuitionValue || 20000;
-              }
               const totalNpr = (annualLivingUsd + tuitionUsd) * USD_TO_NPR;
               setEstimatedCost(`NPR ${(totalNpr / 1000000).toFixed(1)}M`);
             }
@@ -405,11 +486,10 @@ export default function DashboardScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
-      {/* Top Bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: (insets.top || StatusBar.currentHeight || 24) + 20 }]}>
         <View style={styles.greetingSection}>
           <Text style={[styles.greetingText, { color: colors.text }]}>Hi, {userData.name || "user"} 👋</Text>
           <Text style={[styles.subGreetingText, { color: colors.textSecondary }]}>Here's your abroad study overview</Text>
@@ -502,7 +582,7 @@ export default function DashboardScreen() {
         {/* Stats Row */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
           {/* Estimated Cost Card */}
-          <View style={[styles.statCard, { backgroundColor: isDark ? "#064E3B20" : "#F0FDF4", borderColor: isDark ? "#064E3B40" : "#DCFCE7" }]}>
+          <GlassCard glassEffectStyle="regular" fallbackColor={isDark ? "#064E3B20" : "#F0FDF4"} style={[styles.statCard, !canUseGlassEffect() && { backgroundColor: isDark ? "#064E3B20" : "#F0FDF4", borderColor: isDark ? "#064E3B40" : "#DCFCE7" }]}>
             <View>
               <View style={styles.statIconHeader}>
                 <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F3F4F6" }]}>
@@ -534,10 +614,10 @@ export default function DashboardScreen() {
             >
               <Text style={[styles.statButtonText, { color: colors.primary }]}>View Breakdown</Text>
             </TouchableOpacity>
-          </View>
+          </GlassCard>
 
           {/* Admission Chances Card */}
-          <View style={[styles.statCard, { backgroundColor: isDark ? "#9A341220" : "#FFF7ED", borderColor: isDark ? "#9A341240" : "#FFEDD5" }]}>
+          <GlassCard glassEffectStyle="regular" fallbackColor={isDark ? "#9A341220" : "#FFF7ED"} style={[styles.statCard, !canUseGlassEffect() && { backgroundColor: isDark ? "#9A341220" : "#FFF7ED", borderColor: isDark ? "#9A341240" : "#FFEDD5" }]}>
             <View>
               <View style={styles.statIconHeader}>
                 <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#FFF7ED" }]}>
@@ -559,12 +639,20 @@ export default function DashboardScreen() {
               ) : (
                 <>
                   <View style={styles.checkRow}>
-                    <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Good GPA</Text>
+                    <Ionicons 
+                      name={gpaStatus === 'success' ? "checkmark-circle" : "warning"} 
+                      size={16} 
+                      color={gpaStatus === 'success' ? THEME.green : THEME.orange} 
+                    />
+                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>{gpaText}</Text>
                   </View>
                   <View style={styles.checkRow}>
-                    <Ionicons name="warning" size={16} color={THEME.orange} />
-                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Improve IELTS</Text>
+                    <Ionicons 
+                      name={engStatus === 'success' ? "checkmark-circle" : "warning"} 
+                      size={16} 
+                      color={engStatus === 'success' ? THEME.green : THEME.orange} 
+                    />
+                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>{engText}</Text>
                   </View>
                 </>
               )}
@@ -576,10 +664,10 @@ export default function DashboardScreen() {
             >
               <Text style={[styles.statButtonText, { color: colors.primary }]}>Set Goals</Text>
             </TouchableOpacity>
-          </View>
+          </GlassCard>
 
           {/* Visa Readiness Card */}
-          <View style={[styles.statCard, { backgroundColor: isDark ? "#3730A320" : "#EEF2FF", borderColor: isDark ? "#3730A340" : "#E0E7FF" }]}>
+          <GlassCard glassEffectStyle="regular" fallbackColor={isDark ? "#3730A320" : "#EEF2FF"} style={[styles.statCard, !canUseGlassEffect() && { backgroundColor: isDark ? "#3730A320" : "#EEF2FF", borderColor: isDark ? "#3730A340" : "#E0E7FF" }]}>
             <View>
               <View style={styles.statIconHeader}>
                 <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : THEME.secondary + "15" }]}>
@@ -622,7 +710,7 @@ export default function DashboardScreen() {
             >
               <Text style={[styles.statButtonText, { color: colors.primary }]}>Improve</Text>
             </TouchableOpacity>
-          </View>
+          </GlassCard>
         </ScrollView>
 
         {/* Improve Your Chances Banner */}
@@ -713,9 +801,9 @@ export default function DashboardScreen() {
                   source={{ uri: uni.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400" }}
                   style={styles.uniImage}
                 />
-                <View style={styles.matchBadge}>
+                <GlassCard glassEffectStyle="regular" useBlurFallback fallbackBlurIntensity={40} fallbackBlurTint="dark" style={styles.matchBadge}>
                   <Text style={styles.matchText}>{calculateAcceptanceChance(userData, uni).score}% Match</Text>
-                </View>
+                </GlassCard>
               </View>
               <View style={styles.uniCardContent}>
                 <Text style={[styles.uniCardName, { color: colors.text }]} numberOfLines={1}>{uni.name}</Text>
@@ -961,7 +1049,7 @@ export default function DashboardScreen() {
 
                 <ScrollView showsVerticalScrollIndicator={false}>
                   <View style={styles.modalGrid}>
-                    {COUNTRIES.map((c) => (
+                    {(countriesList.length > 0 ? countriesList : COUNTRIES).map((c) => (
                       <TouchableOpacity
                         key={c.id}
                         style={[
@@ -995,7 +1083,7 @@ export default function DashboardScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 

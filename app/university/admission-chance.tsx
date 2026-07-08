@@ -15,9 +15,9 @@ import {
 } from "react-native";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { Skeleton } from "../../components/Skeleton";
-import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 
 const { width } = Dimensions.get("window");
 
