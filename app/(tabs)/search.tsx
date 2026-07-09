@@ -68,6 +68,7 @@ export default function UniversitySelection() {
   const { colors, isDark } = useTheme();
   const { pendingCountry, pendingFlag, openFilter } = useLocalSearchParams<{ pendingCountry?: string; pendingFlag?: string; openFilter?: string }>();
   const [filterVisible, setFilterVisible] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   // Open filter modal from other screens if requested
   useEffect(() => {
@@ -279,6 +280,24 @@ export default function UniversitySelection() {
               <Ionicons name="options-outline" size={20} color={hasActiveFilters ? colors.primary : colors.text} />
               <Text style={[styles.actionButtonText, { color: hasActiveFilters ? colors.primary : colors.text }]}>Filters</Text>
             </TouchableOpacity>
+
+            {/* View Mode Toggle */}
+            <View style={[styles.viewToggle, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <TouchableOpacity
+                style={[styles.viewToggleBtn, viewMode === 'list' && { backgroundColor: colors.primary }]}
+                onPress={() => setViewMode('list')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="list" size={16} color={viewMode === 'list' ? '#fff' : colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.viewToggleBtn, viewMode === 'grid' && { backgroundColor: colors.primary }]}
+                onPress={() => setViewMode('grid')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="grid" size={16} color={viewMode === 'grid' ? '#fff' : colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
         {isLoading ? (
@@ -303,80 +322,135 @@ export default function UniversitySelection() {
             ))}
           </View>
         ) : filteredUniversities.length > 0 ? (
-          filteredUniversities.map((uni) => (
-            <TouchableOpacity
-              key={uni.id}
-              style={[styles.uniRowCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => router.push(`/university/${uni.id}?country=${encodeURIComponent(uni.country)}&name=${encodeURIComponent(uni.name)}`)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.uniRowTop}>
-                <View style={[styles.uniRowLogoBox, { borderColor: colors.border, backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC" }]}>
-                  {uni.logo ? (
-                    <Image source={{ uri: uni.logo }} style={styles.uniRowLogo} resizeMode="contain" />
-                  ) : (
-                    <Ionicons name="school" size={24} color={colors.primary} />
-                  )}
-                </View>
-                <View style={styles.uniRowMainInfo}>
-                  <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
-                    <Text style={[styles.uniRowName, { color: colors.text, flex: 1 }]} numberOfLines={1}>{uni.name}</Text>
-                    {uni.recommended && (
-                      <View style={[styles.matchBadge, { backgroundColor: colors.primary + "15" }]}>
-                        <Text style={[styles.matchBadgeText, { color: colors.primary }]}>Matched</Text>
-                      </View>
+          viewMode === 'list' ? (
+            // ── LIST VIEW ──
+            filteredUniversities.map((uni) => (
+              <TouchableOpacity
+                key={uni.id}
+                style={[styles.uniRowCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => router.push(`/university/${uni.id}?country=${encodeURIComponent(uni.country)}&name=${encodeURIComponent(uni.name)}`)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.uniRowTop}>
+                  <View style={[styles.uniRowLogoBox, { borderColor: colors.border, backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC" }]}>
+                    {uni.logo ? (
+                      <Image source={{ uri: uni.logo }} style={styles.uniRowLogo} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="school" size={24} color={colors.primary} />
                     )}
                   </View>
-                  <Text style={[styles.uniRowCourse, { color: colors.primary }]} numberOfLines={1}>
-                    {uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters")}
-                  </Text>
-                  <View style={styles.uniRowLocationWrap}>
-                     <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-                     <Text style={[styles.uniRowLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
-                     {uni.rank && uni.rank !== "N/A" && (
-                       <>
-                         <Text style={{ color: colors.border, marginHorizontal: 4 }}>•</Text>
-                         <Text style={[styles.uniRowLocationText, { color: colors.textSecondary }]}>Rank #{uni.rank}</Text>
-                       </>
-                     )}
+                  <View style={styles.uniRowMainInfo}>
+                    <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <Text style={[styles.uniRowName, { color: colors.text, flex: 1 }]} numberOfLines={1}>{uni.name}</Text>
+                      {uni.recommended && (
+                        <View style={[styles.matchBadge, { backgroundColor: colors.primary + "15" }]}>
+                          <Text style={[styles.matchBadgeText, { color: colors.primary }]}>Matched</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={[styles.uniRowCourse, { color: colors.primary }]} numberOfLines={1}>
+                      {uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters")}
+                    </Text>
+                    <View style={styles.uniRowLocationWrap}>
+                       <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+                       <Text style={[styles.uniRowLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
+                       {uni.rank && uni.rank !== "N/A" && (
+                         <>
+                           <Text style={{ color: colors.border, marginHorizontal: 4 }}>•</Text>
+                           <Text style={[styles.uniRowLocationText, { color: colors.textSecondary }]}>Rank #{uni.rank}</Text>
+                         </>
+                       )}
+                    </View>
                   </View>
                 </View>
-              </View>
-              
-              <View style={[styles.uniRowBottom, { borderTopColor: colors.border }]}>
-                <View style={styles.uniRowStats}>
-                   <View style={styles.uniRowStatItem}>
-                      <Text style={[styles.uniRowStatLabel, { color: colors.textSecondary }]}>Tuition</Text>
-                      <Text style={[styles.uniRowStatValue, { color: colors.text }]}>{uni.tuition}</Text>
-                   </View>
-                   <View style={styles.uniRowStatItem}>
-                      <Text style={[styles.uniRowStatLabel, { color: colors.textSecondary }]}>Acceptance</Text>
-                      <Text style={[styles.uniRowStatValue, { color: colors.text }]}>{calculateAcceptanceChance(userData, uni).score}%</Text>
-                   </View>
+                
+                <View style={[styles.uniRowBottom, { borderTopColor: colors.border }]}>
+                  <View style={styles.uniRowStats}>
+                     <View style={styles.uniRowStatItem}>
+                        <Text style={[styles.uniRowStatLabel, { color: colors.textSecondary }]}>Tuition</Text>
+                        <Text style={[styles.uniRowStatValue, { color: colors.text }]}>{uni.tuition}</Text>
+                     </View>
+                     <View style={styles.uniRowStatItem}>
+                        <Text style={[styles.uniRowStatLabel, { color: colors.textSecondary }]}>Acceptance</Text>
+                        <Text style={[styles.uniRowStatValue, { color: colors.text }]}>{calculateAcceptanceChance(userData, uni).score}%</Text>
+                     </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={[styles.uniRowSelectBtn, { backgroundColor: colors.primary }]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      if (pendingCountry) {
+                        setUserData({ ...userData, country: pendingCountry as string, flag: pendingFlag as string, selectedUniversities: [uni, ...userData.selectedUniversities.filter(u => u.id !== uni.id)] });
+                      } else { selectUniversity(uni); }
+                      router.replace("/(tabs)/explore");
+                    }}
+                  >
+                    <Text style={styles.uniRowSelectBtnText}>Select</Text>
+                  </TouchableOpacity>
                 </View>
-
-                <TouchableOpacity 
-                  style={[styles.uniRowSelectBtn, { backgroundColor: colors.primary }]}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    if (pendingCountry) {
-                      setUserData({
-                        ...userData,
-                        country: pendingCountry as string,
-                        flag: pendingFlag as string,
-                        selectedUniversities: [uni, ...userData.selectedUniversities.filter(u => u.id !== uni.id)]
-                      });
-                    } else {
-                      selectUniversity(uni);
-                    }
-                    router.replace("/(tabs)/explore");
-                  }}
+              </TouchableOpacity>
+            ))
+          ) : (
+            // ── GRID VIEW ──
+            <View style={styles.gridContainer}>
+              {filteredUniversities.map((uni) => (
+                <TouchableOpacity
+                  key={uni.id}
+                  style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/university/${uni.id}?country=${encodeURIComponent(uni.country)}&name=${encodeURIComponent(uni.name)}`)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={styles.uniRowSelectBtnText}>Select</Text>
+                  {/* Logo */}
+                  <View style={[styles.gridLogoBox, { backgroundColor: isDark ? '#2C2C2E' : '#F8FAFC', borderColor: colors.border }]}>
+                    {uni.logo ? (
+                      <Image source={{ uri: uni.logo }} style={styles.gridLogo} resizeMode="contain" />
+                    ) : (
+                      <Ionicons name="school" size={28} color={colors.primary} />
+                    )}
+                    {uni.recommended && (
+                      <View style={[styles.gridMatchDot, { backgroundColor: colors.primary }]} />
+                    )}
+                  </View>
+
+                  {/* Name */}
+                  <Text style={[styles.gridUniName, { color: colors.text }]} numberOfLines={2}>{uni.name}</Text>
+
+                  {/* Location */}
+                  <View style={styles.gridLocation}>
+                    <Ionicons name="location-outline" size={10} color={colors.textSecondary} />
+                    <Text style={[styles.gridLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
+                  </View>
+
+                  {/* Stats row */}
+                  <View style={[styles.gridStatsRow, { borderTopColor: colors.border }]}>
+                    <View style={styles.gridStat}>
+                      <Text style={[styles.gridStatVal, { color: colors.primary }]}>{calculateAcceptanceChance(userData, uni).score}%</Text>
+                      <Text style={[styles.gridStatLabel, { color: colors.textSecondary }]}>Accept</Text>
+                    </View>
+                    <View style={[styles.gridStatDivider, { backgroundColor: colors.border }]} />
+                    <View style={styles.gridStat}>
+                      <Text style={[styles.gridStatVal, { color: colors.text }]} numberOfLines={1}>{uni.tuition}</Text>
+                      <Text style={[styles.gridStatLabel, { color: colors.textSecondary }]}>Tuition</Text>
+                    </View>
+                  </View>
+
+                  {/* Select btn */}
+                  <TouchableOpacity
+                    style={[styles.gridSelectBtn, { backgroundColor: colors.primary }]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      if (pendingCountry) {
+                        setUserData({ ...userData, country: pendingCountry as string, flag: pendingFlag as string, selectedUniversities: [uni, ...userData.selectedUniversities.filter(u => u.id !== uni.id)] });
+                      } else { selectUniversity(uni); }
+                      router.replace("/(tabs)/explore");
+                    }}
+                  >
+                    <Text style={styles.gridSelectBtnText}>Select</Text>
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))
+              ))}
+            </View>
+          )
         ) : (
           <View style={styles.noResults}>
             <Ionicons name="search-outline" size={64} color={colors.border} />
@@ -635,6 +709,105 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 110,
+  },
+  // ── View Mode Toggle ──
+  viewToggle: {
+    flexDirection: "row",
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+    height: 44,
+  },
+  viewToggleBtn: {
+    width: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // ── Grid Styles ──
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  gridCard: {
+    width: (width - 40 - 12) / 2,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
+    overflow: "hidden",
+  },
+  gridLogoBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    marginBottom: 10,
+  },
+  gridLogo: {
+    width: "100%",
+    height: "100%",
+  },
+  gridMatchDot: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  gridUniName: {
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  gridLocation: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginBottom: 12,
+  },
+  gridLocationText: {
+    fontSize: 11,
+    flex: 1,
+  },
+  gridStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 10,
+    marginBottom: 10,
+  },
+  gridStat: {
+    flex: 1,
+    alignItems: "center",
+  },
+  gridStatVal: {
+    fontSize: 13,
+    fontWeight: "800",
+    marginBottom: 2,
+  },
+  gridStatLabel: {
+    fontSize: 10,
+    fontWeight: "500",
+  },
+  gridStatDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 28,
+    marginHorizontal: 4,
+  },
+  gridSelectBtn: {
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  gridSelectBtnText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
   },
   uniRowCard: {
     borderRadius: 16,
