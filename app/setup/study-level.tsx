@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -9,6 +9,8 @@ import {
   ScrollView,
   StatusBar,
   Platform,
+  LayoutAnimation,
+  UIManager,
 } from "react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -17,6 +19,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const COLORS = {
   primary: "#33BFFF", 
@@ -70,6 +76,37 @@ const LEVEL_METADATA: Record<string, { icon: string; provider: string; desc: str
   }
 };
 
+const CATEGORY_MAP: Record<string, string[]> = {
+  "Postgraduate Programs": [
+    "masters_degree", "doctoral_phd", "post_graduate_diploma", 
+    "post_graduate_certificate", "integrated_masters"
+  ],
+  "Undergraduate Programs": [
+    "bachelors", "3_year_bachelors", "diploma", "advanced_diploma", "certificate"
+  ],
+  "Primary & Secondary Education (K-12)": [
+    "grade_12", "grade_11", "grade_10", "grade_9", "grade_8", 
+    "grade_7", "grade_6", "grade_5", "grade_4", "grade_3", "grade_2", "grade_1"
+  ],
+  "Language & Preparation Programs": [
+    "english"
+  ]
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  "Postgraduate Programs": "ribbon-outline",
+  "Undergraduate Programs": "book-outline",
+  "Primary & Secondary Education (K-12)": "business-outline",
+  "Language & Preparation Programs": "language-outline"
+};
+
+const getCategory = (id: string) => {
+  for (const [category, ids] of Object.entries(CATEGORY_MAP)) {
+    if (ids.includes(id)) return category;
+  }
+  return "Other Programs";
+};
+
 const STATIC_STUDY_LEVELS = [
   { id: "bachelors", name: "Bachelor's Degree" },
   { id: "masters_degree", name: "Master's Degree" },
@@ -83,10 +120,11 @@ export default function StudyLevelSelection() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   
-  const [levelsList, setLevelsList] = useState<any[]>([]);
+  const [groupedLevels, setGroupedLevels] = useState<Record<string, any[]>>({});
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const { getStudyLevels } = require("../../lib/api");
     getStudyLevels().then((data: any[]) => {
       const formatted = data.map((item: any) => {
@@ -103,15 +141,38 @@ export default function StudyLevelSelection() {
           desc: meta.desc,
         };
       });
-      setLevelsList(formatted);
+
+      const grouped = formatted.reduce((acc: any, level: any) => {
+        const category = getCategory(level.id);
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(level);
+        return acc;
+      }, {});
+      
+      // Sort categories to roughly match CATEGORY_MAP order
+      const orderedGrouped: Record<string, any[]> = {};
+      Object.keys(CATEGORY_MAP).forEach(key => {
+        if (grouped[key]) orderedGrouped[key] = grouped[key];
+      });
+      if (grouped["Other Programs"]) orderedGrouped["Other Programs"] = grouped["Other Programs"];
+      
+      setGroupedLevels(orderedGrouped);
 
       // Pre-select current level if it matches
       const current = formatted.find((l: any) => l.name === userData.studyLevel);
       if (current) {
         setSelectedLevel(current.id);
+        setExpandedCategory(getCategory(current.id));
       } else {
         const fallbackMatch = STATIC_STUDY_LEVELS.find((l: any) => l.name === userData.studyLevel);
-        if (fallbackMatch) setSelectedLevel(fallbackMatch.id);
+        if (fallbackMatch) {
+          setSelectedLevel(fallbackMatch.id);
+          setExpandedCategory(getCategory(fallbackMatch.id));
+        } else {
+          // Default to first category if nothing is selected
+          const firstCategory = Object.keys(orderedGrouped)[0];
+          if (firstCategory) setExpandedCategory(firstCategory);
+        }
       }
     });
   }, [userData.studyLevel]);
@@ -119,6 +180,11 @@ export default function StudyLevelSelection() {
   const handleSelect = (id: string, name: string) => {
     setSelectedLevel(id);
     setUserData(prev => ({ ...prev, studyLevel: name }));
+  };
+
+  const toggleCategory = (category: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedCategory(expandedCategory === category ? null : category);
   };
 
   return (
@@ -156,45 +222,76 @@ export default function StudyLevelSelection() {
 
         {/* Info Banner */}
         <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF3C7", borderColor: "#FDE68A" }]}>
-          <Ionicons name="sparkles" size={20} color={isDark ? colors.primary : "#D97706"} />
           <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#92400E" }]}>
             Selecting the correct level filters course requirements, admission score minimums, and stay-back work permit paths.
           </Text>
         </View>
 
-        {/* Level List */}
-        <View style={styles.list}>
-          {(levelsList.length > 0 ? levelsList : STATIC_STUDY_LEVELS.map(l => ({
-            id: l.id,
-            name: l.name,
-            icon: "school-outline",
-            provider: "Ionicons",
-            desc: "Academic study programs."
-          }))).map((level) => {
-            const isSelected = selectedLevel === level.id;
+        {/* Categories Accordion */}
+        <View style={styles.accordionContainer}>
+          {Object.entries(groupedLevels).map(([category, levels]) => {
+            const isExpanded = expandedCategory === category;
+            
             return (
-              <TouchableOpacity
-                key={level.id}
-                activeOpacity={0.8}
-                style={[
-                  styles.levelItem,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                  isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + "15" },
-                ]}
-                onPress={() => handleSelect(level.id, level.name)}
-              >
-                <View style={[styles.iconWrapper, { backgroundColor: colors.border }, isSelected && { backgroundColor: colors.primary }]}>
-                  {level.provider === 'Ionicons' ? (
-                    <Ionicons name={level.icon as any} size={22} color={isSelected ? "white" : colors.textSecondary} />
-                  ) : (
-                    <MaterialCommunityIcons name={level.icon as any} size={22} color={isSelected ? "white" : colors.textSecondary} />
-                  )}
-                </View>
-                <View style={styles.textWrapper}>
-                  <Text style={[styles.levelName, { color: colors.text }, isSelected && { color: colors.primary, fontWeight: "800" }]}>{level.name}</Text>
-                  <Text style={[styles.levelDesc, { color: colors.textSecondary }]}>{level.desc}</Text>
-                </View>
-              </TouchableOpacity>
+              <View key={category} style={[styles.categoryContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <TouchableOpacity 
+                  style={[
+                    styles.categoryHeader, 
+                    isExpanded ? { backgroundColor: colors.primary + "0A" } : { backgroundColor: colors.card },
+                    isExpanded && { borderBottomWidth: 1, borderBottomColor: colors.border }
+                  ]} 
+                  onPress={() => toggleCategory(category)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.categoryHeaderLeft}>
+                    <View style={[styles.categoryIconWrapper, isExpanded && { backgroundColor: colors.primary }]}>
+                      <Ionicons 
+                        name={(CATEGORY_ICONS[category] as any) || "school-outline"} 
+                        size={20} 
+                        color={isExpanded ? "#FFF" : colors.primary} 
+                      />
+                    </View>
+                    <Text style={[styles.categoryTitle, { color: colors.text }, isExpanded && { color: colors.primary }]}>
+                      {category}
+                    </Text>
+                  </View>
+                  <View style={[styles.chevronWrapper, isExpanded && { backgroundColor: colors.primary + "1A" }]}>
+                    <Feather name={isExpanded ? "chevron-up" : "chevron-down"} size={18} color={isExpanded ? colors.primary : colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+
+                {isExpanded && (
+                  <View style={styles.categoryContent}>
+                    {levels.map((level: any) => {
+                      const isSelected = selectedLevel === level.id;
+                      return (
+                        <TouchableOpacity
+                          key={level.id}
+                          activeOpacity={0.8}
+                          style={[
+                            styles.levelItem,
+                            { borderColor: colors.border },
+                            isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + "15" },
+                          ]}
+                          onPress={() => handleSelect(level.id, level.name)}
+                        >
+                          <View style={[styles.iconWrapper, { backgroundColor: colors.border }, isSelected && { backgroundColor: colors.primary }]}>
+                            {level.provider === 'Ionicons' ? (
+                              <Ionicons name={level.icon as any} size={22} color={isSelected ? "white" : colors.textSecondary} />
+                            ) : (
+                              <MaterialCommunityIcons name={level.icon as any} size={22} color={isSelected ? "white" : colors.textSecondary} />
+                            )}
+                          </View>
+                          <View style={styles.textWrapper}>
+                            <Text style={[styles.levelName, { color: colors.text }, isSelected && { color: colors.primary, fontWeight: "800" }]}>{level.name}</Text>
+                            <Text style={[styles.levelDesc, { color: colors.textSecondary }]}>{level.desc}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
             );
           })}
         </View>
@@ -280,22 +377,67 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: "600",
   },
-  list: {
+  accordionContainer: {
     gap: 16,
+  },
+  categoryContainer: {
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: "hidden",
+    backgroundColor: COLORS.white,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  categoryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+  },
+  categoryHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+    paddingRight: 12,
+  },
+  categoryIconWrapper: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary + "1A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    flexShrink: 1,
+    lineHeight: 22,
+  },
+  chevronWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.bgSubtle,
+  },
+  categoryContent: {
+    padding: 12,
+    gap: 12,
   },
   levelItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: COLORS.white,
-    padding: 18,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: COLORS.borderLight,
+    backgroundColor: "transparent",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
     gap: 16,
-  },
-  selectedItem: {
-    borderColor: COLORS.primary,
-    backgroundColor: "#F0F9FF",
   },
   iconWrapper: {
     width: 40,
@@ -305,9 +447,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  selectedIconWrapper: {
-    backgroundColor: COLORS.white,
-  },
   textWrapper: {
     flex: 1,
     gap: 4,
@@ -316,9 +455,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     color: COLORS.textDark,
-  },
-  selectedLevelName: {
-    color: COLORS.primary,
   },
   levelDesc: {
     fontSize: 12,
@@ -361,11 +497,5 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     width: 32,
-  },
-  trackerSegmentActive: {
-    backgroundColor: COLORS.primary,
-  },
-  trackerSegmentInactive: {
-    backgroundColor: "#E5E7EB",
   },
 });

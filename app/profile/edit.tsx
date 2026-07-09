@@ -98,7 +98,7 @@ export default function EditProfile() {
                  {formData.profileImage ? (
                    <Image source={{ uri: formData.profileImage }} style={styles.avatarImage} />
                  ) : (
-                   <Ionicons name="person" size={50} color={colors.textSecondary} />
+                   <Ionicons name="person-circle-outline" size={60} color={colors.textSecondary} />
                  )}
               </View>
               <View style={[styles.cameraIcon, { backgroundColor: colors.primary, borderColor: colors.background }]}>

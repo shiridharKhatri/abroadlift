@@ -181,7 +181,7 @@ export default function AcademicsSetup() {
 
           {/* Dynamic Suggestion/Tip Box */}
           <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" }]}>
-            <Ionicons name="sparkles" size={20} color={isDark ? colors.primary : "#10B981"} />
+            <Ionicons name="trending-up" size={20} color={isDark ? colors.primary : "#10B981"} />
             <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#065F46" }]}>
               A CGPA above 3.0/4.0 or 75% unlocks access to top tier schools and increases scholarship funding opportunities by up to 50%.
             </Text>

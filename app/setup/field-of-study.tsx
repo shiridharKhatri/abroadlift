@@ -213,7 +213,7 @@ export default function FieldOfStudySelection() {
             })}
             {filteredFields.length === 0 && search.trim().length > 0 && (
               <View style={[styles.customSelectionCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
-                <Ionicons name="sparkles-outline" size={20} color={colors.primary} />
+                <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
                 <Text style={[styles.customSelectionText, { color: colors.text }]}>
                   Use custom field: <Text style={{ fontWeight: "800" }}>"{search}"</Text>
                 </Text>

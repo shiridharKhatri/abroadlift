@@ -282,150 +282,100 @@ export default function UniversitySelection() {
           </View>
         </View>
         {isLoading ? (
-          <View style={{ gap: 16 }}>
+          <View style={{ gap: 12 }}>
             {[1, 2, 3].map((key) => (
-              <View key={key} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, overflow: "hidden" }]}>
-                {/* Image Placeholder */}
-                <View style={{ height: 160, width: "100%" }}>
-                  <Skeleton width="100%" height={160} borderRadius={0} />
-                </View>
-                {/* Details Placeholder */}
-                <View style={{ padding: 16, gap: 12 }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <Skeleton width={120} height={14} borderRadius={4} />
-                    <Skeleton width={60} height={18} borderRadius={10} />
-                  </View>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <Skeleton width={36} height={36} borderRadius={12} />
-                    <View style={{ flex: 1, gap: 6 }}>
+              <View key={key} style={[styles.uniRowCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.uniRowTop}>
+                   <Skeleton width={56} height={56} borderRadius={12} />
+                   <View style={{ flex: 1, gap: 8, paddingLeft: 12 }}>
                       <Skeleton width="80%" height={16} borderRadius={4} />
-                      <Skeleton width="50%" height={12} borderRadius={4} />
-                    </View>
-                  </View>
+                      <Skeleton width="50%" height={14} borderRadius={4} />
+                   </View>
+                </View>
+                <View style={[styles.uniRowBottom, { borderTopColor: colors.border }]}>
+                   <View style={styles.uniRowStats}>
+                      <Skeleton width={60} height={30} borderRadius={4} />
+                      <Skeleton width={60} height={30} borderRadius={4} />
+                   </View>
+                   <Skeleton width={80} height={36} borderRadius={18} />
                 </View>
               </View>
             ))}
           </View>
         ) : filteredUniversities.length > 0 ? (
           filteredUniversities.map((uni) => (
-            <View key={uni.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {/* Entire card top part is clickable for details navigation */}
-              <TouchableOpacity
-                activeOpacity={0.95}
-                onPress={() => router.push(`/university/${uni.id}?country=${encodeURIComponent(uni.country)}&name=${encodeURIComponent(uni.name)}`)}
-              >
-                <View style={styles.imageContainer}>
-                  <Image source={{ uri: uni.image }} style={styles.cardImage} />
-                  {uni.rank && uni.rank !== "N/A" && (
-                    <View style={styles.rankBadge}>
-                      <GlassCard glassEffectStyle="regular" useBlurFallback fallbackBlurIntensity={30} fallbackBlurTint="light" style={styles.rankBlur}>
-                        <Ionicons name="trophy" size={12} color="#FFF" />
-                        <Text style={[styles.rankText, { color: "#FFF" }]}>{uni.rank}</Text>
-                      </GlassCard>
-                    </View>
+            <TouchableOpacity
+              key={uni.id}
+              style={[styles.uniRowCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push(`/university/${uni.id}?country=${encodeURIComponent(uni.country)}&name=${encodeURIComponent(uni.name)}`)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.uniRowTop}>
+                <View style={[styles.uniRowLogoBox, { borderColor: colors.border, backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC" }]}>
+                  {uni.logo ? (
+                    <Image source={{ uri: uni.logo }} style={styles.uniRowLogo} resizeMode="contain" />
+                  ) : (
+                    <Ionicons name="school" size={24} color={colors.primary} />
                   )}
                 </View>
-              </TouchableOpacity>
-
-              <View style={styles.cardInfo}>
-                {/* Header Section: Logo + Title */}
-                <View style={styles.nameRow}>
-                  <View style={[styles.uniIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC", borderColor: colors.border, borderWidth: 1 }]}>
-                    {uni.logo ? (
-                      <Image source={{ uri: uni.logo }} style={styles.uniLogoImage} resizeMode="contain" />
-                    ) : (
-                      <Ionicons name="school" size={20} color={colors.primary} />
+                <View style={styles.uniRowMainInfo}>
+                  <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Text style={[styles.uniRowName, { color: colors.text, flex: 1 }]} numberOfLines={1}>{uni.name}</Text>
+                    {uni.recommended && (
+                      <View style={[styles.matchBadge, { backgroundColor: colors.primary + "15" }]}>
+                        <Text style={[styles.matchBadgeText, { color: colors.primary }]}>Matched</Text>
+                      </View>
                     )}
                   </View>
-                  <View style={styles.nameTexts}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <Text style={[styles.uniName, { color: colors.text, flex: 1, marginRight: 8 }]} numberOfLines={2}>
-                        {uni.name}
-                      </Text>
-                      {uni.recommended && (
-                        <View style={[styles.recommendedBadge, { backgroundColor: colors.primary + "15" }]}>
-                          <Text style={[styles.recommendedText, { color: colors.primary }]}>Matched</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={[styles.courseName, { color: colors.textSecondary }]}>
-                      {uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters")}
-                    </Text>
+                  <Text style={[styles.uniRowCourse, { color: colors.primary }]} numberOfLines={1}>
+                    {uni.course || (uni.levels ? uni.levels.join(" & ") : "Bachelors & Masters")}
+                  </Text>
+                  <View style={styles.uniRowLocationWrap}>
+                     <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+                     <Text style={[styles.uniRowLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
+                     {uni.rank && uni.rank !== "N/A" && (
+                       <>
+                         <Text style={{ color: colors.border, marginHorizontal: 4 }}>•</Text>
+                         <Text style={[styles.uniRowLocationText, { color: colors.textSecondary }]}>Rank #{uni.rank}</Text>
+                       </>
+                     )}
                   </View>
-                </View>
-
-                {/* Location Badge */}
-                <View style={styles.locationRowCompact}>
-                  <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-                  <Text style={[styles.locationTextCompact, { color: colors.textSecondary }]}>{uni.location}</Text>
-                </View>
-
-                <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                {/* Duration & Tuition Grid */}
-                <View style={styles.detailsGrid}>
-                  <View style={styles.detailItem}>
-                    <View style={[styles.detailIconContainer, { backgroundColor: colors.border + "50" }]}>
-                      <Feather name="calendar" size={14} color={colors.primary} />
-                    </View>
-                    <View style={styles.detailTextWrapper}>
-                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Duration</Text>
-                      <Text style={[styles.detailValue, { color: colors.text }]}>{uni.duration || "2 - 4 Years"}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <View style={[styles.detailIconContainer, { backgroundColor: colors.border + "50" }]}>
-                      <Feather name="dollar-sign" size={14} color={colors.primary} />
-                    </View>
-                    <View style={styles.detailTextWrapper}>
-                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Tuition</Text>
-                      <Text style={[styles.detailValue, { color: colors.text }]}>{uni.tuition}</Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Acceptance Rate Progress Tracker in a capsule */}
-                <View style={[styles.acceptanceRow, { backgroundColor: isDark ? "#1E293B" : "#F8FAFC", padding: 12, borderRadius: 16, marginBottom: 20 }]}>
-                  <View style={styles.acceptanceLabelBox}>
-                    <Ionicons name="stats-chart" size={14} color={colors.primary} />
-                    <Text style={[styles.acceptanceLabel, { color: colors.text, fontWeight: "700" }]}>Acceptance</Text>
-                  </View>
-                  <ProgressTracker percentage={calculateAcceptanceChance(userData, uni).score} />
-                </View>
-
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={[styles.selectButton, { backgroundColor: colors.primary }]}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      if (pendingCountry) {
-                        setUserData({
-                          ...userData,
-                          country: pendingCountry as string,
-                          flag: pendingFlag as string,
-                          selectedUniversities: [uni, ...userData.selectedUniversities.filter(u => u.id !== uni.id)]
-                        });
-                      } else {
-                        selectUniversity(uni);
-                      }
-                      router.replace("/(tabs)/explore");
-                    }}
-                  >
-                    <Text style={styles.selectButtonText}>Select University</Text>
-                    <Feather name="arrow-right" size={16} color="white" />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.detailsButton, { borderColor: colors.border, backgroundColor: colors.card }]}
-                    activeOpacity={0.7}
-                    onPress={() => router.push(`/university/${uni.id}`)}
-                  >
-                    <Text style={[styles.detailsButtonText, { color: colors.text }]}>View Details</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
-            </View>
+              
+              <View style={[styles.uniRowBottom, { borderTopColor: colors.border }]}>
+                <View style={styles.uniRowStats}>
+                   <View style={styles.uniRowStatItem}>
+                      <Text style={[styles.uniRowStatLabel, { color: colors.textSecondary }]}>Tuition</Text>
+                      <Text style={[styles.uniRowStatValue, { color: colors.text }]}>{uni.tuition}</Text>
+                   </View>
+                   <View style={styles.uniRowStatItem}>
+                      <Text style={[styles.uniRowStatLabel, { color: colors.textSecondary }]}>Acceptance</Text>
+                      <Text style={[styles.uniRowStatValue, { color: colors.text }]}>{calculateAcceptanceChance(userData, uni).score}%</Text>
+                   </View>
+                </View>
+
+                <TouchableOpacity 
+                  style={[styles.uniRowSelectBtn, { backgroundColor: colors.primary }]}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (pendingCountry) {
+                      setUserData({
+                        ...userData,
+                        country: pendingCountry as string,
+                        flag: pendingFlag as string,
+                        selectedUniversities: [uni, ...userData.selectedUniversities.filter(u => u.id !== uni.id)]
+                      });
+                    } else {
+                      selectUniversity(uni);
+                    }
+                    router.replace("/(tabs)/explore");
+                  }}
+                >
+                  <Text style={styles.uniRowSelectBtnText}>Select</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           ))
         ) : (
           <View style={styles.noResults}>
@@ -686,230 +636,92 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 110,
   },
-  card: {
-    backgroundColor: THEME.white,
-    borderRadius: 24,
-    marginBottom: 24,
-    borderWidth: 1.5,
-    borderColor: "#F1F5F9",
+  uniRowCard: {
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
-  imageContainer: {
-    height: 180,
-    width: "100%",
-    position: "relative",
+  uniRowTop: {
+    flexDirection: "row",
+    padding: 16,
+    alignItems: "center",
   },
-  cardImage: {
-    width: "100%",
-    height: "100%",
-  },
-  rankBadge: {
-    position: "absolute",
-    top: 16,
-    right: 16,
+  uniRowLogoBox: {
+    width: 56,
+    height: 56,
     borderRadius: 12,
-    overflow: "hidden",
-  },
-  rankBlur: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    gap: 4,
-  },
-  rankText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#004be3",
-  },
-  cardInfo: {
-    padding: 24,
-  },
-  locationRowCompact: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 16,
-  },
-  locationTextCompact: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#64748B",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  detailIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  locationRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  locationLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  locationText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#64748B",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  recommendedBadge: {
-    backgroundColor: "rgba(51, 191, 255, 0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  recommendedText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: THEME.primary,
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    marginBottom: 20,
-  },
-  uniIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#F1F5F9",
+    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
-  uniLogoImage: {
+  uniRowLogo: {
     width: "100%",
     height: "100%",
-    borderRadius: 24,
   },
-  nameTexts: {
+  uniRowMainInfo: {
     flex: 1,
+    paddingLeft: 12,
   },
-  uniName: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: THEME.textDark,
-    marginBottom: 4,
-  },
-  courseName: {
-    fontSize: 14,
+  uniRowName: {
+    fontSize: 16,
     fontWeight: "700",
-    color: "#6366F1",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F1F5F9",
-    marginBottom: 16,
-  },
-  detailsGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  detailItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    width: "48%",
-  },
-  detailTextWrapper: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 11,
-    color: "#94A3B8",
-    fontWeight: "600",
     marginBottom: 2,
   },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: THEME.textDark,
+  matchBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginLeft: 8,
   },
-  acceptanceRow: {
+  matchBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  uniRowCourse: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+  uniRowLocationWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  uniRowLocationText: {
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  uniRowBottom: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  acceptanceLabelBox: {
+  uniRowStats: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+    gap: 20,
   },
-  acceptanceLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#64748B",
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flex: 0.8,
-  },
-  progressBarBackground: {
-    flex: 1,
-    height: 8,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    borderRadius: 4,
-  },
-  progressText: {
+  uniRowStatItem: {},
+  uniRowStatLabel: {
     fontSize: 11,
-    fontWeight: "900",
-    width: 32,
-    textAlign: "right",
+    fontWeight: "500",
+    marginBottom: 2,
   },
-  actionButtons: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 8,
-  },
-  selectButton: {
-    flex: 1.25,
-    backgroundColor: THEME.secondary,
-    height: 50,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  selectButtonText: {
-    color: THEME.white,
+  uniRowStatValue: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
   },
-  detailsButton: {
-    flex: 1,
-    height: 50,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    justifyContent: "center",
-    alignItems: "center",
+  uniRowSelectBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 18,
   },
-  detailsButtonText: {
-    color: THEME.textGray,
-    fontSize: 14,
+  uniRowSelectBtnText: {
+    color: "#FFF",
+    fontSize: 13,
     fontWeight: "700",
   },
   modalOverlay: {

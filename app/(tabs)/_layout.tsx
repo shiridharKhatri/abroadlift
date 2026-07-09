@@ -1,10 +1,13 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassCard, GlassContainerCard, canUseGlassEffect } from '../../components/GlassCard';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+
+const { width } = Dimensions.get('window');
 
 const THEME = {
   primary: "#33BFFF",
@@ -13,116 +16,145 @@ const THEME = {
   bgLight: "#FFFFFF",
 };
 
-function CustomTabBar({ state, descriptors, navigation }: any) {
-  const { colors } = useTheme();
-  const useGlass = canUseGlassEffect();
+const TAB_COUNT = 4;
+const PADDING_HORIZ = 16;
+const FULL_WIDTH = width - 40;
+const USABLE_WIDTH = FULL_WIDTH - (PADDING_HORIZ * 2);
+const SLOT_WIDTH = USABLE_WIDTH / TAB_COUNT;
+const PILL_WIDTH = 50;
+const PILL_HEIGHT = 40;
 
-  const tabContent = state.routes.map((route: any, index: number) => {
-    const { options } = descriptors[route.key];
-    const label =
-      options.tabBarLabel !== undefined
-        ? options.tabBarLabel
-        : options.title !== undefined
-        ? options.title
-        : route.name;
+const springConfig = {
+  damping: 16,
+  stiffness: 250,
+  mass: 0.8,
+};
 
-    const isFocused = state.index === index;
+function TabItem({ route, index, state, navigation, colors }: any) {
+  const isFocused = state.index === index;
 
-    const onPress = () => {
-      const event = navigation.emit({
-        type: 'tabPress',
-        target: route.key,
-        canPreventDefault: true,
-      });
+  const onPress = () => {
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
 
-      if (!isFocused && !event.defaultPrevented) {
-         navigation.navigate(route.name);
-      }
+    if (!isFocused && !event.defaultPrevented) {
+       navigation.navigate(route.name);
+    }
+  };
+
+  let iconName = 'home-outline';
+  if (route.name === 'explore') iconName = isFocused ? 'home' : 'home-outline';
+  if (route.name === 'search') iconName = isFocused ? 'search' : 'search-outline';
+  if (route.name === 'recent') iconName = isFocused ? 'heart' : 'heart-outline';
+  if (route.name === 'profile') iconName = isFocused ? 'person' : 'person-outline';
+
+  const activeValue = useSharedValue(isFocused ? 1 : 0);
+  
+  useEffect(() => {
+    activeValue.value = withSpring(isFocused ? 1 : 0, { damping: 16, stiffness: 250, mass: 0.8 });
+  }, [isFocused]);
+
+  const iconStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: 1 + (activeValue.value * 0.15) }],
     };
-
-    let iconName = 'home';
-    if (route.name === 'explore') iconName = 'home';
-    if (route.name === 'search') iconName = 'search';
-    if (route.name === 'recent') iconName = 'heart';
-    if (route.name === 'profile') iconName = 'user';
-
-    return (
-      <TouchableOpacity
-        key={route.key}
-        accessibilityRole="button"
-        accessibilityState={isFocused ? { selected: true } : {}}
-        accessibilityLabel={options.tabBarAccessibilityLabel}
-        testID={options.tabBarTestID}
-        onPress={onPress}
-        style={styles.tabItem}
-        activeOpacity={0.7}
-      >
-        {useGlass && isFocused && (
-          <GlassCard
-            glassEffectStyle="clear"
-            isInteractive={true}
-            style={styles.activeTabBubble}
-          />
-        )}
-        <View style={styles.iconWrapper}>
-          <Feather 
-            name={iconName as any} 
-            size={22} 
-            color={isFocused ? colors.primary : colors.textSecondary} 
-          />
-        </View>
-        <Text style={[
-          styles.tabText, 
-          { color: colors.textSecondary },
-          isFocused && styles.tabTextActive,
-          isFocused && { color: colors.primary }
-        ]}>
-          {label}
-        </Text>
-        {isFocused && <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />}
-      </TouchableOpacity>
-    );
   });
 
-  // Use native Liquid Glass on iOS 26+
-  if (useGlass) {
-    return (
-      <GlassContainerCard 
-        spacing={6} 
-        style={[
-          styles.bottomTabContainer,
-          styles.glassTabContainer,
-        ]}
-      >
-        {/* Main Tab Background */}
-        <GlassCard
-          glassEffectStyle="clear"
-          style={StyleSheet.absoluteFillObject}
-        />
-        
-        {/* Tab Items Layout Overlay */}
-        <View style={styles.tabItemsOverlay}>
-          {tabContent}
-        </View>
-      </GlassContainerCard>
-    );
-  }
-
-  // Fallback: BlurView for older iOS / Android
   return (
-    <BlurView 
-      intensity={50} 
-      tint={colors.tabBlur}
-      style={[
-        styles.bottomTabContainer,
-        {
-          backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.25)' : colors.tabBg,
-          borderColor: colors.tabBorder,
-        }
-      ]}
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      onPress={onPress}
+      style={styles.tabItem}
+      activeOpacity={0.8}
     >
-      {tabContent}
-    </BlurView>
+      <Animated.View style={[styles.iconWrapper, iconStyle]}>
+        <Ionicons 
+          name={iconName as any} 
+          size={22} 
+          color={isFocused ? colors.primary : colors.textSecondary} 
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+function CustomTabBar({ state, descriptors, navigation }: any) {
+  const { colors, isDark } = useTheme();
+  const useGlass = canUseGlassEffect();
+
+  const activeIndex = useSharedValue(state.index);
+
+  useEffect(() => {
+    activeIndex.value = withSpring(state.index, springConfig);
+  }, [state.index]);
+
+  const pillStyle = useAnimatedStyle(() => {
+    const activeTabCenter = PADDING_HORIZ + activeIndex.value * SLOT_WIDTH + SLOT_WIDTH / 2;
+    const expandedTranslateX = activeTabCenter - PILL_WIDTH / 2;
+    return {
+      transform: [{ translateX: expandedTranslateX }],
+    };
+  });
+
+  const tabContent = state.routes.map((route: any, index: number) => {
+    return <TabItem 
+      key={route.key} 
+      route={route} 
+      index={index} 
+      state={state} 
+      navigation={navigation} 
+      colors={colors}
+    />;
+  });
+
+  const renderContent = () => (
+    <>
+      <Animated.View style={[styles.activePill, pillStyle]}>
+        <BlurView 
+          intensity={80} 
+          tint={isDark ? "dark" : "light"} 
+          style={StyleSheet.absoluteFillObject} 
+        />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primary, opacity: 0.25 }]} />
+      </Animated.View>
+      
+      <View style={styles.tabItemsOverlay}>
+        {tabContent}
+      </View>
+    </>
+  );
+
+  return (
+    <View style={styles.absoluteContainer}>
+      {useGlass ? (
+        <GlassContainerCard 
+          spacing={0} 
+          style={[styles.bottomTabContainer, styles.glassTabContainer, { shadowColor: isDark ? "#000" : colors.primary }]}
+        >
+          <GlassCard glassEffectStyle="clear" style={StyleSheet.absoluteFillObject} />
+          {renderContent()}
+        </GlassContainerCard>
+      ) : (
+        <BlurView 
+          intensity={60} 
+          tint={isDark ? "dark" : "light"}
+          style={[
+            styles.bottomTabContainer,
+            {
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.70)',
+              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.5)',
+              shadowColor: isDark ? "#000" : colors.textSecondary,
+            }
+          ]}
+        >
+          {renderContent()}
+        </BlurView>
+      )}
+    </View>
   );
 }
 
@@ -133,100 +165,67 @@ export default function TabLayout() {
       screenOptions={{ 
         headerShown: false,
         tabBarTransparent: true,
-      } as any}
+      }}
     >
-      <Tabs.Screen
-        name="explore"
-        options={{ title: 'Home' }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{ 
-          title: 'Search',
-          href: null 
-        }}
-      />
-      <Tabs.Screen
-        name="recent"
-        options={{ title: 'Saved' }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{ title: 'Profile' }}
-      />
+      <Tabs.Screen name="explore" />
+      <Tabs.Screen name="search" />
+      <Tabs.Screen name="recent" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  bottomTabContainer: {
+  absoluteContainer: {
     position: "absolute",
     bottom: Platform.OS === 'ios' ? 24 : 16,
     left: 20,
     right: 20,
+    height: 60,
+    borderRadius: 30,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  bottomTabContainer: {
+    width: "100%",
+    height: "100%",
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
-    paddingHorizontal: 28,
-    paddingVertical: 10,
-    borderRadius: 100,
+    borderRadius: 30,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.35)",
-    paddingBottom: Platform.OS === 'ios' ? 14 : 10,
     overflow: "hidden",
+  },
+  tabItemsOverlay: {
+    flexDirection: 'row',
+    width: FULL_WIDTH,
+    paddingHorizontal: PADDING_HORIZ,
+    height: "100%",
+    alignItems: "center",
   },
   tabItem: {
     alignItems: "center",
     justifyContent: "center",
-    height: 44,
-    width: 60,
-    position: "relative",
+    width: SLOT_WIDTH,
+    height: PILL_HEIGHT,
   },
   iconWrapper: {
-    height: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 3,
   },
-  tabText: {
-    fontSize: 10.5,
-    color: THEME.textGray,
-    fontWeight: "500",
-  },
-  tabTextActive: {
-    color: THEME.primary,
-    fontWeight: "700",
-  },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: THEME.primary,
+  activePill: {
     position: "absolute",
-    bottom: -4,
+    top: 10, // (60 - 40) / 2 = 10
+    left: 0,
+    width: PILL_WIDTH,
+    height: PILL_HEIGHT,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   glassTabContainer: {
     backgroundColor: 'transparent',
-    borderWidth: 0,
-    borderColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  activeTabBubble: {
-    position: 'absolute',
-    top: -6,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    zIndex: -1,
-  },
-  tabItemsOverlay: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
-    paddingHorizontal: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
 });

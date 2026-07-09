@@ -206,8 +206,8 @@ export default function UniversitySelectionSetup() {
         ]}
       >
         <View style={styles.topRow}>
-          <TouchableOpacity style={[styles.backBtn, { backgroundColor: colors.card }]} onPress={() => router.back()}>
-            <Feather name="arrow-left" size={22} color={colors.text} />
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={handleBack}>
+            <Feather name="chevron-left" size={28} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Selection</Text>
           <TouchableOpacity style={[styles.skipHeaderBtn, { backgroundColor: colors.primary + "15" }]} onPress={handleSkip}>
@@ -415,13 +415,13 @@ export default function UniversitySelectionSetup() {
                   {/* Details Grid */}
                   <View style={styles.detailsRow}>
                     <View style={[styles.detailChip, { backgroundColor: colors.border }]}>
-                      <Feather name="clock" size={13} color={colors.text} />
+                      <Ionicons name="time-outline" size={14} color={colors.text} />
                       <Text style={[styles.detailChipText, { color: colors.text }]}>
                         {uni.duration || "Check Site"}
                       </Text>
                     </View>
                     <View style={[styles.detailChip, { backgroundColor: colors.border }]}>
-                      <Feather name="dollar-sign" size={13} color={colors.text} />
+                      <Ionicons name="cash-outline" size={14} color={colors.text} />
                       <Text style={[styles.detailChipText, { color: colors.text }]}>
                         {formatTuition(uni.tuition)}
                       </Text>

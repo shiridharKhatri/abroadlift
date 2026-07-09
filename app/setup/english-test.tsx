@@ -209,7 +209,7 @@ export default function EnglishTestSelection() {
 
                 {/* Recommendation Tip Banner */}
                 <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF3C7", borderColor: "#FDE68A" }]}>
-                  <Ionicons name="sparkles" size={20} color={isDark ? colors.primary : "#3B82F6"} />
+                  <Ionicons name="bulb" size={20} color={isDark ? colors.primary : "#3B82F6"} />
                   <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#92400E" }]}>
                     {TEST_TIPS[testType as TestType]}
                   </Text>

@@ -125,7 +125,7 @@ export default function IntakeSetup() {
         {/* Dynamic Country Intake Recommendation Box */}
         <View style={[styles.recommendationCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#FEF9F2", borderColor: "#FDEED7" }]}>
           <View style={styles.recHeader}>
-            <Ionicons name="sparkles" size={18} color={isDark ? colors.primary : "#D97706"} />
+            <Ionicons name="calendar-outline" size={18} color={isDark ? colors.primary : "#D97706"} />
             <Text style={[styles.recTitle, { color: isDark ? colors.text : "#92400E" }]}>{userData.country || "Global"} Intake Recommendation</Text>
           </View>
           <Text style={[styles.recText, { color: colors.textSecondary }]}>{getIntakeRecommendation()}</Text>

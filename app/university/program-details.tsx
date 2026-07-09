@@ -10,7 +10,7 @@ import {
   Platform,
 } from "react-native";
 import { router, useLocalSearchParams, Stack } from "expo-router";
-import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import { Ionicons, FontAwesome5, Feather } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 
 const THEME = {
@@ -147,8 +147,8 @@ export default function ProgramDetailsScreen() {
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color={colors.text} />
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Program Details</Text>
         <View style={{ width: 44 }} />
