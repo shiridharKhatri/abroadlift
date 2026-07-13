@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, LayoutAnimation, Platform, UIManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -72,6 +76,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setThemeMode = async (mode: ThemeMode) => {
     try {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       _setThemeMode(mode);
       await AsyncStorage.setItem('@theme_mode', mode);
     } catch (e) {

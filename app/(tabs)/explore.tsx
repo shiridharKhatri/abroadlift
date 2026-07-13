@@ -186,7 +186,7 @@ const getCountryTheme = (countryName: string | undefined, isDark: boolean, color
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { userData, setUserData, selectUniversity } = useUser();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, setThemeMode } = useTheme();
   const countryTheme = getCountryTheme(userData.country, isDark, colors);
 
   // Compute dynamic user admission metrics locally for the dashboard view
@@ -299,13 +299,13 @@ export default function DashboardScreen() {
     const finalVisa = typeof user.visaSuccessProb === 'number'
       ? user.visaSuccessProb
       : (() => {
-          let localVisaProb = 60;
-          if (user.passportReady) localVisaProb += 10;
-          if (user.docsReady) localVisaProb += 10;
-          const balance = parseFloat(user.bankBalance || "0");
-          if (balance > 3000000) localVisaProb += 15;
-          return Math.min(98, localVisaProb);
-        })();
+        let localVisaProb = 60;
+        if (user.passportReady) localVisaProb += 10;
+        if (user.docsReady) localVisaProb += 10;
+        const balance = parseFloat(user.bankBalance || "0");
+        if (balance > 3000000) localVisaProb += 15;
+        return Math.min(98, localVisaProb);
+      })();
 
     let visaLabel = "Good";
     if (finalVisa < 65) visaLabel = "Needs Work";
@@ -489,482 +489,280 @@ export default function DashboardScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
-      <View style={[styles.topBar, { paddingTop: (insets.top || StatusBar.currentHeight || 24) + 20 }]}>
-        <View style={styles.greetingSection}>
-          <Text style={[styles.greetingText, { color: colors.text }]}>Hi, {userData.name || "user"} 👋</Text>
-          <Text style={[styles.subGreetingText, { color: colors.textSecondary }]}>Here's your abroad study overview</Text>
+      {/* ── Header ── */}
+      <View style={[styles.topBar, { paddingTop: (insets.top || StatusBar.currentHeight || 24) + 16, borderBottomColor: colors.border }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.greetingText, { color: colors.text }]}>Hi, {userData.name || "Student"}</Text>
+          <Text style={[styles.subGreetingText, { color: colors.textSecondary }]}>Your abroad study overview</Text>
         </View>
         <View style={styles.topBarIcons}>
           <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: colors.card }]}
-            onPress={() => setShowNotificationsModal(true)}
+            style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => setThemeMode(isDark ? "light" : "dark")}
           >
-            <Ionicons name="notifications-outline" size={24} color={colors.text} />
+            <Ionicons name={isDark ? "sunny-outline" : "moon-outline"} size={22} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.profileButton}
-            onPress={() => router.push("/(tabs)/profile")}
+            style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => setShowNotificationsModal(true)}
           >
-            <ProfileAvatar size={44} color={colors.border} />
+            <Ionicons name="notifications-outline" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
+            <ProfileAvatar size={42} color={colors.border} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* Global Search Bar */}
-        <View style={styles.globalSearchContainer}>
+        {/* ── Search Bar ── */}
+        <TouchableOpacity
+          style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+          activeOpacity={0.8}
+          onPress={() => router.push("/(tabs)/search")}
+        >
+          <Feather name="search" size={16} color={colors.textSecondary} />
+          <Text style={[styles.searchPlaceholder, { color: colors.textSecondary }]}>Search university or courses…</Text>
           <TouchableOpacity
-            style={[styles.globalSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
-            activeOpacity={0.8}
-            onPress={() => router.push("/(tabs)/search")}
+            style={[styles.filterDot, { backgroundColor: colors.primary }]}
+            onPress={() => router.push({ pathname: "/(tabs)/search", params: { openFilter: "true" } })}
           >
-            <Feather name="search" size={18} color={colors.textSecondary} />
-            <TextInput
-              placeholder="Search university or courses"
-              style={[styles.globalSearchInput, { color: colors.text }]}
-              placeholderTextColor={colors.textSecondary}
-              editable={false}
-              pointerEvents="none"
-            />
+            <Ionicons name="options" size={14} color="white" />
           </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* ── Study Plan Row ── */}
+        <TouchableOpacity
+          style={[styles.studyPlanRow, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => setShowPlanModal(true)}
+          activeOpacity={0.75}
+        >
+          <View style={styles.studyPlanLeft}>
+            {getFlagUrl(userData.country) ? (
+              <Image source={{ uri: getFlagUrl(userData.country)! }} style={styles.flagImg} resizeMode="cover" />
+            ) : (
+              <View style={[styles.flagPlaceholder, { backgroundColor: colors.border }]}>
+                <Ionicons name="globe-outline" size={18} color={colors.textSecondary} />
+              </View>
+            )}
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={[styles.studyPlanLabel, { color: colors.textSecondary }]}>STUDY DESTINATION</Text>
+              <Text style={[styles.studyPlanCountry, { color: colors.text }]}>{userData.country || "Select Destination"}</Text>
+            </View>
+          </View>
+          <View style={[styles.editChip, { backgroundColor: colors.primary + "15" }]}>
+            <Feather name="edit-2" size={12} color={colors.primary} />
+            <Text style={[styles.editChipText, { color: colors.primary }]}>Edit</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* ── Metrics Row ── */}
+        <View style={styles.metricsRow}>
+          {/* Cost */}
           <TouchableOpacity
-            style={styles.filterBtnSmall}
-            onPress={() => router.push({
-              pathname: "/(tabs)/search",
-              params: { openFilter: "true" }
-            })}
+            style={[styles.metricCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push({ pathname: "/university/cost-breakdown", params: { country: userData.country || "UK" } })}
+            activeOpacity={0.75}
           >
-            <Ionicons name="options-outline" size={20} color="white" />
+            <View style={[styles.metricIconBox, { backgroundColor: "#E0F2FE" }]}>
+              <Ionicons name="cash-outline" size={16} color="#0369A1" />
+            </View>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Est. Cost / yr</Text>
+            {loadingUnis || estimatedCost === "--" ? (
+              <Skeleton width={70} height={18} borderRadius={4} />
+            ) : (
+              <Text style={[styles.metricValue, { color: colors.text }]}>{estimatedCost}</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Acceptance */}
+          <TouchableOpacity
+            style={[styles.metricCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/university/admission-chance")}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.metricIconBox, { backgroundColor: "#DCFCE7" }]}>
+              <Ionicons name="trending-up-outline" size={16} color="#15803D" />
+            </View>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Acceptance</Text>
+            {loadingUnis || acceptanceChance === "--" ? (
+              <Skeleton width={70} height={18} borderRadius={4} />
+            ) : (
+              <Text style={[styles.metricValue, { color: colors.text }]}>
+                {acceptanceChance.replace(" - ", "\n")}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Visa */}
+          <TouchableOpacity
+            style={[styles.metricCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/visa-readiness")}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.metricIconBox, { backgroundColor: "#F5F3FF" }]}>
+              <Ionicons name="shield-checkmark-outline" size={16} color="#7C3AED" />
+            </View>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Visa</Text>
+            {loadingUnis || visaReadiness === "--" ? (
+              <Skeleton width={70} height={18} borderRadius={4} />
+            ) : (
+              <Text style={[styles.metricValue, { color: colors.text }]}>
+                {visaReadiness.replace(" - ", "\n")}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 
-        {/* Study Plan Card */}
+        {/* ── Profile Status Strip ── */}
         <TouchableOpacity
-          style={styles.studyPlanCard}
-          onPress={() => setShowPlanModal(true)}
-          activeOpacity={0.9}
+          style={[styles.profileStrip, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.push("/(tabs)/profile")}
+          activeOpacity={0.75}
         >
-          <LinearGradient
-            colors={countryTheme.colors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.studyPlanCardGradient}
-          >
-            <View style={styles.studyPlanInfo}>
-              <View style={styles.flagIconWrapper}>
-                {getFlagUrl(userData.country) ? (
-                  <Image
-                    source={{ uri: getFlagUrl(userData.country)! }}
-                    style={styles.flagImageCircle}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text style={styles.flagEmojiLarge}>🗺️</Text>
-                )}
-              </View>
-              <View style={styles.studyPlanTextWrapper}>
-                <Text style={styles.studyPlanLabel}>Study Plan</Text>
-                <Text style={styles.studyCountry}>{userData.country || "Select Destination"}</Text>
-              </View>
-            </View>
-            <View style={styles.editButtonGlass}>
-              <Feather name="edit-2" size={14} color="#FFFFFF" />
-              <Text style={styles.editText}>Edit</Text>
-            </View>
-          </LinearGradient>
+          <View style={styles.profileStripLeft}>
+            <View style={[styles.profileStripDot, {
+              backgroundColor: (userData.cgpa && userData.score) ? THEME.green : THEME.orange
+            }]} />
+            <Text style={[styles.profileStripText, { color: colors.text }]}>
+              {(userData.cgpa && userData.score) ? "Profile complete — ready for applications" : "Complete your profile to get accurate results"}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* Stats Row */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
-          {/* Estimated Cost Card */}
-          <GlassCard glassEffectStyle="regular" fallbackColor={isDark ? "#064E3B20" : "#F0FDF4"} style={[styles.statCard, !canUseGlassEffect() && { backgroundColor: isDark ? "#064E3B20" : "#F0FDF4", borderColor: isDark ? "#064E3B40" : "#DCFCE7" }]}>
-            <View>
-              <View style={styles.statIconHeader}>
-                <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F3F4F6" }]}>
-                  <MaterialCommunityIcons name="currency-usd" size={20} color={isDark ? colors.primary : THEME.textDark} />
-                </View>
-                <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Estimated Cost</Text>
-              </View>
-              {loadingUnis || estimatedCost === "--" ? (
-                <Skeleton width={120} height={28} borderRadius={6} style={{ marginVertical: 4 }} />
-              ) : (
-                <Text style={[styles.statValue, { color: colors.text }]}>{estimatedCost} <Text style={[styles.statUnit, { color: colors.textSecondary }]}>/ year</Text></Text>
-              )}
-              {loadingUnis || estimatedCost === "--" ? (
-                <Skeleton width={90} height={20} borderRadius={6} style={{ marginVertical: 4 }} />
-              ) : (
-                <View style={[styles.statBadge, { backgroundColor: isDark ? "#2C2C2E" : "#F0FDF4" }]}>
-                  <View style={styles.affordableDot} />
-                  <Text style={[styles.statBadgeText, { color: isDark ? colors.text : THEME.textGray }]}>Affordable</Text>
-                </View>
-              )}
-              <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>Tuition + Living</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.statButton, { backgroundColor: colors.primary + "15" }]}
-              onPress={() => router.push({
-                pathname: "/university/cost-breakdown",
-                params: { country: userData.country || "UK" }
-              })}
-            >
-              <Text style={[styles.statButtonText, { color: colors.primary }]}>View Breakdown</Text>
-            </TouchableOpacity>
-          </GlassCard>
-
-          {/* Admission Chances Card */}
-          <GlassCard glassEffectStyle="regular" fallbackColor={isDark ? "#9A341220" : "#FFF7ED"} style={[styles.statCard, !canUseGlassEffect() && { backgroundColor: isDark ? "#9A341220" : "#FFF7ED", borderColor: isDark ? "#9A341240" : "#FFEDD5" }]}>
-            <View>
-              <View style={styles.statIconHeader}>
-                <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#FFF7ED" }]}>
-                  <MaterialCommunityIcons name="target" size={20} color={isDark ? colors.primary : THEME.orange} />
-                </View>
-                <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Acceptance Chance</Text>
-              </View>
-              {loadingUnis || acceptanceChance === "--" ? (
-                <Skeleton width={120} height={28} borderRadius={6} style={{ marginVertical: 4 }} />
-              ) : (
-                <Text style={[styles.statValue, { color: colors.text }]}>{acceptanceChance}</Text>
-              )}
-
-              {loadingUnis || acceptanceChance === "--" ? (
-                <View style={{ gap: 8, marginVertical: 6 }}>
-                  <Skeleton width={100} height={16} borderRadius={4} />
-                  <Skeleton width={100} height={16} borderRadius={4} />
-                </View>
-              ) : (
-                <>
-                  <View style={styles.checkRow}>
-                    <Ionicons 
-                      name={gpaStatus === 'success' ? "checkmark-circle" : "warning"} 
-                      size={16} 
-                      color={gpaStatus === 'success' ? THEME.green : THEME.orange} 
-                    />
-                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>{gpaText}</Text>
-                  </View>
-                  <View style={styles.checkRow}>
-                    <Ionicons 
-                      name={engStatus === 'success' ? "checkmark-circle" : "warning"} 
-                      size={16} 
-                      color={engStatus === 'success' ? THEME.green : THEME.orange} 
-                    />
-                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>{engText}</Text>
-                  </View>
-                </>
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.statButton, { backgroundColor: colors.primary + "15" }]}
-              onPress={() => router.push("/university/admission-chance")}
-            >
-              <Text style={[styles.statButtonText, { color: colors.primary }]}>Set Goals</Text>
-            </TouchableOpacity>
-          </GlassCard>
-
-          {/* Visa Readiness Card */}
-          <GlassCard glassEffectStyle="regular" fallbackColor={isDark ? "#3730A320" : "#EEF2FF"} style={[styles.statCard, !canUseGlassEffect() && { backgroundColor: isDark ? "#3730A320" : "#EEF2FF", borderColor: isDark ? "#3730A340" : "#E0E7FF" }]}>
-            <View>
-              <View style={styles.statIconHeader}>
-                <View style={[styles.statIconBox, { backgroundColor: isDark ? "#2C2C2E" : THEME.secondary + "15" }]}>
-                  <Text style={[styles.visaIconText, { color: isDark ? colors.primary : THEME.secondary }]}>VISA</Text>
-                </View>
-                <Text style={[styles.statTitle, { color: colors.textSecondary }]}>Visa Readiness</Text>
-              </View>
-              {loadingUnis || visaReadiness === "--" ? (
-                <Skeleton width={120} height={28} borderRadius={6} style={{ marginVertical: 4 }} />
-              ) : (
-                <Text style={[styles.statValue, { color: colors.text }]}>{visaReadiness}</Text>
-              )}
-
-              {loadingUnis || visaReadiness === "--" ? (
-                <View style={{ gap: 8, marginVertical: 6 }}>
-                  <Skeleton width={140} height={8} borderRadius={4} />
-                  <Skeleton width={120} height={16} borderRadius={4} />
-                </View>
-              ) : (
-                <>
-                  <View style={[styles.progressBarContainer, { backgroundColor: isDark ? "#2C2C2E" : "#E2E8F0" }]}>
-                    <View style={[styles.progressBarFull, { width: "60%", backgroundColor: colors.primary }]} />
-                  </View>
-
-                  <View style={styles.checkRow}>
-                    <Ionicons name="checkmark-circle" size={16} color={THEME.green} />
-                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Strong Academics</Text>
-                  </View>
-                  <View style={styles.checkRow}>
-                    <Ionicons name="warning" size={16} color={THEME.orange} />
-                    <Text style={[styles.checkText, { color: colors.textSecondary }]}>Financial Proof Weak</Text>
-                  </View>
-                </>
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.statButton, { backgroundColor: colors.primary + "15" }]}
-              onPress={() => router.push("/visa-readiness")}
-            >
-              <Text style={[styles.statButtonText, { color: colors.primary }]}>Improve</Text>
-            </TouchableOpacity>
-          </GlassCard>
-        </ScrollView>
-
-        {/* Improve Your Chances Banner */}
-        <LinearGradient
-          colors={[THEME.primary, THEME.secondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.improveBannerGradient}
-        >
-          <View style={styles.improveContent}>
-            <View style={styles.improveTitleRow}>
-              <Ionicons name="sparkles" size={18} color="#FFE066" />
-              <Text style={styles.improveTitle}>Improve Your Chances</Text>
-            </View>
-            <Text style={styles.improveSubtitle}>Get personalized recommendations and actionable steps to boost your admissions success rate.</Text>
-            <TouchableOpacity
-              style={styles.viewPlanButton}
-              onPress={() => router.push("/university/admission-chance")}
-            >
-              <Text style={styles.viewPlanButtonText}>View Plan</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-
-        {/* Recommended Universities */}
+        {/* ── Quick Actions ── */}
         <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+        </View>
+        <View style={styles.quickActionsGrid}>
+          {[
+            { icon: "search-outline", label: "Find Universities", bg: "#E0F2FE", color: "#0369A1", route: "/(tabs)/search" },
+            { icon: "document-text-outline", label: "Documents", bg: "#F5F3FF", color: "#7C3AED", route: "/visa-readiness" },
+            { icon: "stats-chart-outline", label: "Improve Chances", bg: "#DCFCE7", color: "#15803D", route: "/university/admission-chance" },
+            { icon: "heart-outline", label: "Saved", bg: "#FFF7ED", color: "#C2410C", route: "/(tabs)/recent" },
+          ].map((action) => (
+            <TouchableOpacity
+              key={action.label}
+              style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push(action.route as any)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? colors.border : action.bg }]}>
+                <Ionicons name={action.icon as any} size={20} color={isDark ? colors.primary : action.color} />
+              </View>
+              <Text style={[styles.quickActionText, { color: colors.text }]}>{action.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ── Recommended Universities ── */}
+        <View style={[styles.sectionHeader, { marginTop: 8 }]}>
           <View>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended Universities</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Based on your profile & budget</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Based on your profile</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push("/search")}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/search")}>
             <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
           </TouchableOpacity>
         </View>
+
         {showCountryFallback && (
-          <View style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: isDark ? "#2C2C2E" : "#FFF7ED",
-            borderColor: isDark ? "#3F3F46" : "#FFEDD5",
-            borderWidth: 1,
-            borderRadius: 16,
-            padding: 12,
-            marginHorizontal: 20,
-            marginBottom: 16,
-            gap: 8
-          }}>
-            <Ionicons name="information-circle" size={18} color={THEME.orange} />
-            <Text style={{
-              flex: 1,
-              fontSize: 12,
-              fontWeight: "600",
-              color: isDark ? colors.text : THEME.orange
-            }}>
-              No universities match {userData.country || "selected destination"} yet. Showing global recommendations instead.
+          <View style={[styles.fallbackBanner, { backgroundColor: isDark ? "#2C2C2E" : "#FFF7ED", borderColor: isDark ? "#3F3F46" : "#FFEDD5" }]}>
+            <Ionicons name="information-circle" size={16} color={THEME.orange} />
+            <Text style={[styles.fallbackText, { color: isDark ? colors.text : THEME.orange }]}>
+              No matches for {userData.country || "destination"} — showing global picks instead.
             </Text>
           </View>
         )}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
-          {loadingUnis ? (
-            [1, 2, 3].map((key) => (
-              <View
-                key={key}
-                style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        {/* List-style university rows */}
+        {loadingUnis ? (
+          [1, 2, 3].map((k) => (
+            <View key={k} style={[styles.uniListRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Skeleton width={48} height={48} borderRadius={12} />
+              <View style={{ flex: 1, marginLeft: 12, gap: 8 }}>
+                <Skeleton width="75%" height={15} borderRadius={4} />
+                <Skeleton width="50%" height={12} borderRadius={4} />
+              </View>
+              <Skeleton width={60} height={28} borderRadius={14} />
+            </View>
+          ))
+        ) : recommendedUnis.length > 0 ? (
+          recommendedUnis.map((uni, idx) => {
+            const isSaved = userData.selectedUniversities?.some((u) => String(u.id) === String(uni.id));
+            return (
+              <TouchableOpacity
+                key={uni.id || idx}
+                style={[styles.uniListRow, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => router.push({ pathname: "/university/[id]", params: { id: uni.id, country: uni.country, name: uni.name } })}
+                activeOpacity={0.7}
               >
-                <View style={styles.uniImageContainer}>
-                  <Skeleton width="100%" height={140} borderRadius={0} />
+                {/* Logo */}
+                <View style={[styles.uniLogoBox, { backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC", borderColor: colors.border }]}>
+                  {uni.logo ? (
+                    <Image source={{ uri: uni.logo }} style={styles.uniLogo} resizeMode="contain" />
+                  ) : (
+                    <Ionicons name="school" size={20} color={colors.primary} />
+                  )}
                 </View>
-                <View style={styles.uniCardContent}>
-                  <Skeleton width={180} height={18} borderRadius={4} style={{ marginBottom: 8 }} />
-                  <Skeleton width={140} height={14} borderRadius={4} style={{ marginBottom: 8 }} />
-                  <Skeleton width={80} height={16} borderRadius={4} />
-                </View>
-              </View>
-            ))
-          ) : recommendedUnis.length > 0 ? recommendedUnis.map((uni, idx) => (
-            <TouchableOpacity
-              key={uni.id || idx}
-              style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => router.push({
-                pathname: "/university/[id]",
-                params: { id: uni.id, country: uni.country, name: uni.name }
-              })}
-            >
-              <View style={styles.uniImageContainer}>
-                <Image
-                  source={{ uri: uni.image || "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=400" }}
-                  style={styles.uniImage}
-                />
-                <GlassCard glassEffectStyle="regular" useBlurFallback fallbackBlurIntensity={40} fallbackBlurTint="dark" style={styles.matchBadge}>
-                  <Text style={styles.matchText}>{calculateAcceptanceChance(userData, uni).score}% Match</Text>
-                </GlassCard>
-              </View>
-              <View style={styles.uniCardContent}>
-                <Text style={[styles.uniCardName, { color: colors.text }]} numberOfLines={1}>{uni.name}</Text>
-                <View style={styles.uniLocationRow}>
-                  <Ionicons name="location" size={14} color={THEME.orange} />
-                  <Text style={[styles.uniLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
-                </View>
-                <View style={styles.uniCostRow}>
-                  <Text style={[styles.uniCostValue, { color: colors.text }]}>
-                    {uni.tuition}
-                    {uni.tuition !== "N/A" && (
-                      <Text style={[styles.uniCostUnit, { color: colors.textSecondary }]}>/ year</Text>
+
+                {/* Info */}
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={[styles.uniRowName, { color: colors.text }]} numberOfLines={1}>{uni.name}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                    <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
+                    <Text style={[styles.uniRowLocation, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
+                    {uni.tuition && uni.tuition !== "N/A" && (
+                      <>
+                        <Text style={{ color: colors.border }}>•</Text>
+                        <Text style={[styles.uniRowLocation, { color: colors.textSecondary }]}>{uni.tuition}/yr</Text>
+                      </>
                     )}
-                  </Text>
-                  <View style={[styles.safeBadge, { backgroundColor: uni.acceptanceRate && uni.acceptanceRate > 50 ? "#DCFCE7" : "#FFF7ED" }]}>
-                    <Text style={[styles.safeText, { color: uni.acceptanceRate && uni.acceptanceRate > 50 ? THEME.green : THEME.orange }]}>
-                      {uni.acceptanceRate && uni.acceptanceRate > 50 ? "Safe" : "Moderate"}
-                    </Text>
                   </View>
                 </View>
-                <View style={styles.uniActions}>
-                  {(() => {
-                    const isSaved = userData.selectedUniversities?.some(
-                      (u) => String(u.id) === String(uni.id)
-                    );
-                    return (
-                      <TouchableOpacity
-                        style={[
-                          styles.saveBtn,
-                          { backgroundColor: isSaved ? colors.primary : colors.primary + "15" }
-                        ]}
-                        onPress={() => {
-                          if (isSaved) {
-                            setUserData((prev) => ({
-                              ...prev,
-                              selectedUniversities: prev.selectedUniversities.filter(
-                                (u) => String(u.id) !== String(uni.id)
-                              ),
-                            }));
-                          } else {
-                            selectUniversity({
-                              id: uni.id,
-                              name: uni.name,
-                              location: uni.location || uni.country,
-                              image: uni.image,
-                              course: uni.course || "MSc Computer Science",
-                              tuition: uni.tuition || "N/A",
-                              tuitionValue: uni.tuitionValue,
-                            });
-                          }
-                        }}
-                      >
-                        <Text style={[styles.saveBtnText, { color: isSaved ? "white" : colors.primary }]}>
-                          {isSaved ? "Saved" : "Save"}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })()}
-                  <TouchableOpacity
-                    style={[styles.compareBtn, { borderColor: colors.border }]}
-                    onPress={() => router.push({
-                      pathname: "/university/[id]",
-                      params: { id: uni.id, country: uni.country, name: uni.name }
-                    })}
-                  >
-                    <Text style={styles.compareBtnText}>View</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )) : (
-            <View style={{ width: width - 40, height: 100, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: colors.textSecondary }}>No recommendations found for {userData.country}</Text>
-            </View>
-          )}
-        </ScrollView>
 
-        {/* Quick Actions */}
-        <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginBottom: 16, color: colors.text }]}>Quick Actions</Text>
-        <View style={styles.quickActionsGrid}>
-          <TouchableOpacity
-            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/search")}
-          >
-            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#E0F2FE" }]}>
-              <Ionicons name="search" size={20} color={isDark ? colors.primary : THEME.blue} />
-            </View>
-            <Text style={[styles.quickActionText, { color: colors.text }]}>Compare Universities</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/visa-readiness")}
-          >
-            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#F5F3FF" }]}>
-              <MaterialCommunityIcons name="file-document-outline" size={20} color={isDark ? colors.secondary : "#8B5CF6"} />
-            </View>
-            <Text style={[styles.quickActionText, { color: colors.text }]}>View Documents</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/university/admission-chance")}
-          >
-            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#DCFCE7" }]}>
-              <MaterialCommunityIcons name="bullseye-arrow" size={20} color={isDark ? colors.primary : THEME.green} />
-            </View>
-            <Text style={[styles.quickActionText, { color: colors.text }]}>Improve My Chances</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickActionItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/recent")}
-          >
-            <View style={[styles.quickActionIconBox, { backgroundColor: isDark ? "#2C2C2E" : "#FFEDD5" }]}>
-              <Ionicons name="bookmark" size={20} color={isDark ? colors.secondary : THEME.orange} />
-            </View>
-            <Text style={[styles.quickActionText, { color: colors.text }]}>Saved Universities</Text>
-          </TouchableOpacity>
-        </View>
+                {/* Save btn */}
+                <TouchableOpacity
+                  style={[styles.saveBtn, { backgroundColor: isSaved ? colors.primary : colors.primary + "15" }]}
+                  onPress={() => {
+                    if (isSaved) {
+                      setUserData((prev) => ({ ...prev, selectedUniversities: prev.selectedUniversities.filter((u) => String(u.id) !== String(uni.id)) }));
+                    } else {
+                      selectUniversity({ id: uni.id, name: uni.name, location: uni.location || uni.country, image: uni.image, course: uni.course || "MSc Computer Science", tuition: uni.tuition || "N/A", tuitionValue: uni.tuitionValue });
+                    }
+                  }}
+                >
+                  <Text style={[styles.saveBtnText, { color: isSaved ? "white" : colors.primary }]}>{isSaved ? "Saved" : "Save"}</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            );
+          })
+        ) : (
+          <View style={[styles.uniListRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>No recommendations found for {userData.country}</Text>
+          </View>
+        )}
 
       </ScrollView>
 
-      {/* Notifications Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showNotificationsModal}
-        onRequestClose={() => setShowNotificationsModal(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowNotificationsModal(false)}
-        >
-          <TouchableOpacity
-            activeOpacity={1}
-            style={[styles.modalContent, { backgroundColor: colors.background }]}
-            onPress={() => { }}
-          >
+      {/* ── Notifications Modal ── */}
+      <Modal animationType="slide" transparent visible={showNotificationsModal} onRequestClose={() => setShowNotificationsModal(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowNotificationsModal(false)}>
+          <TouchableOpacity activeOpacity={1} style={[styles.modalContent, { backgroundColor: colors.background }]} onPress={() => {}}>
             <View style={[styles.modalIndicator, { backgroundColor: colors.border }]} />
             <View style={styles.modalHeaderRow}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Notifications</Text>
-              <TouchableOpacity
-                style={[styles.modalCloseCircle, { backgroundColor: colors.card }]}
-                onPress={() => setShowNotificationsModal(false)}
-              >
+              <TouchableOpacity style={[styles.modalCloseCircle, { backgroundColor: colors.card }]} onPress={() => setShowNotificationsModal(false)}>
                 <Ionicons name="close" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
-
             <ScrollView showsVerticalScrollIndicator={false} style={styles.notificationsList}>
               {getDynamicNotifications().map((notif, index) => (
-                <View
-                  key={notif.id}
-                  style={[
-                    styles.notificationItem,
-                    { borderBottomColor: colors.border },
-                    index === 2 && { borderBottomWidth: 0 }
-                  ]}
-                >
-                  <View style={[styles.notifIconBox, { backgroundColor: notif.bgColor }]}>
-                    <Ionicons name={notif.icon as any} size={18} color={notif.iconColor} />
-                  </View>
+                <View key={notif.id} style={[styles.notificationItem, { borderBottomColor: colors.border }, index === 2 && { borderBottomWidth: 0 }]}>
+                  {/* Small unread indicator dot instead of a big colored circle */}
+                  <View style={[styles.statusDot, { backgroundColor: notif.iconColor, marginTop: 6 }]} />
                   <View style={styles.notifTextContent}>
                     <Text style={[styles.notifTitle, { color: colors.text }]}>{notif.title}</Text>
                     <Text style={[styles.notifBody, { color: colors.textSecondary }]}>{notif.body}</Text>
@@ -977,24 +775,9 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Plan Edit Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showPlanModal}
-        onRequestClose={() => {
-          setShowPlanModal(false);
-          setModalStep('options');
-        }}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => {
-            setShowPlanModal(false);
-            setModalStep('options');
-          }}
-        >
+      {/* ── Plan Edit Modal ── */}
+      <Modal animationType="slide" transparent visible={showPlanModal} onRequestClose={() => { setShowPlanModal(false); setModalStep('options'); }}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => { setShowPlanModal(false); setModalStep('options'); }}>
           <View style={[styles.modalContent, { backgroundColor: colors.background }, modalStep === 'country' && { height: '80%' }]}>
             <View style={[styles.modalIndicator, { backgroundColor: colors.border }]} />
 
@@ -1002,12 +785,8 @@ export default function DashboardScreen() {
               <>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Update Study Plan</Text>
                 <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>What would you like to update first?</Text>
-
                 <View style={styles.modalOptions}>
-                  <TouchableOpacity
-                    style={[styles.modalOption, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => setModalStep('country')}
-                  >
+                  <TouchableOpacity style={[styles.modalOption, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setModalStep('country')}>
                     <View style={[styles.modalOptionIcon, { backgroundColor: isDark ? "#1E293B" : "#E0F2FE" }]}>
                       <Ionicons name="globe-outline" size={24} color={isDark ? colors.primary : THEME.blue} />
                     </View>
@@ -1017,14 +796,7 @@ export default function DashboardScreen() {
                     </View>
                     <Feather name="chevron-right" size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.modalOption, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => {
-                      setShowPlanModal(false);
-                      router.push("/search");
-                    }}
-                  >
+                  <TouchableOpacity style={[styles.modalOption, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => { setShowPlanModal(false); router.push("/search"); }}>
                     <View style={[styles.modalOptionIcon, { backgroundColor: isDark ? "#1E293B" : "#F3F4F6" }]}>
                       <Ionicons name="business-outline" size={24} color={isDark ? colors.primary : THEME.textDark} />
                     </View>
@@ -1046,21 +818,13 @@ export default function DashboardScreen() {
                   <View style={{ width: 24 }} />
                 </View>
                 <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Where do you want to study?</Text>
-
                 <ScrollView showsVerticalScrollIndicator={false}>
                   <View style={styles.modalGrid}>
                     {(countriesList.length > 0 ? countriesList : COUNTRIES).map((c) => (
                       <TouchableOpacity
                         key={c.id}
-                        style={[
-                          styles.modalCountryItem,
-                          { backgroundColor: colors.card, borderColor: colors.border },
-                          userData.country === c.name && [styles.modalCountrySelected, { borderColor: colors.primary, backgroundColor: colors.primary + "15" }]
-                        ]}
-                        onPress={() => {
-                          setShowPlanModal(false); setModalStep('options'); router.push({ pathname: "/search", params: { pendingCountry: c.name, pendingFlag: c.flag } });
-                          setModalStep('options');
-                        }}
+                        style={[styles.modalCountryItem, { backgroundColor: colors.card, borderColor: colors.border }, userData.country === c.name && [styles.modalCountrySelected, { borderColor: colors.primary, backgroundColor: colors.primary + "15" }]]}
+                        onPress={() => { setShowPlanModal(false); setModalStep('options'); router.push({ pathname: "/search", params: { pendingCountry: c.name, pendingFlag: c.flag } }); }}
                       >
                         <Text style={styles.modalCountryFlag}>{c.flag}</Text>
                         <Text style={[styles.modalCountryName, { color: colors.text }]}>{c.name}</Text>
@@ -1071,13 +835,7 @@ export default function DashboardScreen() {
               </>
             )}
 
-            <TouchableOpacity
-              style={[styles.modalCloseBtn, { backgroundColor: colors.card }]}
-              onPress={() => {
-                setShowPlanModal(false);
-                setModalStep('options');
-              }}
-            >
+            <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: colors.card }]} onPress={() => { setShowPlanModal(false); setModalStep('options'); }}>
               <Text style={[styles.modalCloseBtnText, { color: colors.textSecondary }]}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -1086,652 +844,286 @@ export default function DashboardScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.white,
-  },
+  container: { flex: 1 },
+
+  // ── Header ──
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 10,
-    paddingBottom: 20,
-  },
-  greetingSection: {
-    flex: 1,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   greetingText: {
     fontSize: 22,
     fontWeight: "900",
-    color: THEME.textDark,
-    marginBottom: 4,
+    letterSpacing: -0.5,
+    marginBottom: 2,
   },
   subGreetingText: {
     fontSize: 13,
-    color: THEME.textGray,
     fontWeight: "500",
   },
-  topBarIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
+  topBarIcons: { flexDirection: "row", alignItems: "center", gap: 10 },
   iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: THEME.white,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: "center",
     alignItems: "center",
   },
-  profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    overflow: "hidden",
-  },
-  profileImage: {
-    width: "100%",
-    height: "100%",
-  },
-  scrollContent: {
-    paddingBottom: 110,
-  },
-  studyPlanCard: {
+
+  scrollContent: { paddingBottom: 110 },
+
+  // ── Search Bar ──
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
     marginHorizontal: 20,
-    borderRadius: 24,
-    overflow: "hidden",
-    marginBottom: 24,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-  },
-  studyPlanCardGradient: {
-    padding: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  studyPlanInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-  flagIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-    overflow: "hidden",
-  },
-  flagImageCircle: {
-    width: "100%",
-    height: "100%",
-  },
-  flagEmojiLarge: {
-    fontSize: 24,
-  },
-  studyPlanTextWrapper: {
-    justifyContent: "center",
-  },
-  studyPlanLabel: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "rgba(255, 255, 255, 0.75)",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  studyCountry: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    marginTop: 2,
-  },
-  editButtonGlass: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-  },
-  editText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  statsScroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  statCard: {
-    width: 210,
-    backgroundColor: THEME.white,
-    borderRadius: 24,
-    paddingHorizontal: 14,
-    paddingVertical: 20,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    minHeight: 280,
-    justifyContent: "space-between",
-  },
-  statIconHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 16,
-  },
-  statIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  statTitle: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "800",
-    color: THEME.textDark,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: THEME.textDark,
-    marginBottom: 8,
-  },
-  statUnit: {
-    fontSize: 12,
-    color: THEME.textGray,
-    fontWeight: "500",
-  },
-  statBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#DCFCE7",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: "flex-start",
-    marginBottom: 8,
-    gap: 6,
-  },
-  affordableDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: THEME.green,
-  },
-  statBadgeText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#166534",
-  },
-  statSubtitle: {
-    fontSize: 11,
-    color: THEME.textGray,
-    fontWeight: "500",
-    lineHeight: 16,
-  },
-  statButton: {
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1.5,
-    borderColor: THEME.primary,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
     marginTop: 16,
+    marginBottom: 12,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    gap: 10,
   },
-  statButtonText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: THEME.primary,
-  },
-  checkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 4,
-  },
-  checkText: {
-    fontSize: 11,
-    color: THEME.textGray,
-    fontWeight: "600",
-  },
-  visaIconText: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: THEME.white,
-  },
-  progressBarContainer: {
-    height: 6,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 3,
-    marginVertical: 12,
-    overflow: "hidden",
-  },
-  progressBarFull: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  improveBannerGradient: {
-    marginHorizontal: 20,
-    borderRadius: 24,
-    overflow: "hidden",
-    marginBottom: 32,
-  },
-  improveContent: {
-    padding: 24,
+  searchPlaceholder: { flex: 1, fontSize: 14, fontWeight: "500" },
+  filterDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
+    alignItems: "center",
   },
-  improveTitleRow: {
+
+  // ── Study Plan Row ──
+  studyPlanRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  studyPlanLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
+  flagImg: { width: 40, height: 40, borderRadius: 20 },
+  flagPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  studyPlanLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8 },
+  studyPlanCountry: { fontSize: 16, fontWeight: "800", marginTop: 2 },
+  editChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  editChipText: { fontSize: 12, fontWeight: "700" },
+
+  // ── Metrics Row ──
+  metricsRow: {
+    flexDirection: "row",
+    marginHorizontal: 16,
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  improveTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: THEME.white,
+  metricCard: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
+    minHeight: 115,
+    justifyContent: "space-between",
   },
-  improveSubtitle: {
-    fontSize: 13,
-    color: "rgba(255, 255, 255, 0.85)",
+  metricIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  metricLabel: { fontSize: 11, fontWeight: "600" },
+  metricValue: { fontSize: 14, fontWeight: "800" },
+
+  // ── Profile strip ──
+  profileStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
     marginBottom: 16,
-    lineHeight: 18,
-    fontWeight: "500",
-  },
-  viewPlanButton: {
-    backgroundColor: THEME.white,
-    paddingHorizontal: 22,
-    paddingVertical: 10,
+    padding: 12,
     borderRadius: 12,
-    alignSelf: "flex-start",
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  viewPlanButtonText: {
-    color: THEME.secondary,
-    fontSize: 13,
-    fontWeight: "800",
-  },
+  profileStripLeft: { flexDirection: "row", alignItems: "center", flex: 1, gap: 8 },
+  profileStripDot: { width: 8, height: 8, borderRadius: 4 },
+  profileStripText: { fontSize: 13, fontWeight: "600", flex: 1 },
+
+  // ── Section Header ──
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: THEME.textDark,
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: THEME.textGray,
-    fontWeight: "500",
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: THEME.blue,
-  },
-  uniCardsScroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-  },
-  uniCard: {
-    width: 260,
-    backgroundColor: THEME.white,
-    borderRadius: 24,
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    overflow: "hidden",
-  },
-  uniImageContainer: {
-    width: "100%",
-    height: 140,
-    position: "relative",
-  },
-  uniImage: {
-    width: "100%",
-    height: "100%",
-  },
-  matchBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.05)",
-  },
-  matchText: {
-    fontSize: 11,
-    fontWeight: "900",
-    color: THEME.blue,
-  },
-  uniCardContent: {
-    padding: 16,
-  },
-  uniCardName: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: THEME.textDark,
-    marginBottom: 6,
-  },
-  uniLocationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
     marginBottom: 12,
   },
-  uniLocationText: {
-    fontSize: 12,
-    color: THEME.textGray,
-    fontWeight: "500",
-  },
-  uniCostRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#F8FAFC",
-  },
-  uniCostValue: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: THEME.textDark,
-  },
-  uniCostUnit: {
-    fontSize: 12,
-    color: THEME.textGray,
-    fontWeight: "500",
-  },
-  safeBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  safeText: {
-    fontSize: 11,
-    fontWeight: "800",
-  },
-  uniActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  saveBtn: {
-    flex: 1,
-    height: 38,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: THEME.white,
-  },
-  saveBtnText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: THEME.textGray,
-  },
-  compareBtn: {
-    flex: 1.5,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: THEME.textDark,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  compareBtnText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: THEME.white,
-  },
+  sectionTitle: { fontSize: 17, fontWeight: "800" },
+  sectionSubtitle: { fontSize: 12, fontWeight: "500", marginTop: 2 },
+  seeAllText: { fontSize: 13, fontWeight: "700" },
+
+  // ── Quick Actions ──
   quickActionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingHorizontal: 16,
-    gap: 12,
-    marginBottom: 32,
-  },
-  quickActionItem: {
-    width: (width - 44) / 2,
-    backgroundColor: THEME.white,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  quickActionIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quickActionText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "800",
-    color: THEME.textDark,
-    lineHeight: 18,
-  },
-  globalSearchContainer: {
-    marginHorizontal: 20,
-    flexDirection: "row",
+    paddingHorizontal: 20,
     gap: 10,
     marginBottom: 20,
   },
-  globalSearchBar: {
-    flex: 1,
-    height: 52,
-    backgroundColor: "#F8FAFF",
-    borderRadius: 16,
+  quickActionItem: {
+    width: (width - 40 - 10) / 2,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: "#EDF2F7",
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
   },
-  globalSearchInput: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "500",
-    color: THEME.textDark,
-  },
-  filterBtnSmall: {
-    width: 52,
-    height: 52,
-    backgroundColor: THEME.textDark,
-    borderRadius: 16,
+  quickActionIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: THEME.white,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingTop: 12,
-    minHeight: 400,
-  },
-  modalIndicator: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: THEME.textDark,
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 15,
-    color: THEME.textGray,
-    marginBottom: 24,
-    fontWeight: "500",
-  },
-  modalOptions: {
-    gap: 16,
-  },
-  modalOption: {
+  quickActionText: { fontSize: 13, fontWeight: "700", flex: 1 },
+
+  // ── Fallback banner ──
+  fallbackBanner: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
+    gap: 8,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  modalOptionIcon: {
+  fallbackText: { flex: 1, fontSize: 12, fontWeight: "600" },
+
+  // ── University List Rows ──
+  uniListRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  uniLogoBox: {
     width: 48,
     height: 48,
-    borderRadius: 16,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
   },
-  modalOptionTextWrapper: {
-    flex: 1,
-  },
-  modalOptionTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: THEME.textDark,
-    marginBottom: 2,
-  },
-  modalOptionDesc: {
-    fontSize: 12,
-    color: THEME.textGray,
-    fontWeight: "500",
-  },
-  modalHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  modalGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    paddingBottom: 20,
-  },
-  modalCountryItem: {
-    width: (width - 72) / 2,
-    backgroundColor: "#F8FAFC",
+  uniLogo: { width: "100%", height: "100%" },
+  uniRowName: { fontSize: 14, fontWeight: "700" },
+  uniRowLocation: { fontSize: 11, fontWeight: "500" },
+  saveBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 16,
-    padding: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    gap: 8,
   },
-  modalCountrySelected: {
-    borderColor: THEME.blue,
-    backgroundColor: "#F0F9FF",
+  saveBtnText: { fontSize: 12, fontWeight: "700" },
+
+  // ── Modals ──
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
+  modalContent: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+    paddingBottom: 36,
+    maxHeight: "80%",
   },
-  modalCountryFlag: {
-    fontSize: 24,
-  },
-  modalCountryName: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: THEME.textDark,
-  },
-  modalCloseBtn: {
-    marginTop: 20,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalCloseBtnText: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: THEME.textGray,
-  },
+  modalIndicator: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 20 },
+  modalHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  modalTitle: { fontSize: 20, fontWeight: "900" },
+  modalSubtitle: { fontSize: 14, fontWeight: "500", marginBottom: 20 },
   modalCloseCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F1F5F9",
     justifyContent: "center",
     alignItems: "center",
   },
-  notificationsList: {
-    flex: 1,
+  modalOptions: { gap: 12 },
+  modalOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+    gap: 14,
   },
+  modalOptionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalOptionTextWrapper: { flex: 1 },
+  modalOptionTitle: { fontSize: 15, fontWeight: "700" },
+  modalOptionDesc: { fontSize: 12, fontWeight: "500", marginTop: 2 },
+  modalGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingBottom: 20 },
+  modalCountryItem: {
+    width: (width - 48 - 24) / 3,
+    alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 6,
+  },
+  modalCountrySelected: {},
+  modalCountryFlag: { fontSize: 24 },
+  modalCountryName: { fontSize: 12, fontWeight: "700", textAlign: "center" },
+  modalCloseBtn: {
+    marginTop: 16,
+    borderRadius: 14,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCloseBtnText: { fontSize: 15, fontWeight: "700" },
+
+  // ── Notifications ──
+  notificationsList: { maxHeight: 400 },
   notificationItem: {
     flexDirection: "row",
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-    gap: 12,
+    gap: 14,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  notifIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  notifTextContent: {
-    flex: 1,
-  },
-  notifTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: THEME.textDark,
-    marginBottom: 4,
-  },
-  notifBody: {
-    fontSize: 13,
-    color: THEME.textGray,
-    lineHeight: 18,
-    fontWeight: "500",
-    marginBottom: 6,
-  },
-  notifTime: {
-    fontSize: 11,
-    color: THEME.textGray,
-    fontWeight: "600",
-  },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  notifTextContent: { flex: 1 },
+  notifTitle: { fontSize: 13, fontWeight: "700", marginBottom: 3 },
+  notifBody: { fontSize: 12, fontWeight: "500", lineHeight: 17 },
+  notifTime: { fontSize: 11, marginTop: 4 },
 });

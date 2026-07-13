@@ -56,9 +56,8 @@ const getFlagUrl = (countryName: string | undefined) => {
 export default function ProfileTab() {
   const insets = useSafeAreaInsets();
   const { userData, logout } = useUser();
-  const { themeMode, isDark, colors, setThemeMode } = useTheme();
+  const { isDark, colors } = useTheme();
   const [showNotificationsModal, setShowNotificationsModal] = React.useState(false);
-  const [showThemeModal, setShowThemeModal] = React.useState(false);
 
   const handleEditPress = () => {
     router.push("/profile/edit");
@@ -201,15 +200,7 @@ export default function ProfileTab() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]} onPress={() => setShowThemeModal(true)}>
-              <Text style={[styles.menuItemText, { color: colors.text }]}>Appearance</Text>
-              <View style={styles.menuValueBox}>
-                <Text style={[styles.menuValueText, { color: colors.textSecondary }]}>
-                  {themeMode === "system" ? "System" : themeMode === "light" ? "Light" : "Dark"}
-                </Text>
-                <Feather name="chevron-right" size={18} color={colors.border} />
-              </View>
-            </TouchableOpacity>
+
 
             <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]} onPress={() => router.push("/profile/edit")}>
               <Text style={[styles.menuItemText, { color: colors.text }]}>Account Details</Text>
@@ -224,24 +215,7 @@ export default function ProfileTab() {
 
       </ScrollView>
 
-      {/* Theme Modal */}
-      <Modal animationType="fade" transparent={true} visible={showThemeModal} onRequestClose={() => setShowThemeModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowThemeModal(false)}>
-          <View style={[styles.modalCenterContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.modalTitleCenter, { color: colors.text }]}>Appearance</Text>
-            {[{ id: "light", label: "Light Mode" }, { id: "dark", label: "Dark Mode" }, { id: "system", label: "System Default" }].map((opt) => (
-              <TouchableOpacity
-                key={opt.id}
-                style={[styles.themeOptionRow, { borderBottomColor: colors.border }]}
-                onPress={() => { setThemeMode(opt.id as any); setShowThemeModal(false); }}
-              >
-                <Text style={{ fontSize: 17, color: themeMode === opt.id ? THEME.primary : colors.text }}>{opt.label}</Text>
-                {themeMode === opt.id && <Ionicons name="checkmark" size={22} color={THEME.primary} />}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+
 
       {/* Notifications Modal */}
       <Modal animationType="fade" transparent={true} visible={showNotificationsModal} onRequestClose={() => setShowNotificationsModal(false)}>

@@ -183,9 +183,11 @@ export default function UniversityDetails() {
     const renderEstimates = () => {
         const tuitionUsd = details.fee_usd || 0;
         const livingUsd = (costData?.monthly_estimate_usd || 1500) * 12;
-        const totalNpr = (tuitionUsd + livingUsd) * USD_TO_NPR;
+        const otherUsd = (tuitionUsd + livingUsd) * 0.05;
+        const totalNpr = (tuitionUsd + livingUsd + otherUsd) * USD_TO_NPR;
 
         const fmtNpr = (v: number) => {
+            if (v >= 10000000) return `NPR ${(v / 10000000).toFixed(2)} Crore`;
             if (v >= 100000) return `NPR ${(v / 100000).toFixed(1)} Lakhs`;
             return `NPR ${v.toLocaleString()}`;
         };
@@ -216,79 +218,92 @@ export default function UniversityDetails() {
             chanceAdvice = "Consider improving your grades or test scores to boost your odds.";
         }
 
-        const rotation = `${Math.round((score / 100) * 360 - 135)}deg`;
-
         return (
             <View style={styles.tabContent}>
-                <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.estimateCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <Text style={[styles.estimateLabel, { color: colors.textSecondary }]}>ESTIMATED TOTAL COST / YR</Text>
+                {/* Cost Breakdown Card */}
+                <View style={[styles.estimateCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.estimateLabel, { color: colors.textSecondary }]}>ESTIMATED ANNUAL EXPENSES</Text>
                     <Text style={[styles.estimateValue, { color: colors.text }]}>{fmtNpr(totalNpr)}</Text>
-                    <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16, fontWeight: "600" }}>
-                        Approx. ${(tuitionUsd + livingUsd).toLocaleString()} USD
+                    <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 20, fontWeight: "600" }}>
+                        Approx. ${(tuitionUsd + livingUsd + otherUsd).toLocaleString()} USD / year
                     </Text>
+
+                    {/* Progress visual bar */}
                     <View style={[styles.costBar, { backgroundColor: colors.border }]}>
-                        <View style={[styles.costSegment, { width: `${(tuitionUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#6366F1' }]} />
+                        <View style={[styles.costSegment, { width: `${(tuitionUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: colors.primary }]} />
                         <View style={[styles.costSegment, { width: `${(livingUsd / (tuitionUsd + livingUsd) * 100).toFixed(0)}%` as any, backgroundColor: '#FBBF24' }]} />
                         <View style={[styles.costSegment, { width: '5%', backgroundColor: '#10B981' }]} />
                     </View>
-                    <View style={styles.costLegend}>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: '#6366F1' }]} />
-                            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Tuition</Text>
+
+                    {/* Table-based Estimates Breakdown */}
+                    <View style={{ gap: 10 }}>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+                                <Text style={{ color: colors.text, fontWeight: "600", fontSize: 13 }}>Tuition Fees</Text>
+                            </View>
+                            <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>{fmtNpr(tuitionUsd * USD_TO_NPR)}</Text>
                         </View>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
-                            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Living</Text>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
+                                <Text style={{ color: colors.text, fontWeight: "600", fontSize: 13 }}>Living Expenses</Text>
+                            </View>
+                            <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>{fmtNpr(livingUsd * USD_TO_NPR)}</Text>
                         </View>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
-                            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Other</Text>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+                                <Text style={{ color: colors.text, fontWeight: "600", fontSize: 13 }}>Insurance & Other</Text>
+                            </View>
+                            <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>{fmtNpr(otherUsd * USD_TO_NPR)}</Text>
                         </View>
                     </View>
-                </GlassCard>
+                </View>
 
-                <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.chancesCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <Text style={[styles.chancesTitle, { color: colors.text }]}>Your Chances</Text>
-                    <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center", width: "100%", marginVertical: 12 }}>
-                        {/* Profile-based Admission Match */}
-                        <View style={{ alignItems: "center" }}>
-                            <View style={[styles.circularProgress, { borderColor: colors.border }]}>
-                                <View style={[styles.circularFill, { borderColor: chanceColor, transform: [{ rotate: rotation }] }]} />
-                                <View style={[styles.circularInner, { backgroundColor: colors.background }]}>
-                                    <Text style={[styles.percentageText, { color: colors.text }]}>{score}%</Text>
-                                </View>
+                {/* Admission Chances Card */}
+                <View style={[styles.chancesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.chancesTitle, { color: colors.text }]}>Admissions Match</Text>
+                    
+                    <View style={{ gap: 14, marginBottom: 20 }}>
+                        {/* Match Progress Bar */}
+                        <View>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                                <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 12 }}>Profile Match Rate</Text>
+                                <Text style={{ color: chanceColor, fontWeight: "800", fontSize: 13 }}>{score}% ({label})</Text>
                             </View>
-                            <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Admission</Text>
+                            <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
+                                <View style={{ height: "100%", width: `${score}%`, backgroundColor: chanceColor }} />
+                            </View>
                         </View>
 
-                        {/* Raw University Acceptance Rate */}
-                        <View style={{ alignItems: "center" }}>
-                            <View style={[styles.circularProgress, { borderColor: colors.border }]}>
-                                <View style={[
-                                    styles.circularFill, 
-                                    { 
-                                        borderColor: '#10B981', 
-                                        transform: [{ rotate: `${Math.round(((uniData?.acceptanceRate || 65) / 100) * 360 - 135)}deg` }] 
-                                    }
-                                ]} />
-                                <View style={[styles.circularInner, { backgroundColor: colors.background }]}>
-                                    <Text style={[styles.percentageText, { color: colors.text }]}>{uniData?.acceptanceRate || 65}%</Text>
-                                </View>
+                        {/* Acceptance Rate Bar */}
+                        <View>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                                <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 12 }}>Uni Acceptance Rate</Text>
+                                <Text style={{ color: colors.text, fontWeight: "800", fontSize: 13 }}>{uniData?.acceptanceRate || 65}%</Text>
                             </View>
-                            <Text style={[styles.admissionLabel, { color: colors.textSecondary }]}>Acceptance</Text>
+                            <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
+                                <View style={{ height: "100%", width: `${uniData?.acceptanceRate || 65}%`, backgroundColor: colors.primary }} />
+                            </View>
                         </View>
                     </View>
-                    <Text style={[styles.chancesDescription, { color: colors.textSecondary }]}>
-                        Based on your profile, you have a <Text style={{ fontWeight: '800', color: colors.text }}>{chanceDesc}</Text> of admission. {chanceAdvice}
-                    </Text>
+
+                    <View style={{ backgroundColor: colors.background, padding: 12, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, marginBottom: 20 }}>
+                        <Text style={{ fontSize: 12, lineHeight: 18, color: colors.textSecondary, fontWeight: "500" }}>
+                            Based on your profile, you have a <Text style={{ fontWeight: '700', color: colors.text }}>{chanceDesc}</Text> of admission. {chanceAdvice}
+                        </Text>
+                    </View>
+
                     <TouchableOpacity
                         style={[styles.completeEstimateBtn, { backgroundColor: colors.primary }]}
                         onPress={() => router.push({
                             pathname: "/university/cost-breakdown",
                             params: { id: id, country: currentCountry }
                         })}
+                        activeOpacity={0.8}
                     >
-                        <Text style={[styles.completeEstimateBtnText, { color: "#FFFFFF" }]}>Get Complete Cost Breakdown</Text>
+                        <Text style={[styles.completeEstimateBtnText, { color: "#FFFFFF" }]}>Get Cost Breakdown</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -298,17 +313,18 @@ export default function UniversityDetails() {
                                 backgroundColor: "transparent",
                                 borderWidth: 1.5,
                                 borderColor: colors.primary,
-                                marginTop: 12
+                                marginTop: 10
                             }
                         ]}
                         onPress={() => router.push({
                             pathname: "/university/compare",
                             params: { id1: id, country1: currentCountry }
                         })}
+                        activeOpacity={0.8}
                     >
-                        <Text style={[styles.completeEstimateBtnText, { color: colors.primary }]}>Compare with another University</Text>
+                        <Text style={[styles.completeEstimateBtnText, { color: colors.primary }]}>Compare University</Text>
                     </TouchableOpacity>
-                </GlassCard>
+                </View>
             </View>
         );
     };
@@ -322,12 +338,9 @@ export default function UniversityDetails() {
         return (
             <View style={styles.tabContent}>
                 <View style={styles.sectionHeader}>
-                    <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
-                        <Ionicons name="book-outline" size={18} color={colors.primary} />
-                    </View>
                     <Text style={[styles.contentSectionTitle, { color: colors.text }]}>About University</Text>
                 </View>
-                <GlassCard glassEffectStyle="regular" fallbackColor={colors.card} style={[styles.overviewTextCard, !canUseGlassEffect() && { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.overviewTextCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={[styles.overviewText, { color: colors.text }]}>{displayedDescription}</Text>
                     {isLongDescription && (
                         <TouchableOpacity
@@ -339,98 +352,82 @@ export default function UniversityDetails() {
                             </Text>
                             <Ionicons
                                 name={isUniDescriptionExpanded ? "chevron-up" : "chevron-down"}
-                                size={16}
+                                size={14}
                                 color={colors.primary}
                                 style={{ marginLeft: 4 }}
                             />
                         </TouchableOpacity>
                     )}
                     {uniData?.notes && (
-                        <View style={[styles.notesBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                            <Text style={[styles.notesLabel, { color: colors.textSecondary }]}>ADMISSION NOTES</Text>
+                        <View style={[styles.notesBox, { borderTopColor: colors.border }]}>
+                            <Text style={[styles.notesLabel, { color: colors.primary }]}>ADMISSION NOTES</Text>
                             <Text style={[styles.notesText, { color: colors.text }]}>{uniData.notes}</Text>
                         </View>
                     )}
-                </GlassCard>
+                </View>
 
+                {/* Highlights List (Text-First) */}
                 <View style={styles.sectionHeader}>
-                    <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
-                        <Ionicons name="star-outline" size={18} color="#FBBF24" />
-                    </View>
-                    <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Highlights</Text>
+                    <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Quick Information</Text>
                 </View>
-                {details.ranking_world && details.ranking_world !== "N/A" && details.ranking_world !== "0" && (
-                    <View style={styles.highlightItem}>
-                        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
-                            <Ionicons name="ribbon-outline" size={12} color="#FBBF24" />
+                <View style={[styles.overviewTextCard, { backgroundColor: colors.card, borderColor: colors.border, gap: 12, paddingVertical: 16 }]}>
+                    {details.ranking_world && details.ranking_world !== "N/A" && details.ranking_world !== "0" && (
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 13 }}>QS World Ranking</Text>
+                            <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>#{details.ranking_world}</Text>
                         </View>
-                        <Text style={[styles.highlightText, { color: colors.text }]}>QS World Ranking: #{details.ranking_world}</Text>
-                    </View>
-                )}
-                {details.ranking_national && details.ranking_national !== "N/A" && details.ranking_national !== "0" && (
-                    <View style={styles.highlightItem}>
-                        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
-                            <Ionicons name="ribbon-outline" size={12} color="#FBBF24" />
+                    )}
+                    {details.ranking_national && details.ranking_national !== "N/A" && details.ranking_national !== "0" && (
+                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                            <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 13 }}>National Ranking</Text>
+                            <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>#{details.ranking_national}</Text>
                         </View>
-                        <Text style={[styles.highlightText, { color: colors.text }]}>National Ranking: #{details.ranking_national}</Text>
+                    )}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                        <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 13 }}>Institution Type</Text>
+                        <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>{details.type || "Public Research"}</Text>
                     </View>
-                )}
-                <View style={styles.highlightItem}>
-                    <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
-                        <Ionicons name="school-outline" size={12} color={colors.primary} />
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                        <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 13 }}>Established Year</Text>
+                        <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>{details.established !== "N/A" ? details.established : "N/A"}</Text>
                     </View>
-                    <Text style={[styles.highlightText, { color: colors.text }]}>{details.type || "Higher Education Institution"}</Text>
-                </View>
-                <View style={styles.highlightItem}>
-                    <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
-                        <Ionicons name="calendar-outline" size={12} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.highlightText, { color: colors.text }]}>Established in {details.established !== "N/A" ? details.established : "N/A"}</Text>
-                </View>
-                <View style={styles.highlightItem}>
-                    <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
-                        <Ionicons name="people-outline" size={12} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.highlightText, { color: colors.text }]}>
-                        {(() => {
-                            const count = details.students;
-                            if (!count) return "10,000+ Students";
-                            if (typeof count === "number" || !isNaN(Number(count))) {
-                                return `${Number(count).toLocaleString()} Students`;
-                            }
-                            return `${count} Students`;
-                        })()}
-                    </Text>
-                </View>
-                {uniData?.address && (
-                    <View style={styles.highlightItem}>
-                        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
-                            <Ionicons name="location-outline" size={12} color={colors.primary} />
-                        </View>
-                        <Text style={[styles.highlightText, { color: colors.text }]}>Address: {uniData.address}</Text>
-                    </View>
-                )}
-                {details.website ? (
-                    <TouchableOpacity
-                        style={styles.highlightItem}
-                        onPress={() => {
-                            Linking.openURL(details.website).catch(err => console.error("Error opening URL", err));
-                        }}
-                        activeOpacity={0.7}
-                    >
-                        <View style={[styles.checkCircle, { backgroundColor: colors.border }]}>
-                            <Ionicons name="globe-outline" size={12} color={colors.primary} />
-                        </View>
-                        <Text style={[styles.highlightText, { color: colors.primary, textDecorationLine: "underline" }]}>
-                            Website: {details.website}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                        <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 13 }}>Total Students</Text>
+                        <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>
+                            {(() => {
+                                const count = details.students;
+                                if (!count) return "10,000+";
+                                if (typeof count === "number" || !isNaN(Number(count))) {
+                                    return Number(count).toLocaleString();
+                                }
+                                return count;
+                            })()}
                         </Text>
-                    </TouchableOpacity>
-                ) : null}
-
-                <View style={styles.sectionHeader}>
-                    <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
-                        <Ionicons name="gift-outline" size={18} color="#FBBF24" />
                     </View>
+                    {uniData?.address && (
+                        <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: 10, marginTop: 4 }}>
+                            <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 11, marginBottom: 2 }}>ADDRESS</Text>
+                            <Text style={{ color: colors.text, fontWeight: "500", fontSize: 13, lineHeight: 18 }}>{uniData.address}</Text>
+                        </View>
+                    )}
+                    {details.website ? (
+                        <TouchableOpacity
+                            onPress={() => {
+                                Linking.openURL(details.website).catch(err => console.error("Error opening URL", err));
+                            }}
+                            activeOpacity={0.7}
+                            style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: 10 }}
+                        >
+                            <Text style={{ color: colors.textSecondary, fontWeight: "600", fontSize: 11, marginBottom: 2 }}>OFFICIAL PORTAL</Text>
+                            <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13, textDecorationLine: "underline" }}>
+                                {details.website}
+                            </Text>
+                        </TouchableOpacity>
+                    ) : null}
+                </View>
+
+                {/* Scholarships Section */}
+                <View style={styles.sectionHeader}>
                     <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Scholarships</Text>
                 </View>
 
@@ -438,12 +435,12 @@ export default function UniversityDetails() {
                     uniData.scholarships.map((s, idx) => (
                         <View key={idx} style={[styles.scholarshipCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                             <View style={styles.scholarshipHeader}>
-                                <Text style={[styles.scholarshipName, { color: colors.text }]}>{s.name}</Text>
+                                <Text style={[styles.scholarshipName, { color: colors.text }]} numberOfLines={1}>{s.name}</Text>
                                 <Text style={[styles.scholarshipValue, { color: colors.primary }]}>{s.value}</Text>
                             </View>
                             {s.eligibility && (
-                                <Text style={[styles.scholarshipElig, { color: colors.textSecondary }]}>
-                                    <Text style={{ fontWeight: '700', color: colors.text }}>Eligibility: </Text>{s.eligibility}
+                                <Text style={[styles.scholarshipElig, { color: colors.textSecondary }]} numberOfLines={2}>
+                                    <Text style={{ fontWeight: '700', color: colors.text }}>Eligible: </Text>{s.eligibility}
                                 </Text>
                             )}
                             {s.notes && (
@@ -458,46 +455,11 @@ export default function UniversityDetails() {
                     ))
                 ) : (
                     <View style={[styles.noScholarshipBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.noScholarshipText, { color: colors.textSecondary }]}>Check university website for latest scholarships.</Text>
+                        <Text style={[styles.noScholarshipText, { color: colors.textSecondary }]}>Check official portal for scholarships</Text>
                     </View>
                 )}
 
-                <View style={styles.sectionHeader}>
-                    <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
-                        <Ionicons name="business-outline" size={18} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Key Facts</Text>
-                </View>
-                <View style={styles.keyFactsGrid}>
-                    <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
-                            <MaterialCommunityIcons name="office-building" size={20} color="#BF90FF" />
-                        </View>
-                        <Text style={[styles.factLabel, { color: colors.textSecondary }]}>TYPE</Text>
-                        <Text style={[styles.factValue, { color: colors.text }]}>{details.type}</Text>
-                    </View>
-                    <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
-                            <Ionicons name="time-outline" size={20} color="#F59E0B" />
-                        </View>
-                        <Text style={[styles.factLabel, { color: colors.textSecondary }]}>ESTABLISHED</Text>
-                        <Text style={[styles.factValue, { color: colors.text }]}>{details.established}</Text>
-                    </View>
-                    <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
-                            <Ionicons name="location-outline" size={20} color="#F43F5E" />
-                        </View>
-                        <Text style={[styles.factLabel, { color: colors.textSecondary }]}>CAMPUS</Text>
-                        <Text style={[styles.factValue, { color: colors.text }]}>{details.campus}</Text>
-                    </View>
-                    <View style={[styles.factCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <View style={[styles.factIconBox, { backgroundColor: colors.border }]}>
-                            <Ionicons name="people-outline" size={20} color="#10B981" />
-                        </View>
-                        <Text style={[styles.factLabel, { color: colors.textSecondary }]}>STUDENTS</Text>
-                        <Text style={[styles.factValue, { color: colors.text }]}>{details.students}</Text>
-                    </View>
-                </View>
+                {/* Campus Location Map */}
                 {(() => {
                     const lat = parseFloat(String(details.latitude));
                     const lng = parseFloat(String(details.longitude));
@@ -506,9 +468,6 @@ export default function UniversityDetails() {
                     return (
                         <>
                             <View style={styles.sectionHeader}>
-                                <View style={[styles.sectionIconBox, { backgroundColor: colors.border }]}>
-                                    <Ionicons name="map-outline" size={18} color={colors.primary} />
-                                </View>
                                 <Text style={[styles.contentSectionTitle, { color: colors.text }]}>Campus Location</Text>
                             </View>
                             <View style={[styles.mapContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
@@ -543,7 +502,7 @@ export default function UniversityDetails() {
                                         }
                                     }}
                                 >
-                                    <Ionicons name="navigate-outline" size={16} color="#FFF" style={{ marginRight: 6 }} />
+                                    <Ionicons name="navigate-outline" size={14} color="#FFF" style={{ marginRight: 4 }} />
                                     <Text style={styles.directionsButtonText}>Get Directions</Text>
                                 </TouchableOpacity>
                             </View>
@@ -940,24 +899,26 @@ export default function UniversityDetails() {
                 </View>
 
                 {/* Sticky Tab Bar */}
-                <View style={[styles.tabBarWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+                <View style={[styles.tabBarWrapper, { backgroundColor: colors.background }]}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
-                        {TABS.map((tab) => (
-                            <TouchableOpacity
-                                key={tab}
-                                style={[
-                                    styles.tabItem,
-                                    selectedTab === tab && { borderBottomColor: colors.primary }
-                                ]}
-                                onPress={() => setSelectedTab(tab)}
-                            >
-                                <Text style={[
-                                    styles.tabText,
-                                    { color: colors.textSecondary },
-                                    selectedTab === tab && { color: colors.primary }
-                                ]}>{tab}</Text>
-                            </TouchableOpacity>
-                        ))}
+                        <View style={[styles.tabInnerContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                            {TABS.map((tab) => (
+                                <TouchableOpacity
+                                    key={tab}
+                                    style={[
+                                        styles.tabItem,
+                                        selectedTab === tab && { backgroundColor: colors.primary }
+                                    ]}
+                                    onPress={() => setSelectedTab(tab)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text style={[
+                                        styles.tabText,
+                                        { color: selectedTab === tab ? "#FFFFFF" : colors.textSecondary }
+                                    ]}>{tab}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     </ScrollView>
                 </View>
 
@@ -1075,10 +1036,9 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: "#F8FAFC",
     },
     bannerContainer: {
-        height: 220,
+        height: 250,
         width: "100%",
         position: "relative",
         backgroundColor: "#0F172A",
@@ -1115,14 +1075,16 @@ const styles = StyleSheet.create({
     },
     bannerBottomInfo: {
         position: "absolute",
-        bottom: 16,
+        bottom: 20,
         left: 20,
+        right: 20,
     },
     uniTitle: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: "900",
         color: "white",
-        marginBottom: 4,
+        marginBottom: 6,
+        letterSpacing: -0.5,
     },
     locationRow: {
         flexDirection: "row",
@@ -1130,78 +1092,71 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     locationText: {
-        fontSize: 12,
+        fontSize: 13,
         color: "white",
         fontWeight: "600",
         opacity: 0.9,
     },
     tabBarWrapper: {
-        backgroundColor: "white",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E2E8F0",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
     },
     tabScroll: {
-        paddingHorizontal: 12,
+        alignItems: "center",
+    },
+    tabInnerContainer: {
+        flexDirection: "row",
+        borderRadius: 14,
+        borderWidth: StyleSheet.hairlineWidth,
+        padding: 4,
     },
     tabItem: {
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderBottomWidth: 3,
-        borderBottomColor: "transparent",
-    },
-    activeTabItem: {
-        borderBottomColor: THEME.blue,
+        paddingVertical: 8,
+        borderRadius: 10,
     },
     tabText: {
         fontSize: 13,
         fontWeight: "700",
-        color: "#94A3B8",
-    },
-    activeTabText: {
-        color: THEME.blue,
     },
     mainContent: {
-        padding: 16,
+        paddingHorizontal: 20,
+        paddingTop: 8,
     },
     tabContent: {
         flex: 1,
     },
     estimateCard: {
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 16,
-        borderWidth: 1.5,
-        borderColor: "#F1F5F9",
+        borderRadius: 16,
+        padding: 18,
+        borderWidth: StyleSheet.hairlineWidth,
         marginBottom: 16,
     },
     estimateLabel: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: "800",
-        color: "#94A3B8",
-        letterSpacing: 1,
+        letterSpacing: 0.8,
         marginBottom: 12,
     },
     estimateValue: {
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: "900",
-        color: THEME.textDark,
-        marginBottom: 12,
+        marginBottom: 8,
     },
     costBar: {
-        height: 10,
+        height: 8,
         width: "100%",
-        backgroundColor: "#F1F5F9",
-        borderRadius: 5,
+        borderRadius: 4,
         flexDirection: "row",
         overflow: "hidden",
-        marginBottom: 20,
+        marginBottom: 16,
     },
     costSegment: {
         height: "100%",
     },
     costLegend: {
         flexDirection: "row",
-        gap: 20,
+        gap: 16,
     },
     legendItem: {
         flexDirection: "row",
@@ -1209,36 +1164,29 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     legendDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
     },
     legendText: {
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: "600",
-        color: "#64748B",
     },
     chancesCard: {
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
+        borderRadius: 16,
+        padding: 18,
+        borderWidth: StyleSheet.hairlineWidth,
+        marginBottom: 20,
     },
     chancesTitle: {
         fontSize: 16,
         fontWeight: "800",
-        color: THEME.textDark,
-        marginBottom: 12,
-    },
-    chancesVisual: {
-        alignItems: "center",
-        marginBottom: 24,
+        marginBottom: 16,
     },
     circularProgress: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
+        width: 68,
+        height: 68,
+        borderRadius: 34,
         borderWidth: 4,
         borderColor: "#F1F5F9",
         justifyContent: "center",
@@ -1246,415 +1194,317 @@ const styles = StyleSheet.create({
     },
     circularFill: {
         position: "absolute",
-        width: 64,
-        height: 64,
-        borderRadius: 32,
+        width: 68,
+        height: 68,
+        borderRadius: 34,
         borderWidth: 4,
         borderColor: "#EF4444",
         borderTopColor: "transparent",
         borderLeftColor: "transparent",
     },
     percentageText: {
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: "900",
-        color: THEME.textDark,
     },
     admissionLabel: {
         fontSize: 12,
         fontWeight: "700",
-        color: "#94A3B8",
         marginTop: 8,
     },
     chancesDescription: {
-        fontSize: 14,
-        lineHeight: 22,
-        color: "#64748B",
+        fontSize: 13,
+        lineHeight: 20,
         textAlign: "center",
-        marginBottom: 24,
+        marginBottom: 20,
     },
     completeEstimateBtn: {
-        backgroundColor: "#EFF6FF",
-        height: 56,
-        borderRadius: 16,
+        height: 52,
+        borderRadius: 14,
         justifyContent: "center",
         alignItems: "center",
     },
     completeEstimateBtnText: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: "800",
-        color: THEME.blue,
     },
     circularInner: {
-        width: 54,
-        height: 54,
-        borderRadius: 27,
-        backgroundColor: "white",
+        width: 58,
+        height: 58,
+        borderRadius: 29,
         justifyContent: "center",
         alignItems: "center",
     },
     sectionHeader: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 16,
-        marginTop: 8,
+        marginBottom: 14,
+        marginTop: 14,
     },
     sectionIconBox: {
-        width: 32,
-        height: 32,
-        borderRadius: 10,
-        backgroundColor: "#F8FAFC",
+        width: 30,
+        height: 30,
+        borderRadius: 8,
         justifyContent: "center",
         alignItems: "center",
-        marginRight: 12,
+        marginRight: 10,
     },
     contentSectionTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: "800",
-        color: THEME.textDark,
     },
     overviewTextCard: {
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
-        marginBottom: 28,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: StyleSheet.hairlineWidth,
+        marginBottom: 20,
     },
     overviewText: {
         fontSize: 14,
-        lineHeight: 24,
-        color: "#475569",
+        lineHeight: 22,
         fontWeight: "500",
     },
     notesBox: {
-        marginTop: 16,
-        paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: "#F1F5F9",
+        marginTop: 14,
+        paddingTop: 14,
+        borderTopWidth: StyleSheet.hairlineWidth,
     },
     notesLabel: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: "800",
-        color: THEME.orange,
         marginBottom: 4,
         letterSpacing: 0.5,
     },
     notesText: {
         fontSize: 13,
-        color: "#475569",
         fontWeight: "600",
-        lineHeight: 20,
+        lineHeight: 18,
     },
     highlightItem: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "white",
-        padding: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
-        marginBottom: 12,
-        gap: 12,
+        padding: 14,
+        borderRadius: 14,
+        borderWidth: StyleSheet.hairlineWidth,
+        marginBottom: 10,
+        gap: 10,
     },
     checkCircle: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: "#EFF6FF",
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         justifyContent: "center",
         alignItems: "center",
     },
     highlightText: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: "700",
-        color: "#475569",
+        flex: 1,
     },
     keyFactsGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: 16,
-        marginTop: 8,
+        gap: 12,
+        marginTop: 4,
     },
     factCard: {
-        width: (width - 64) / 2,
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 20,
+        width: (width - 40 - 12) / 2,
+        borderRadius: 16,
+        padding: 16,
         alignItems: "center",
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
+        borderWidth: StyleSheet.hairlineWidth,
     },
     factIconBox: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: "#F8FAFC",
+        width: 38,
+        height: 38,
+        borderRadius: 19,
         justifyContent: "center",
         alignItems: "center",
-        marginBottom: 12,
+        marginBottom: 8,
     },
     factLabel: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: "800",
-        color: "#94A3B8",
         marginBottom: 4,
     },
     factValue: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: "900",
-        color: THEME.textDark,
     },
     scholarshipCard: {
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
-        marginBottom: 16,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: StyleSheet.hairlineWidth,
+        marginBottom: 12,
     },
     scholarshipHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        marginBottom: 8,
-        gap: 12,
+        marginBottom: 6,
+        gap: 10,
     },
     scholarshipName: {
         flex: 1,
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: "800",
-        color: THEME.textDark,
     },
     scholarshipValue: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: "900",
-        color: THEME.green,
     },
     scholarshipElig: {
-        fontSize: 13,
-        color: "#64748B",
-        marginBottom: 6,
-        lineHeight: 18,
+        fontSize: 12,
+        marginBottom: 4,
+        lineHeight: 16,
     },
     scholarshipNotes: {
-        fontSize: 12,
-        color: "#94A3B8",
+        fontSize: 11,
         fontStyle: "italic",
-        marginBottom: 12,
+        marginBottom: 10,
     },
     typeBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
         alignSelf: "flex-start",
     },
     typeBadgeText: {
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: "800",
     },
     noScholarshipBox: {
-        padding: 20,
-        backgroundColor: "#F8FAFC",
-        borderRadius: 16,
+        padding: 16,
+        borderRadius: 14,
         borderStyle: "dashed",
-        borderWidth: 1,
-        borderColor: "#CBD5E1",
-        marginBottom: 24,
+        borderWidth: StyleSheet.hairlineWidth,
+        marginBottom: 20,
         alignItems: "center",
     },
     noScholarshipText: {
         fontSize: 13,
-        color: "#94A3B8",
         fontWeight: "600",
     },
     rankingGlobalCard: {
-        backgroundColor: THEME.blue,
-        borderRadius: 32,
-        padding: 28,
-        marginBottom: 24,
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
         position: "relative",
         overflow: "hidden",
     },
     globalHeader: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 16,
-        marginBottom: 32,
+        gap: 12,
+        marginBottom: 20,
         zIndex: 10,
     },
     medalIcon: {
-        width: 54,
-        height: 54,
-        borderRadius: 18,
+        width: 44,
+        height: 44,
+        borderRadius: 14,
         backgroundColor: "rgba(255,255,255,0.2)",
         justifyContent: "center",
         alignItems: "center",
     },
     globalRatingTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: "900",
         color: "white",
     },
     globalRatingSub: {
-        fontSize: 14,
+        fontSize: 12,
         color: "white",
         opacity: 0.8,
         fontWeight: "600",
     },
     globalRanksRow: {
         flexDirection: "row",
-        gap: 16,
+        gap: 12,
         zIndex: 10,
     },
     rankSubCard: {
         flex: 1,
         backgroundColor: "rgba(255,255,255,0.12)",
-        borderRadius: 24,
-        padding: 20,
+        borderRadius: 16,
+        padding: 16,
         borderWidth: 1,
         borderColor: "rgba(255,255,255,0.2)",
     },
     rankAgency: {
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: "800",
         color: "white",
         opacity: 0.9,
-        marginBottom: 6,
+        marginBottom: 4,
     },
     rankNumber: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: "900",
         color: "white",
         marginBottom: 2,
     },
     rankScope: {
-        fontSize: 16,
-        fontWeight: "800",
-        color: "white",
-    },
-    ribbonOverlay: {
-        position: "absolute",
-        right: -20,
-        bottom: -20,
-        opacity: 0.4,
-    },
-    nationalRankCard: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "white",
-        padding: 24,
-        borderRadius: 24,
-        borderWidth: 1,
-        borderColor: "#F1F5F9",
-        gap: 20,
-    },
-    nationalIconBox: {
-        width: 56,
-        height: 56,
-        borderRadius: 16,
-        backgroundColor: "#F1F5F9",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    nationalRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 4,
-    },
-    nationalLabel: {
         fontSize: 13,
         fontWeight: "800",
-        color: "#64748B",
-    },
-    tierBadge: {
-        backgroundColor: "#EFF6FF",
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 10,
-    },
-    tierText: {
-        fontSize: 11,
-        fontWeight: "800",
-        color: THEME.blue,
-    },
-    nationalValue: {
-        fontSize: 24,
-        fontWeight: "900",
-        color: THEME.textDark,
-    },
-    nationalSub: {
-        fontSize: 14,
-        color: "#94A3B8",
-        fontWeight: "600",
+        color: "white",
     },
     courseSearchWrapper: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "white",
-        borderWidth: 1,
-        borderColor: "#E2E8F0",
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        height: 56,
-        marginBottom: 24,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderRadius: 14,
+        paddingHorizontal: 12,
+        height: 48,
+        marginBottom: 16,
     },
     courseInput: {
         flex: 1,
-        marginLeft: 12,
-        fontSize: 15,
+        marginLeft: 10,
+        fontSize: 14,
         fontWeight: "600",
-        color: THEME.textDark,
     },
     courseCard: {
-        backgroundColor: "white",
         borderRadius: 16,
         padding: 16,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: "#E2E8F0",
+        marginBottom: 12,
+        borderWidth: StyleSheet.hairlineWidth,
     },
     courseTopRow: {
-        marginBottom: 8,
+        marginBottom: 6,
     },
     categoryTag: {
         alignSelf: "flex-start",
-        backgroundColor: "#EFF6FF",
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 3,
         borderRadius: 6,
     },
     categoryTagText: {
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: "700",
-        color: THEME.secondary,
     },
     courseName: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: "800",
-        color: THEME.textDark,
-        lineHeight: 22,
-        marginBottom: 12,
+        lineHeight: 20,
+        marginBottom: 10,
     },
     courseDetails: {
         flexDirection: "row",
-        gap: 16,
-        marginBottom: 12,
+        gap: 14,
+        marginBottom: 10,
     },
     courseDetailItem: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
+        gap: 4,
     },
     courseDetailText: {
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: "500",
-        color: "#64748B",
     },
     courseDivider: {
-        height: 1,
-        backgroundColor: "#F1F5F9",
-        marginVertical: 12,
+        height: StyleSheet.hairlineWidth,
+        marginVertical: 10,
     },
     tuitionRowCompact: {
         flexDirection: "row",
@@ -1662,61 +1512,33 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     tuitionLabelCompact: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: "600",
-        color: "#94A3B8",
         marginBottom: 2,
     },
     tuitionValueCompact: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: "900",
-        color: THEME.secondary,
-    },
-    bottomActionWrap: {
-        paddingHorizontal: 24,
-        marginTop: 10,
-        marginBottom: 20,
-    },
-    shortlistBtn: {
-        backgroundColor: THEME.blue,
-        height: 64,
-        borderRadius: 20,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    shortlistBtnText: {
-        color: "white",
-        fontSize: 18,
-        fontWeight: "900",
-    },
-    shortlistActiveBtn: {
-        backgroundColor: "#F1F5F9",
-        borderWidth: 1.5,
-        borderColor: "#E2E8F0",
-    },
-    shortlistActiveBtnText: {
-        color: THEME.textDark,
     },
     noPhotosBox: {
-        padding: 40,
+        padding: 30,
         alignItems: "center",
         justifyContent: "center",
     },
     noPhotosText: {
-        fontSize: 14,
-        color: "#94A3B8",
+        fontSize: 13,
         fontWeight: "600",
     },
     galleryGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: 12,
-        paddingTop: 8,
+        gap: 10,
+        paddingTop: 4,
     },
     galleryItem: {
-        width: (width - 44) / 2,
-        height: 140,
-        borderRadius: 16,
+        width: (width - 40 - 10) / 2,
+        height: 125,
+        borderRadius: 14,
         overflow: "hidden",
         backgroundColor: "#F1F5F9",
     },
@@ -1734,9 +1556,9 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: Platform.OS === "ios" ? 60 : 40,
         right: 20,
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: "rgba(255,255,255,0.2)",
         justifyContent: "center",
         alignItems: "center",

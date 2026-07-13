@@ -75,13 +75,13 @@ export default function EditProfile() {
         style={{ flex: 1 }}
       >
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.border, paddingTop: Platform.OS === 'android' ? (insets.top || 30) + 10 : insets.top + 10 }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border, paddingTop: insets.top + 6 }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Feather name="chevron-left" size={28} color={colors.text} />
+            <Feather name="chevron-left" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
-          <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary + "15" }]} onPress={handleSave}>
-             <Text style={[styles.saveButtonText, { color: colors.primary }]}>Save</Text>
+          <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={handleSave}>
+             <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
         </View>
 
@@ -98,20 +98,20 @@ export default function EditProfile() {
                  {formData.profileImage ? (
                    <Image source={{ uri: formData.profileImage }} style={styles.avatarImage} />
                  ) : (
-                   <Ionicons name="person-circle-outline" size={60} color={colors.textSecondary} />
+                   <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} />
                  )}
               </View>
               <View style={[styles.cameraIcon, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-                  <Feather name="camera" size={16} color="white" />
+                  <Feather name="camera" size={14} color="white" />
               </View>
             </View>
-            <Text style={[styles.changePhotoText, { color: colors.primary }]}>Change Profile Photo</Text>
+            <Text style={[styles.changePhotoText, { color: colors.primary }]}>Change Photo</Text>
           </TouchableOpacity>
 
           {/* Form Fields */}
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Full Name</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
               <TextInput 
                 style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.name}
@@ -122,7 +122,7 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Username</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Username</Text>
               <TextInput 
                 style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.username}
@@ -134,7 +134,7 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Recent Field of Study</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Recent Field of Study</Text>
               <TextInput 
                 style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.recentAcademicField}
@@ -145,7 +145,7 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>CGPA / Percentage</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>CGPA / Percentage</Text>
               <TextInput 
                 style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.cgpa}
@@ -157,7 +157,7 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Passout Year</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Passout Year</Text>
               <TextInput 
                 style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={formData.passoutYear}
@@ -171,7 +171,7 @@ export default function EditProfile() {
           </View>
 
           {/* Additional Settings */}
-          <View style={[styles.footerInfo, { backgroundColor: colors.card }]}>
+          <View style={[styles.footerInfo, { backgroundColor: colors.card, borderColor: colors.border }]}>
              <Text style={[styles.footerText, { color: colors.textSecondary }]}>
                 Your profile information is used to personalize your university recommendations and study journey.
              </Text>
@@ -186,61 +186,58 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 20 : 40,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backButton: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: COLORS.textDark,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: -0.5,
   },
   saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: COLORS.primary + "15",
   },
   saveButtonText: {
-    color: COLORS.primary,
-    fontWeight: "bold",
-    fontSize: 15,
+    color: "white",
+    fontWeight: "800",
+    fontSize: 13,
   },
   scrollInner: {
-    padding: 24,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
   },
   avatarContainer: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 32,
   },
   avatarWrapper: {
     position: "relative",
-    width: 100,
-    height: 100,
+    width: 90,
+    height: 90,
   },
   avatarBox: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#F3F4F6",
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
   avatarImage: {
@@ -251,53 +248,47 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: COLORS.primary,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "white",
+    borderWidth: 1.5,
   },
   changePhotoText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: "600",
+    marginTop: 10,
+    fontSize: 13,
+    fontWeight: "700",
   },
   form: {
-    gap: 24,
+    gap: 16,
   },
   inputGroup: {
-    gap: 8,
+    gap: 6,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.textDark,
-    marginLeft: 4,
+    fontSize: 11,
+    fontWeight: "800",
+    marginLeft: 2,
+    letterSpacing: 0.5,
   },
   input: {
-    height: 56,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: COLORS.textDark,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   footerInfo: {
-    marginTop: 40,
-    padding: 20,
-    backgroundColor: COLORS.bgSubtle,
-    borderRadius: 20,
+    marginTop: 32,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   footerText: {
-    fontSize: 13,
-    color: COLORS.textGray,
+    fontSize: 12,
     lineHeight: 18,
     textAlign: "center",
+    fontWeight: "500",
   },
 });

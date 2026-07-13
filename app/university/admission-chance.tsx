@@ -188,43 +188,35 @@ export default function AdmissionChanceScreen() {
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.background }]} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={28} color={colors.text} />
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Feather name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Admission Chance</Text>
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => router.push("/(tabs)/profile")}
-        >
-          <ProfileAvatar size={44} color={colors.border} />
+        <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
+          <ProfileAvatar size={38} color={colors.border} />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* Summary Card */}
-        <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.summaryContent}>
-            <View style={styles.summaryLeft}>
-              <Text style={[styles.summaryTitle, { color: isDark ? colors.text : THEME.textDark }]}>Admission Percentage</Text>
-              <Text style={[styles.summaryValue, { color: isDark ? colors.text : THEME.textDark }]}>
-                {finalProb}% <Text style={[styles.summaryStatus, { color: isDark ? colors.text : THEME.textDark }]}>- {chanceLabel}</Text>
-              </Text>
-              <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
-                <View style={styles.orangeDot} />
-                <Text style={styles.averageBadgeText}>Average Cost</Text>
-              </View>
-            </View>
-            <View style={styles.chartContainer}>
-              <Ionicons name="pie-chart" size={60} color={colors.primary} />
-            </View>
+        <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>ADMISSION MATCH RATE</Text>
+          <Text style={[styles.summaryValue, { color: colors.text }]}>
+            {finalProb}% <Text style={[styles.summaryStatus, { color: colors.primary }]}>({chanceLabel})</Text>
+          </Text>
+          <View style={[styles.averageBadge, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <View style={[styles.statusDot, { backgroundColor: finalProb >= 65 ? THEME.green : THEME.orange }]} />
+            <Text style={[styles.averageBadgeText, { color: colors.textSecondary }]}>
+              {finalProb >= 65 ? "Competitive Profile" : "Improvement Suggested"}
+            </Text>
           </View>
-          <View style={styles.summaryDivider} />
+          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
           <View style={styles.summaryFooter}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+            <Ionicons name="information-circle-outline" size={15} color={colors.textSecondary} />
             <Text style={[styles.summaryFooterText, { color: colors.textSecondary }]}>
-              Opportunity for some universities. Room for improve.
+              Chances are estimates based on GPA & English scores. Complete your profile details for higher accuracy.
             </Text>
           </View>
         </View>
@@ -232,30 +224,30 @@ export default function AdmissionChanceScreen() {
         {/* Profile Analysis */}
         <View style={[styles.sectionBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity
-            style={[styles.sectionHeader, { backgroundColor: colors.card }]}
+            style={styles.sectionHeader}
             activeOpacity={0.7}
             onPress={() => setIsProfileExpanded(!isProfileExpanded)}
           >
-            <Text style={[styles.sectionTitleText, { color: colors.text }]}>Your Profile Analysis</Text>
-            <Feather name={isProfileExpanded ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitleText, { color: colors.text }]}>Your Profile Metrics</Text>
+            <Feather name={isProfileExpanded ? "chevron-up" : "chevron-down"} size={18} color={colors.textSecondary} />
           </TouchableOpacity>
 
           {isProfileExpanded && (
             <View style={[styles.sectionBody, { borderTopColor: colors.border }]}>
               <AnalysisItem
-                label="CGPA"
+                label="Academic CGPA"
                 value={gpaVal}
                 status={gpaStatus}
                 onPress={() => router.push("/setup/academics")}
               />
               <AnalysisItem
-                label="IELTS"
+                label="English Proficiency"
                 value={engVal}
                 status={engStatus}
                 onPress={() => router.push("/setup/english-test")}
               />
               <AnalysisItem
-                label="Course Competitiveness"
+                label="Target Major"
                 value={userData.fieldOfStudy || "General"}
                 status="success"
                 onPress={() => router.push("/setup/field-of-study")}
@@ -266,13 +258,14 @@ export default function AdmissionChanceScreen() {
         </View>
 
         {/* Universities By Risk Level */}
-        <Text style={[styles.riskTitle, { color: colors.text }]}>Universities By Risk Level</Text>
+        <Text style={[styles.riskTitle, { color: colors.text }]}>Target Institutions</Text>
         <View style={[styles.riskTabs, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {(['Safe', 'Moderate', 'Ambitious'] as const).map((level) => (
             <TouchableOpacity
               key={level}
               style={[styles.riskTab, activeRiskLevel === level && { backgroundColor: colors.primary }]}
               onPress={() => setActiveRiskLevel(level)}
+              activeOpacity={0.8}
             >
               <Text style={activeRiskLevel === level ? styles.riskTabTextActive : [styles.riskTabText, { color: colors.textSecondary }]}>
                 {level}
@@ -282,128 +275,91 @@ export default function AdmissionChanceScreen() {
         </View>
 
         {loading ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
-            {[1, 2, 3].map((key) => (
-              <View
-                key={key}
-                style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              >
-                <View style={styles.uniImageContainer}>
-                  <Skeleton width="100%" height={140} borderRadius={0} />
-                </View>
-                <View style={styles.uniCardContent}>
-                  <Skeleton width={180} height={18} borderRadius={4} style={{ marginBottom: 8 }} />
-                  <Skeleton width={140} height={14} borderRadius={4} style={{ marginBottom: 8 }} />
-                  <Skeleton width={80} height={16} borderRadius={4} />
-                </View>
+          [1, 2, 3].map((key) => (
+            <View key={key} style={[styles.uniListRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Skeleton width={48} height={48} borderRadius={12} />
+              <View style={{ flex: 1, marginLeft: 12, gap: 8 }}>
+                <Skeleton width="70%" height={16} borderRadius={4} />
+                <Skeleton width="45%" height={12} borderRadius={4} />
               </View>
-            ))}
-          </ScrollView>
+              <Skeleton width={60} height={28} borderRadius={14} />
+            </View>
+          ))
         ) : currentList.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.uniCardsScroll}>
-            {currentList.map((uni) => {
-              const match = calculateAcceptanceChance(userData, uni);
-              return (
-                <TouchableOpacity
-                  key={uni.id}
-                  style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => router.push({
-                    pathname: "/university/[id]",
-                    params: { id: uni.id, country: uni.country, name: uni.name }
-                  })}
-                >
-                  <View style={styles.uniImageContainer}>
-                    <Image source={{ uri: uni.image || "" }} style={styles.uniImage} />
-                    <View style={[styles.matchBadge, { backgroundColor: isDark ? "rgba(0,0,0,0.8)" : "rgba(255, 255, 255, 0.9)" }]}>
-                      <Text style={[styles.matchText, { color: colors.primary }]}>{match.score}% Match</Text>
-                    </View>
+          currentList.map((uni) => {
+            const match = calculateAcceptanceChance(userData, uni);
+            const isSaved = userData.selectedUniversities?.some((u) => String(u.id) === String(uni.id));
+            return (
+              <TouchableOpacity
+                key={uni.id}
+                style={[styles.uniListRow, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => router.push({
+                  pathname: "/university/[id]",
+                  params: { id: uni.id, country: uni.country, name: uni.name }
+                })}
+                activeOpacity={0.7}
+              >
+                {/* Logo placeholder / school icon */}
+                <View style={[styles.uniLogoBox, { backgroundColor: isDark ? "#2C2C2E" : "#F8FAFC", borderColor: colors.border }]}>
+                  {uni.logo ? (
+                    <Image source={{ uri: uni.logo }} style={styles.uniLogo} resizeMode="contain" />
+                  ) : (
+                    <Ionicons name="school" size={20} color={colors.primary} />
+                  )}
+                </View>
+
+                {/* Info block */}
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={[styles.uniRowName, { color: colors.text }]} numberOfLines={1}>{uni.name}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                    <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
+                    <Text style={[styles.uniRowLocation, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
+                    {uni.tuition && uni.tuition !== "N/A" && (
+                      <>
+                        <Text style={{ color: colors.border }}>•</Text>
+                        <Text style={[styles.uniRowLocation, { color: colors.textSecondary }]}>{formatTuition(uni.tuition)}/yr</Text>
+                      </>
+                    )}
                   </View>
-                  <View style={styles.uniCardContent}>
-                    <Text style={[styles.uniCardName, { color: colors.text }]} numberOfLines={1}>{uni.name}</Text>
-                    <View style={styles.uniLocationRow}>
-                      <Ionicons name="location" size={14} color="#F97316" />
-                      <Text style={[styles.uniLocationText, { color: colors.textSecondary }]} numberOfLines={1}>{uni.location}</Text>
-                    </View>
-                    <View style={styles.uniCostRow}>
-                      <Text style={[styles.uniCostValue, { color: colors.text }]}>
-                        {formatTuition(uni.tuition)}
-                        <Text style={[styles.uniCostUnit, { color: colors.textSecondary }]}>/ year</Text>
-                      </Text>
-                      <View style={[
-                        styles.safeBadge,
-                        activeRiskLevel === 'Moderate' && { backgroundColor: "#FEF3C7" },
-                        activeRiskLevel === 'Ambitious' && { backgroundColor: "#FEE2E2" }
-                      ]}>
-                        <Text style={[
-                          styles.safeText,
-                          activeRiskLevel === 'Safe' && { color: "#10B981" },
-                          activeRiskLevel === 'Moderate' && { color: "#F97316" },
-                          activeRiskLevel === 'Ambitious' && { color: "#EF4444" }
-                        ]}>
-                          {activeRiskLevel}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.uniActions}>
-                      {(() => {
-                        const isSaved = userData.selectedUniversities?.some(
-                          (u) => String(u.id) === String(uni.id)
-                        );
-                        return (
-                          <TouchableOpacity
-                            style={[
-                              styles.saveBtn,
-                              { backgroundColor: isSaved ? colors.primary : colors.border }
-                            ]}
-                            activeOpacity={0.7}
-                            onPress={() => {
-                              if (isSaved) {
-                                setUserData((prev) => ({
-                                  ...prev,
-                                  selectedUniversities: prev.selectedUniversities.filter(
-                                    (u) => String(u.id) !== String(uni.id)
-                                  ),
-                                }));
-                              } else {
-                                selectUniversity({
-                                  id: uni.id,
-                                  name: uni.name,
-                                  location: uni.location || uni.country,
-                                  image: uni.image,
-                                  course: uni.course || "MSc Computer Science",
-                                  tuition: uni.tuition || "N/A",
-                                  tuitionValue: uni.tuitionValue,
-                                });
-                              }
-                            }}
-                          >
-                            <Text style={[styles.saveBtnText, { color: isSaved ? "white" : colors.primary }]}>
-                              {isSaved ? "Saved" : "Save"}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })()}
-                      <TouchableOpacity
-                        style={[styles.compareBtn, { backgroundColor: colors.primary + "15" }]}
-                        activeOpacity={0.7}
-                        onPress={() => router.push({
-                          pathname: "/university/[id]",
-                          params: { id: uni.id, country: uni.country, name: uni.name }
-                        })}
-                      >
-                        <Text style={[styles.compareBtnText, { color: colors.primary }]}>Compare</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                </View>
+
+                {/* Match Chip + Save */}
+                <View style={{ alignItems: "flex-end", gap: 6 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primary }}>{match.score}% Match</Text>
+                  <TouchableOpacity
+                    style={[styles.saveBtnMini, { backgroundColor: isSaved ? colors.primary : colors.primary + "15" }]}
+                    onPress={() => {
+                      if (isSaved) {
+                        setUserData((prev) => ({
+                          ...prev,
+                          selectedUniversities: prev.selectedUniversities.filter((u) => String(u.id) !== String(uni.id)),
+                        }));
+                      } else {
+                        selectUniversity({
+                          id: uni.id,
+                          name: uni.name,
+                          location: uni.location || uni.country,
+                          image: uni.image,
+                          course: uni.course || "MSc Computer Science",
+                          tuition: uni.tuition || "N/A",
+                          tuitionValue: uni.tuitionValue,
+                        });
+                      }
+                    }}
+                  >
+                    <Text style={[styles.saveBtnMiniText, { color: isSaved ? "white" : colors.primary }]}>
+                      {isSaved ? "Saved" : "Save"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            );
+          })
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons name="school-outline" size={48} color={colors.textSecondary} />
+            <Ionicons name="alert-circle-outline" size={32} color={colors.textSecondary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No universities categorized as "{activeRiskLevel}" for your current profile.
+              No universities categorized as "{activeRiskLevel}" match your profile.
             </Text>
           </View>
         )}
@@ -416,104 +372,75 @@ export default function AdmissionChanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: THEME.white,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 10,
-    paddingBottom: 20,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: THEME.white,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: THEME.textDark,
-  },
-  profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    overflow: "hidden",
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: -0.5,
   },
   scrollContent: {
     paddingBottom: 40,
     paddingHorizontal: 20,
+    paddingTop: 16,
   },
   summaryCard: {
-    backgroundColor: "#FDF9F3",
-    borderRadius: 32,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#FBEBD6",
-  },
-  summaryContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    borderRadius: 16,
+    padding: 18,
     marginBottom: 20,
-  },
-  summaryLeft: {
-    flex: 1,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   summaryTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: THEME.textDark,
-    marginBottom: 12,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    marginBottom: 10,
   },
   summaryValue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "900",
-    color: THEME.textDark,
     marginBottom: 12,
   },
   summaryStatus: {
     fontSize: 18,
-    fontWeight: "700",
-    color: THEME.textDark,
+    fontWeight: "800",
   },
   averageBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FBEBD6",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
     alignSelf: "flex-start",
+    borderWidth: StyleSheet.hairlineWidth,
     gap: 6,
   },
-  orangeDot: {
+  statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: THEME.orange,
   },
   averageBadgeText: {
     fontSize: 11,
-    fontWeight: "800",
-    color: THEME.orange,
-  },
-  chartContainer: {
-    width: 80,
-    height: 80,
-    justifyContent: "center",
-    alignItems: "center",
+    fontWeight: "700",
   },
   summaryDivider: {
-    height: 1,
-    backgroundColor: "rgba(0,0,0,0.05)",
-    marginBottom: 16,
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 14,
   },
   summaryFooter: {
     flexDirection: "row",
@@ -522,263 +449,131 @@ const styles = StyleSheet.create({
   },
   summaryFooterText: {
     fontSize: 11,
-    color: THEME.textGray,
     fontWeight: "500",
+    lineHeight: 16,
+    flex: 1,
   },
   sectionBox: {
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: THEME.divider,
-    backgroundColor: THEME.white,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
     marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
-    backgroundColor: THEME.white,
+    padding: 16,
   },
   sectionTitleText: {
     fontSize: 15,
     fontWeight: "800",
-    color: THEME.textDark,
   },
   sectionBody: {
-    borderTopWidth: 1,
-    borderTopColor: THEME.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingVertical: 4,
   },
   analysisItemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: THEME.divider,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   analysisLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     flex: 1,
   },
   analysisLabel: {
-    fontSize: 14,
-    color: THEME.textDark,
+    fontSize: 13,
     fontWeight: "700",
+    flex: 1,
   },
   analysisValueText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
-    color: THEME.textGray,
-  },
-  factorItemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: THEME.divider,
-  },
-  factorLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  factorIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#FFF3E0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  factorLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: THEME.textDark,
   },
   riskTitle: {
     fontSize: 16,
-    fontWeight: "900",
-    color: THEME.textDark,
-    marginTop: 10,
-    marginBottom: 16,
+    fontWeight: "800",
+    marginTop: 8,
+    marginBottom: 12,
   },
   riskTabs: {
     flexDirection: "row",
-    backgroundColor: THEME.white,
     padding: 4,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: THEME.divider,
-    marginBottom: 20,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 16,
   },
   riskTab: {
     flex: 1,
-    height: 44,
+    height: 38,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 20,
-  },
-  riskTabActive: {
-    backgroundColor: THEME.blue,
+    borderRadius: 10,
   },
   riskTabText: {
     fontSize: 13,
     fontWeight: "700",
-    color: THEME.textGray,
   },
   riskTabTextActive: {
     fontSize: 13,
     fontWeight: "700",
-    color: THEME.white,
+    color: "#FFFFFF",
   },
-  uniCardsScroll: {
-    paddingBottom: 20,
+  uniListRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  uniCard: {
-    width: 280,
-    backgroundColor: THEME.white,
-    borderRadius: 24,
+  uniLogoBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: "center",
+    alignItems: "center",
     overflow: "hidden",
-    marginRight: 16,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 3,
   },
-  uniImageContainer: {
-    height: 140,
-    width: "100%",
-  },
-  uniImage: {
+  uniLogo: {
     width: "100%",
     height: "100%",
   },
-  matchBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+  uniRowName: {
+    fontSize: 14,
+    fontWeight: "700",
   },
-  matchText: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: THEME.blue,
-  },
-  uniCardContent: {
-    padding: 16,
-  },
-  uniCardName: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: THEME.textDark,
-    marginBottom: 8,
-  },
-  uniLocationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 12,
-  },
-  uniLocationText: {
-    fontSize: 12,
-    color: THEME.textGray,
-    fontWeight: "600",
-  },
-  uniCostRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  uniCostValue: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: THEME.textDark,
-  },
-  uniCostUnit: {
+  uniRowLocation: {
     fontSize: 11,
-    color: THEME.textGray,
     fontWeight: "500",
   },
-  safeBadge: {
-    backgroundColor: "#DCFCE7",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  safeText: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: THEME.green,
-  },
-  uniActions: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  saveBtn: {
-    flex: 1,
-    height: 44,
+  saveBtnMini: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 12,
-    backgroundColor: "#FFF7ED",
-    justifyContent: "center",
-    alignItems: "center",
   },
-  saveBtnText: {
-    color: THEME.orange,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  compareBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "#E0F2FE",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  compareBtnText: {
-    color: THEME.blue,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  loaderContainer: {
-    height: 180,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loaderText: {
-    marginTop: 12,
-    color: THEME.textGray,
-    fontWeight: "500",
+  saveBtnMiniText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
   emptyContainer: {
-    paddingVertical: 40,
+    paddingVertical: 32,
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
   },
   emptyText: {
-    marginTop: 12,
+    fontSize: 13,
     textAlign: "center",
-    color: THEME.textGray,
-    paddingHorizontal: 20,
-    lineHeight: 20,
+    paddingHorizontal: 24,
+    lineHeight: 18,
+    fontWeight: "500",
   },
 });
