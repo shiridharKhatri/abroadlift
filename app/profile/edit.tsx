@@ -94,9 +94,9 @@ export default function EditProfile() {
             activeOpacity={0.8}
           >
             <View style={styles.avatarWrapper}>
-              <View style={[styles.avatarBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.avatarBox, { backgroundColor: colors.card, borderColor: formData.profileImage ? 'transparent' : colors.border, borderWidth: formData.profileImage ? 0 : StyleSheet.hairlineWidth }]}>
                  {formData.profileImage ? (
-                   <Image source={{ uri: formData.profileImage }} style={styles.avatarImage} />
+                   <Image source={{ uri: formData.profileImage }} style={[styles.avatarImage, { borderRadius: 45 }]} />
                  ) : (
                    <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} />
                  )}

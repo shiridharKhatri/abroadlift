@@ -14,10 +14,10 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ size, color = "#CB
 
   if (userData.profileImage) {
     return (
-      <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }, style]}>
+      <View style={[styles.container, { width: size, height: size, borderRadius: size / 2, borderWidth: 0 }, style]}>
         <Image
           source={{ uri: userData.profileImage }}
-          style={styles.image as ImageStyle}
+          style={[styles.image, { borderRadius: size / 2 }] as ImageStyle}
           resizeMode="cover"
         />
       </View>

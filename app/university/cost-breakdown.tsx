@@ -19,6 +19,7 @@ import { getCostEstimate, getCostOfLiving, getRelocationIndex, getUniversityDeta
 import { ActivityIndicator } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { Skeleton } from "../../components/Skeleton";
+import Svg, { Circle } from "react-native-svg";
 
 const { width } = Dimensions.get("window");
 
@@ -330,58 +331,134 @@ export default function CostBreakdownScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+        stickyHeaderIndices={[1]}
+      >
 
-        {/* University Card */}
-        {uniData && (
-          <View style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            {uniData.logo || uniData.image ? (
-              <Image 
-                source={{ uri: uniData.logo || uniData.image }} 
-                style={[styles.uniLogo, { backgroundColor: isDark ? colors.border : "#F8FAFF" }]} 
-              />
-            ) : (
-              <View style={[styles.uniLogoPlaceholder, { backgroundColor: colors.border }]}>
-                <Ionicons name="school" size={24} color={colors.textSecondary} />
-              </View>
-            )}
-            <View style={styles.uniDetails}>
-              <Text style={[styles.uniName, { color: colors.text }]} numberOfLines={1}>
-                {uniData.name}
-              </Text>
-              <View style={styles.uniLocationRow}>
-                <Ionicons name="location-sharp" size={14} color={THEME.primary} />
-                <Text style={[styles.uniLocation, { color: colors.textSecondary }]}>
-                  {uniData.location}
+        {/* Index 0: University Card Wrapper */}
+        <View>
+          {uniData && (
+            <View style={[styles.uniCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {uniData.logo || uniData.image ? (
+                <Image 
+                  source={{ uri: uniData.logo || uniData.image }} 
+                  style={[styles.uniLogo, { backgroundColor: isDark ? colors.border : "#F8FAFF" }]} 
+                />
+              ) : (
+                <View style={[styles.uniLogoPlaceholder, { backgroundColor: colors.border }]}>
+                  <Ionicons name="school" size={24} color={colors.textSecondary} />
+                </View>
+              )}
+              <View style={styles.uniDetails}>
+                <Text style={[styles.uniName, { color: colors.text }]} numberOfLines={1}>
+                  {uniData.name}
                 </Text>
+                <View style={styles.uniLocationRow}>
+                  <Ionicons name="location-sharp" size={14} color={THEME.primary} />
+                  <Text style={[styles.uniLocation, { color: colors.textSecondary }]}>
+                    {uniData.location}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          )}
+        </View>
 
-        {/* Summary Card */}
-        <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.summaryContent}>
-            <View style={styles.summaryLeft}>
-              <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>{displayTotalTitle}</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>{fmtNpr(displayTotalCost)}</Text>
-              <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
-                <View style={styles.orangeDot} />
-                <Text style={styles.averageBadgeText}>{actualCountry} Average</Text>
+        {/* Index 1: Sticky Summary Card */}
+        <View style={{ backgroundColor: colors.background, paddingVertical: 8 }}>
+          <View style={[styles.summaryCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }, { marginBottom: 0 }]}>
+            <View style={styles.summaryContent}>
+              <View style={styles.summaryLeft}>
+                <Text style={[styles.summaryTitle, { color: colors.textSecondary }]}>{displayTotalTitle}</Text>
+                <Text style={[styles.summaryValue, { color: colors.text }]}>{fmtNpr(displayTotalCost)}</Text>
+                <View style={[styles.averageBadge, isDark && { backgroundColor: colors.border }]}>
+                  <View style={styles.orangeDot} />
+                  <Text style={styles.averageBadgeText}>{actualCountry} Average</Text>
+                </View>
+              </View>
+              <View style={styles.chartContainer}>
+                 {(() => {
+                   const total = (tuitionValue || 0) + (rentValue || 0) + (foodValue || 0);
+                   const safeTotal = total > 0 ? total : 1;
+
+                   const tuitionPct = (tuitionValue || 0) / safeTotal;
+                   const rentPct = (rentValue || 0) / safeTotal;
+                   const foodPct = (foodValue || 0) / safeTotal;
+
+                   const R = 24;
+                   const C = 2 * Math.PI * R;
+
+                   const tuitionStroke = C * tuitionPct;
+                   const rentStroke = C * rentPct;
+                   const foodStroke = C * foodPct;
+
+                   return (
+                     <Svg width={70} height={70} viewBox="0 0 70 70">
+                       <Circle
+                         cx={35}
+                         cy={35}
+                         r={R}
+                         stroke={isDark ? "#2C2C2E" : "#E2E8F0"}
+                         strokeWidth={8}
+                         fill="transparent"
+                       />
+                       {/* Tuition Segment */}
+                       {tuitionStroke > 0 && (
+                         <Circle
+                           cx={35}
+                           cy={35}
+                           r={R}
+                           stroke="#F97316"
+                           strokeWidth={8}
+                           strokeDasharray={`${tuitionStroke} ${C}`}
+                           strokeDashoffset={0}
+                           fill="transparent"
+                           origin="35, 35"
+                           rotation={-90}
+                         />
+                       )}
+                       {/* Rent Segment */}
+                       {rentStroke > 0 && (
+                         <Circle
+                           cx={35}
+                           cy={35}
+                           r={R}
+                           stroke="#3B82F6"
+                           strokeWidth={8}
+                           strokeDasharray={`${rentStroke} ${C}`}
+                           strokeDashoffset={-tuitionStroke}
+                           fill="transparent"
+                           origin="35, 35"
+                           rotation={-90}
+                         />
+                       )}
+                       {/* Food Segment */}
+                       {foodStroke > 0 && (
+                         <Circle
+                           cx={35}
+                           cy={35}
+                           r={R}
+                           stroke="#10B981"
+                           strokeWidth={8}
+                           strokeDasharray={`${foodStroke} ${C}`}
+                           strokeDashoffset={-(tuitionStroke + rentStroke)}
+                           fill="transparent"
+                           origin="35, 35"
+                           rotation={-90}
+                         />
+                       )}
+                     </Svg>
+                   );
+                 })()}
               </View>
             </View>
-            <View style={styles.chartContainer}>
-               <View style={[styles.donutBase, { borderColor: colors.border }]}>
-                  <View style={[styles.donutSegment, { borderColor: '#3B82F6', borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '45deg' }] }]} />
-                  <View style={[styles.donutSegment, { borderColor: '#10B981', borderBottomColor: 'transparent', borderRightColor: 'transparent', transform: [{ rotate: '-45deg' }] }]} />
-                  <View style={[styles.donutSegment, { borderColor: '#F97316', borderTopColor: 'transparent', borderRightColor: 'transparent', width: 66, height: 66, top: -10, left: -10, transform: [{ rotate: '120deg' }] }]} />
-               </View>
+            <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.summaryFooter}>
+              <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+              <Text style={[styles.summaryFooterText, { color: colors.textSecondary }]}>Cost based on country, lifestyle, university.</Text>
             </View>
-          </View>
-          <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-          <View style={styles.summaryFooter}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
-            <Text style={[styles.summaryFooterText, { color: colors.textSecondary }]}>Cost based on country, lifestyle, university.</Text>
           </View>
         </View>
 
@@ -717,23 +794,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  donutBase: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 12,
-    borderColor: "#E2E8F0",
-    position: 'relative',
-  },
-  donutSegment: {
-    position: 'absolute',
-    top: -12,
-    left: -12,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 12,
-  },
+
   summaryDivider: {
     height: 1,
     backgroundColor: "#FDEED7",

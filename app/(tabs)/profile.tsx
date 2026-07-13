@@ -57,7 +57,6 @@ export default function ProfileTab() {
   const insets = useSafeAreaInsets();
   const { userData, logout } = useUser();
   const { isDark, colors } = useTheme();
-  const [showNotificationsModal, setShowNotificationsModal] = React.useState(false);
 
   const handleEditPress = () => {
     router.push("/profile/edit");
@@ -115,9 +114,9 @@ export default function ProfileTab() {
         {/* Minimal Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.profileHeaderLeft}>
-            <View style={[styles.avatarInner, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <View style={[styles.avatarInner, { borderColor: userData.profileImage ? 'transparent' : colors.border, borderWidth: userData.profileImage ? 0 : 1, backgroundColor: colors.card }]}>
               {userData.profileImage ? (
-                <Image source={{ uri: userData.profileImage }} style={styles.avatarImage} />
+                <Image source={{ uri: userData.profileImage }} style={[styles.avatarImage, { borderRadius: 34 }]} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
                   <Text style={[styles.avatarLetter, { color: colors.primary }]}>
@@ -183,29 +182,9 @@ export default function ProfileTab() {
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>SETTINGS</Text>
           <View style={[styles.cardBlock, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]} onPress={() => router.push("/(tabs)/recent")}>
-              <Text style={[styles.menuItemText, { color: colors.text }]}>Saved Universities</Text>
-              <Feather name="chevron-right" size={18} color={colors.border} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]} onPress={() => setShowNotificationsModal(true)}>
-              <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
-              <View style={styles.menuValueBox}>
-                {dynamicNotifications.length > 0 && (
-                  <View style={[styles.badge, { backgroundColor: THEME.primary }]}>
-                    <Text style={styles.badgeText}>{dynamicNotifications.length}</Text>
-                  </View>
-                )}
-                <Feather name="chevron-right" size={18} color={colors.border} />
-              </View>
-            </TouchableOpacity>
 
 
 
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]} onPress={() => router.push("/profile/edit")}>
-              <Text style={[styles.menuItemText, { color: colors.text }]}>Account Details</Text>
-              <Feather name="chevron-right" size={18} color={colors.border} />
-            </TouchableOpacity>
 
             <TouchableOpacity style={styles.menuItem} onPress={logout}>
               <Text style={[styles.menuItemText, { color: THEME.red }]}>Log Out</Text>
@@ -217,20 +196,7 @@ export default function ProfileTab() {
 
 
 
-      {/* Notifications Modal */}
-      <Modal animationType="fade" transparent={true} visible={showNotificationsModal} onRequestClose={() => setShowNotificationsModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowNotificationsModal(false)}>
-          <View style={[styles.modalCenterContent, { backgroundColor: colors.card, borderColor: colors.border, minHeight: 300 }]}>
-            <Text style={[styles.modalTitleCenter, { color: colors.text }]}>Notifications</Text>
-            {dynamicNotifications.map((notif, index) => (
-              <View key={notif.id} style={[styles.notificationItem, { borderBottomColor: colors.border, borderBottomWidth: index === dynamicNotifications.length - 1 ? 0 : StyleSheet.hairlineWidth }]}>
-                <Text style={[styles.notifTitle, { color: colors.text }]}>{notif.title}</Text>
-                <Text style={[styles.notifBody, { color: colors.textSecondary }]}>{notif.body}</Text>
-              </View>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+
 
     </View>
   );
