@@ -14,6 +14,8 @@ type UserData = {
   studyLevel: string;
   fieldOfStudy: string;
   recentAcademicField?: string;
+  highestEducationLevel?: string;
+  educationStatus?: string;
   cgpa?: string;
   englishLevel?: string;
   score?: string;
@@ -49,6 +51,8 @@ const DEFAULT_USER_DATA: UserData = {
   studyLevel: "",
   fieldOfStudy: "",
   recentAcademicField: "",
+  highestEducationLevel: "",
+  educationStatus: "",
   cgpa: "",
   englishLevel: "",
   score: "",
@@ -121,6 +125,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 fieldOfStudy: storedObj.fieldOfStudy || profile.fieldOfStudy || "",
                 testType: storedObj.testType || profile.testType || "",
                 recentAcademicField: storedObj.recentAcademicField || profile.recentAcademicField || "",
+                highestEducationLevel: storedObj.highestEducationLevel || profile.highestEducationLevel || "",
+                educationStatus: storedObj.educationStatus || profile.educationStatus || "",
                 passoutYear: storedObj.passoutYear || profile.passoutYear || "",
                 intake: storedObj.intake || profile.intake || "",
                 englishLevel: storedObj.englishLevel || profile.englishLevel || "",
@@ -191,6 +197,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         fieldOfStudy: userData.fieldOfStudy || profile.fieldOfStudy || "",
         testType: userData.testType || profile.testType || "",
         recentAcademicField: userData.recentAcademicField || profile.recentAcademicField || "",
+        highestEducationLevel: userData.highestEducationLevel || profile.highestEducationLevel || "",
+        educationStatus: userData.educationStatus || profile.educationStatus || "",
         passoutYear: userData.passoutYear || profile.passoutYear || "",
         intake: userData.intake || profile.intake || "",
         englishLevel: userData.englishLevel || profile.englishLevel || "",

@@ -157,6 +157,10 @@ export default function UniversitySelectionSetup() {
     );
   }, [sortedUniversities, searchQuery]);
 
+  const handleBack = useCallback(() => {
+    router.back();
+  }, []);
+
   const handleSelect = useCallback((uni: any) => {
     selectUniversity(uni);
     router.push("/(tabs)/explore");
@@ -206,7 +210,7 @@ export default function UniversitySelectionSetup() {
         ]}
       >
         <View style={styles.topRow}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={handleBack}>
+          <TouchableOpacity style={[styles.backBtn, { backgroundColor: colors.card }]} onPress={handleBack}>
             <Feather name="chevron-left" size={28} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Selection</Text>

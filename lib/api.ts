@@ -207,6 +207,8 @@ export const updateProfile = async (userData: any, token: string): Promise<any> 
     fieldOfStudy: userData.fieldOfStudy,
     testType: userData.testType,
     recentAcademicField: userData.recentAcademicField,
+    highestEducationLevel: userData.highestEducationLevel,
+    educationStatus: userData.educationStatus,
     passoutYear: userData.passoutYear,
     intake: userData.intake,
     englishLevel: userData.englishLevel,

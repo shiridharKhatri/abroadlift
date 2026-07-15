@@ -106,7 +106,7 @@ export default function CountrySelection() {
       </View>
 
       <View style={styles.trackerContainer}>
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <View 
             key={i} 
             style={[

@@ -166,7 +166,7 @@ export default function ProfileTab() {
             />
             <PreferenceRow 
               label="Academic Background" 
-              value={userData.recentAcademicField ? `${userData.recentAcademicField}\n${userData.cgpa} CGPA (${userData.passoutYear})` : "Not Set"} 
+              value={(userData.highestEducationLevel || userData.recentAcademicField) ? `${userData.highestEducationLevel ? (userData.highestEducationLevel === "Bachelors" ? "Bachelor's Degree" : userData.highestEducationLevel === "Masters" ? "Master's Degree" : "Integrated Master's") : userData.recentAcademicField} (${userData.educationStatus || "Completed"})\n${userData.cgpa} CGPA (${userData.passoutYear})` : "Not Set"} 
               onPress={() => router.push("/setup/academics?edit=true")}
             />
             <PreferenceRow 

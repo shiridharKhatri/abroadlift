@@ -23,6 +23,7 @@ import { Skeleton } from "../../components/Skeleton";
 import { calculateAcceptanceChance, searchUniversities, UniversityResult } from "../../lib/api";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import Slider from "@react-native-community/slider";
 
 const { width, height } = Dimensions.get("window");
 
@@ -555,27 +556,46 @@ export default function UniversitySelection() {
               <View style={[styles.filterSection, { borderBottomColor: colors.border }]}>
                 <View style={styles.feeHeader}>
                   <Text style={[styles.filterLabel, { color: colors.text }]}>Max Tuition Fee / yr</Text>
-                  <Text style={[styles.feeValue, { color: colors.primary }]}>${Math.round(feeRange / 1000)}k</Text>
+                  <Text style={[styles.feeValue, { color: colors.primary }]}>
+                    ${feeRange > 0 ? feeRange.toLocaleString() : "0"}
+                  </Text>
                 </View>
-                {/* Simplified Slider using TouchableOpacity for demo */}
-                <View style={styles.sliderMock}>
-                  <TouchableOpacity
-                    style={styles.sliderFullWidth}
-                    activeOpacity={1}
-                    onPress={(e) => {
-                      const x = e.nativeEvent.locationX;
-                      const newFee = (x / (width - 48)) * 100000;
-                      setFeeRange(Math.max(20000, Math.min(100000, newFee)));
-                    }}
-                  >
-                    <View style={[styles.sliderTrack, { backgroundColor: colors.border }]} />
-                    <View style={[styles.sliderFill, { backgroundColor: colors.primary, width: `${(feeRange / 100000) * 100}%` }]} />
-                    <View style={[styles.sliderThumb, { borderColor: colors.card, backgroundColor: colors.primary, left: `${(feeRange / 100000) * 100}%` }]} />
-                  </TouchableOpacity>
-                </View>
+                
+                <Slider
+                  minimumValue={10000}
+                  maximumValue={150000}
+                  step={1000}
+                  value={Math.min(150000, Math.max(10000, feeRange))}
+                  onValueChange={(val) => setFeeRange(val)}
+                  minimumTrackTintColor={colors.primary}
+                  maximumTrackTintColor={isDark ? "#2C2C2E" : "#E2E8F0"}
+                  thumbTintColor={colors.primary}
+                  style={{ width: '100%', height: 40 }}
+                />
+
                 <View style={styles.feeRange}>
-                  <Text style={[styles.rangeText, { color: colors.textSecondary }]}>$20k</Text>
-                  <Text style={[styles.rangeText, { color: colors.textSecondary }]}>$100k+</Text>
+                  <Text style={[styles.rangeText, { color: colors.textSecondary }]}>$10k</Text>
+                  <Text style={[styles.rangeText, { color: colors.textSecondary }]}>$150k+</Text>
+                </View>
+
+                {/* Input for exact amount */}
+                <View style={styles.exactInputContainer}>
+                  <Text style={[styles.exactInputLabel, { color: colors.textSecondary }]}>Or enter exact amount:</Text>
+                  <View style={[styles.exactInputWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.currencyPrefix, { color: colors.textSecondary }]}>$</Text>
+                    <TextInput
+                      style={[styles.exactTextInput, { color: colors.text }]}
+                      keyboardType="numeric"
+                      value={feeRange > 0 ? String(Math.round(feeRange)) : ""}
+                      onChangeText={(val) => {
+                        const cleanVal = val.replace(/[^0-9]/g, "");
+                        const num = parseInt(cleanVal, 10);
+                        setFeeRange(isNaN(num) ? 0 : num);
+                      }}
+                      placeholder="e.g. 45000"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                  </View>
                 </View>
               </View>
 
@@ -1007,44 +1027,34 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: THEME.primary,
   },
-  sliderMock: {
-    height: 30,
-    justifyContent: "center",
-    position: "relative",
-    marginBottom: 12,
+  exactInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 12,
   },
-  sliderFullWidth: {
-    width: '100%',
-    height: 30,
-    justifyContent: "center",
+  exactInputLabel: {
+    fontSize: 14,
   },
-  sliderTrack: {
-    height: 6,
-    backgroundColor: "#E2E8F0",
-    borderRadius: 3,
+  exactInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 38,
+    width: 140,
   },
-  sliderFill: {
-    position: "absolute",
-    height: 6,
-    backgroundColor: THEME.primary,
-    borderRadius: 3,
-    top: 12,
+  currencyPrefix: {
+    marginRight: 4,
+    fontSize: 14,
+    fontWeight: "600",
   },
-  sliderThumb: {
-    position: "absolute",
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: THEME.primary,
-    borderWidth: 4,
-    borderColor: THEME.white,
-    top: 3,
-    marginLeft: -12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+  exactTextInput: {
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
+    fontWeight: "600",
   },
   feeRange: {
     flexDirection: "row",

@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   TextInput,
@@ -29,23 +28,38 @@ const COLORS = {
   borderLight: "#F1F5F9",
 };
 
+const EDUCATION_LEVELS = [
+  { id: "Bachelors", label: "BACHELOR'S DEGREE", icon: "ribbon-outline", provider: "Ionicons" },
+  { id: "Masters", label: "MASTER'S DEGREE", icon: "ribbon-outline", provider: "Ionicons" },
+  { id: "Integrated", label: "INTEGRATED MASTER'S", icon: "sparkles-outline", provider: "Ionicons" },
+];
+
+const STATUS_OPTIONS = [
+  { id: "Pursuing", label: "PURSUING", desc: "Currently enrolled", icon: "time-outline" },
+  { id: "Completed", label: "COMPLETED", desc: "Already graduated", icon: "checkmark-circle-outline" },
+];
+
+const YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012];
+
 export default function AcademicsSetup() {
   const { userData, setUserData } = useUser();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [recentField, setRecentField] = useState(userData.recentAcademicField || "");
+
+  const [highestLevel, setHighestLevel] = useState(userData.highestEducationLevel || "");
+  const [status, setStatus] = useState(userData.educationStatus || "");
   const [cgpa, setCgpa] = useState(userData.cgpa || "");
-  const [passoutYear, setPassoutYear] = useState(userData.passoutYear || "");
+  const [passoutYear, setPassoutYear] = useState(userData.passoutYear ? parseInt(userData.passoutYear) : null);
   const [cgpaError, setCgpaError] = useState("");
-  const [yearError, setYearError] = useState("");
 
   const handleContinue = () => {
     setUserData(prev => ({
       ...prev,
-      recentAcademicField: recentField,
+      highestEducationLevel: highestLevel,
+      educationStatus: status,
       cgpa: cgpa,
-      passoutYear: passoutYear,
+      passoutYear: passoutYear ? String(passoutYear) : "",
     }));
     if (edit === "true") {
       router.back();
@@ -55,14 +69,11 @@ export default function AcademicsSetup() {
   };
 
   const isFormValid = 
-    recentField.trim().length > 0 && 
+    highestLevel !== "" && 
+    status !== "" && 
     cgpa.trim().length > 0 && 
-    parseFloat(cgpa) <= 100.0 &&
-    passoutYear.trim().length === 4 &&
-    parseInt(passoutYear) >= 1950 &&
-    parseInt(passoutYear) <= 2035 &&
     !cgpaError &&
-    !yearError;
+    passoutYear !== null;
 
   const handleCgpaChange = (text: string) => {
     setCgpa(text);
@@ -77,20 +88,6 @@ export default function AcademicsSetup() {
       }
     } else {
       setCgpaError("");
-    }
-  };
-
-  const handleYearChange = (text: string) => {
-    setPassoutYear(text);
-    if (text.length === 4) {
-      const year = parseInt(text);
-      if (year < 1950 || year > 2035) {
-        setYearError("Please enter a valid year (1950-2035)");
-      } else {
-        setYearError("");
-      }
-    } else {
-      setYearError("");
     }
   };
 
@@ -111,82 +108,129 @@ export default function AcademicsSetup() {
       </View>
 
       <View style={styles.trackerContainer}>
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <View 
             key={i} 
             style={[
               styles.trackerSegment, 
               { backgroundColor: colors.border },
-              i === 4 && { backgroundColor: colors.primary }
+              i === 3 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.questionText, { color: colors.textSecondary }]}>Tell us about your education</Text>
+        <Text style={[styles.questionText, { color: colors.textSecondary }]}>Tell us about your background</Text>
 
-        {/* Input Cards */}
-        <View style={styles.form}>
-          
-          {/* Field of Study Card */}
-          <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Recent Field of Study</Text>
-            <View style={styles.textInputWrapper}>
-              <Feather name="book-open" size={18} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.textInput, { color: colors.text }]}
-                placeholder="e.g. Computer Science, High School (Science)"
-                placeholderTextColor={colors.textSecondary}
-                value={recentField}
-                onChangeText={setRecentField}
-              />
-            </View>
+        {/* Highest Education Level */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Highest Education Level</Text>
+          <View style={styles.levelRow}>
+            {EDUCATION_LEVELS.map((level) => {
+              const isSelected = highestLevel === level.id;
+              return (
+                <TouchableOpacity
+                  key={level.id}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.levelCard,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + "10" }
+                  ]}
+                  onPress={() => setHighestLevel(level.id)}
+                >
+                  <Ionicons 
+                    name={level.icon as any} 
+                    size={22} 
+                    color={isSelected ? colors.primary : colors.textSecondary} 
+                    style={styles.levelIcon}
+                  />
+                  <Text style={[styles.levelLabelText, { color: colors.textSecondary }, isSelected && { color: colors.primary, fontWeight: "800" }]}>
+                    {level.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+        </View>
 
-          {/* CGPA Card */}
-          <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.inputLabel, { color: colors.text }]}>CGPA / Percentage</Text>
-            <View style={styles.textInputWrapper}>
-              <Feather name="trending-up" size={18} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.textInput, { color: colors.text }]}
-                placeholder="e.g. 3.8 (out of 4.0), 8.5 (out of 10), 85%"
-                placeholderTextColor={colors.textSecondary}
-                value={cgpa}
-                onChangeText={handleCgpaChange}
-                keyboardType="numeric"
-              />
-            </View>
-            {cgpaError ? <Text style={styles.errorText}>{cgpaError}</Text> : null}
+        {/* Education Status */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Education Status</Text>
+          <View style={styles.statusRow}>
+            {STATUS_OPTIONS.map((opt) => {
+              const isSelected = status === opt.id;
+              return (
+                <TouchableOpacity
+                  key={opt.id}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.statusCard,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + "10" }
+                  ]}
+                  onPress={() => setStatus(opt.id)}
+                >
+                  <Ionicons 
+                    name={opt.icon as any} 
+                    size={24} 
+                    color={isSelected ? colors.primary : colors.textSecondary} 
+                  />
+                  <View style={styles.statusTextContainer}>
+                    <Text style={[styles.statusLabelText, { color: colors.text }, isSelected && { color: colors.primary, fontWeight: "800" }]}>
+                      {opt.label}
+                    </Text>
+                    <Text style={[styles.statusDescText, { color: colors.textSecondary }]}>
+                      {opt.desc}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+        </View>
 
-          {/* Passout Year Card */}
-          <View style={[styles.inputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Passout Year</Text>
-            <View style={styles.textInputWrapper}>
-              <Feather name="calendar" size={18} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.textInput, { color: colors.text }]}
-                placeholder="e.g. 2024"
-                placeholderTextColor={colors.textSecondary}
-                value={passoutYear}
-                onChangeText={handleYearChange}
-                keyboardType="numeric"
-                maxLength={4}
-              />
-            </View>
-            {yearError ? <Text style={styles.errorText}>{yearError}</Text> : null}
+        {/* Academics Score */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Academics Score</Text>
+          <View style={[styles.scoreInputCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <TextInput
+              style={[styles.scoreInput, { color: colors.text }]}
+              placeholder="e.g. 3.8"
+              placeholderTextColor={colors.textSecondary}
+              value={cgpa}
+              onChangeText={handleCgpaChange}
+              keyboardType="numeric"
+            />
           </View>
+          {cgpaError ? <Text style={styles.errorText}>{cgpaError}</Text> : null}
+        </View>
 
-          {/* Dynamic Suggestion/Tip Box */}
-          <View style={[styles.infoCard, isDark ? { backgroundColor: colors.card, borderColor: colors.border } : { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" }]}>
-            <Ionicons name="trending-up" size={20} color={isDark ? colors.primary : "#10B981"} />
-            <Text style={[styles.infoText, { color: isDark ? colors.textSecondary : "#065F46" }]}>
-              A CGPA above 3.0/4.0 or 75% unlocks access to top tier schools and increases scholarship funding opportunities by up to 50%.
-            </Text>
+        {/* Year of Passing */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Year of Passing</Text>
+          <View style={styles.yearsGrid}>
+            {YEARS.map((y) => {
+              const isSelected = passoutYear === y;
+              return (
+                <TouchableOpacity
+                  key={y}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.yearButton,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + "15" }
+                  ]}
+                  onPress={() => setPassoutYear(y)}
+                >
+                  <Text style={[styles.yearButtonText, { color: colors.text }, isSelected && { color: colors.primary, fontWeight: "800" }]}>
+                    {y}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
-
         </View>
       </ScrollView>
 
@@ -239,68 +283,96 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   questionText: {
-    fontSize: 16,
-    color: COLORS.textGray,
+    fontSize: 26,
+    color: COLORS.textDark,
     textAlign: "center",
     marginTop: 10,
+    marginBottom: 28,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  section: {
     marginBottom: 24,
-    fontWeight: "500",
   },
-  form: {
-    gap: 16,
-  },
-  inputCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: COLORS.borderLight,
-  },
-  inputLabel: {
+  sectionLabel: {
     fontSize: 12,
     fontWeight: "800",
-    color: COLORS.textGray,
-    marginBottom: 8,
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 1.0,
+    marginBottom: 12,
   },
-  textInputWrapper: {
+  levelRow: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.bgSubtle,
-    borderRadius: 12,
-    height: 48,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    gap: 10,
   },
-  inputIcon: {
-    marginRight: 10,
-    opacity: 0.5,
-  },
-  textInput: {
+  levelCard: {
     flex: 1,
-    fontSize: 15,
-    color: COLORS.textDark,
-    fontWeight: "600",
+    height: 90,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  infoCard: {
-    backgroundColor: "#ECFDF5",
-    borderWidth: 1,
-    borderColor: "#A7F3D0",
-    borderRadius: 20,
-    padding: 16,
+  levelIcon: {
+    marginBottom: 6,
+  },
+  levelLabelText: {
+    fontSize: 10,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  statusRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 8,
+  },
+  statusCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  statusTextContainer: {
+    flex: 1,
+  },
+  statusLabelText: {
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  statusDescText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  scoreInputCard: {
+    borderRadius: 18,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    height: 58,
+    justifyContent: "center",
+  },
+  scoreInput: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  yearsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  yearButton: {
+    width: (width - 48 - 40) / 5, // 5 columns
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    justifyContent: "center",
     alignItems: "center",
   },
-  infoText: {
-    flex: 1,
+  yearButtonText: {
     fontSize: 13,
-    color: "#065F46",
-    lineHeight: 18,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   footer: {
     padding: 24,
@@ -337,12 +409,6 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     width: 32,
-  },
-  trackerSegmentActive: {
-    backgroundColor: COLORS.primary,
-  },
-  trackerSegmentInactive: {
-    backgroundColor: "#E5E7EB",
   },
   errorText: {
     color: "#EF4444",

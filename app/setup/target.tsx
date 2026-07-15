@@ -104,13 +104,13 @@ export default function IntakeSetup() {
 
       {/* Progress Tracker (Step 6 of 7) */}
       <View style={styles.trackerContainer}>
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <View 
             key={i} 
             style={[
               styles.trackerSegment, 
               { backgroundColor: colors.border },
-              i === 6 && { backgroundColor: colors.primary }
+              i === 5 && { backgroundColor: colors.primary }
             ]} 
           />
         ))}

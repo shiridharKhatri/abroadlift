@@ -96,6 +96,7 @@ export default function UniversityDetails() {
     const [uniData, setUniData] = useState<UniversityDetail | null>(null);
     const [costData, setCostData] = useState<any>(null);
     const [activePhotoUrl, setActivePhotoUrl] = useState<string | null>(null);
+    const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
     const USD_TO_NPR = 134;
 
@@ -674,72 +675,142 @@ export default function UniversityDetails() {
                 </View>
 
                 {filtered.length > 0 ? (
-                    filtered.map((course: any, idx) => (
-                        <TouchableOpacity
-                            key={idx}
-                            style={[styles.courseCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                            activeOpacity={0.7}
-                            onPress={() => {
-                                router.push({
-                                    pathname: "/university/program-details",
-                                    params: {
-                                        name: course.name || "",
-                                        category: course.category || "",
-                                        level: JSON.stringify(course.level || []),
-                                        fee: course.fee || "",
-                                        description: course.description || "",
-                                        other_fees: JSON.stringify(course.other_fees || []),
-                                        coop: course.coop_participating ? "true" : "false",
-                                        pgwp: course.pgwp_participating ? "true" : "false",
-                                        universityName: details.title,
-                                        application_fee: course.application_fee || "",
-                                        delivery_method: course.delivery_method || "",
-                                        length_breakdown: course.length_breakdown || "",
-                                        language_of_instruction: course.language_of_instruction || "",
-                                        requirements: course.requirements ? JSON.stringify(course.requirements) : "",
-                                        country: uniData?.country || "",
-                                    },
-                                });
-                            }}
-                        >
-                            {/* Category Badge at the top left */}
-                            <View style={styles.courseTopRow}>
-                                <View style={[styles.categoryTag, { backgroundColor: colors.primary + "15" }]}>
-                                    <Text style={[styles.categoryTagText, { color: colors.primary }]}>
-                                        {(course.category || "General").toUpperCase()}
-                                    </Text>
-                                </View>
-                            </View>
+                    (() => {
+                        const grouped: Record<string, any[]> = {};
+                        filtered.forEach((course) => {
+                            const cat = course.category ? String(course.category).trim() : "General";
+                            const formattedCat = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+                            if (!grouped[formattedCat]) {
+                                grouped[formattedCat] = [];
+                            }
+                            grouped[formattedCat].push(course);
+                        });
 
-                            {/* Course Title taking full width */}
-                            <Text style={[styles.courseName, { color: colors.text }]}>{course.name}</Text>
+                        const sortedCategories = Object.keys(grouped).sort();
 
-                            {/* Course Details */}
-                            <View style={styles.courseDetails}>
-                                <View style={styles.courseDetailItem}>
-                                    <Ionicons name="time-outline" size={15} color={colors.textSecondary} />
-                                    <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>
-                                        {Array.isArray(course.level) ? course.level.join(", ") : (course.level || "2 - 4 Years")}
-                                    </Text>
-                                </View>
-                                <View style={styles.courseDetailItem}>
-                                    <Ionicons name="briefcase-outline" size={15} color={colors.textSecondary} />
-                                    <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>Full-time</Text>
-                                </View>
-                            </View>
+                        return sortedCategories.map((category) => {
+                            const isExpanded = !!expandedCategories[category];
+                            return (
+                                <View key={category} style={{ marginBottom: 12 }}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.categoryHeaderCard, 
+                                            { 
+                                                backgroundColor: colors.card, 
+                                                borderColor: colors.border,
+                                                marginBottom: isExpanded ? 12 : 4
+                                            }
+                                        ]}
+                                        activeOpacity={0.8}
+                                        onPress={() => {
+                                            setExpandedCategories(prev => ({
+                                                ...prev,
+                                                [category]: !prev[category]
+                                            }));
+                                        }}
+                                    >
+                                        <View style={styles.categoryHeaderLeft}>
+                                            <Ionicons 
+                                                name={
+                                                    category.toLowerCase().includes("engineering") ? "construct-outline" :
+                                                    category.toLowerCase().includes("science") || category.toLowerCase().includes("comput") || category.toLowerCase().includes("tech") ? "flask-outline" :
+                                                    category.toLowerCase().includes("business") || category.toLowerCase().includes("manag") || category.toLowerCase().includes("finan") ? "business-outline" :
+                                                    category.toLowerCase().includes("art") || category.toLowerCase().includes("design") ? "color-palette-outline" :
+                                                    category.toLowerCase().includes("health") || category.toLowerCase().includes("medic") || category.toLowerCase().includes("nurs") ? "heart-outline" :
+                                                    "book-outline"
+                                                } 
+                                                size={20} 
+                                                color={colors.primary} 
+                                                style={{ marginRight: 12 }}
+                                            />
+                                            <View>
+                                                <Text style={[styles.categoryHeaderTitle, { color: colors.text }]}>{category}</Text>
+                                                <Text style={[styles.categoryHeaderSub, { color: colors.textSecondary }]}>
+                                                    {grouped[category].length} {grouped[category].length === 1 ? "Program" : "Programs"}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Ionicons 
+                                            name={isExpanded ? "chevron-up" : "chevron-down"} 
+                                            size={18} 
+                                            color={colors.textSecondary} 
+                                        />
+                                    </TouchableOpacity>
 
-                            <View style={[styles.courseDivider, { backgroundColor: colors.border }]} />
+                                    {isExpanded && (
+                                        <View style={{ paddingLeft: 8 }}>
+                                            {grouped[category].map((course: any, idx) => (
+                                                <TouchableOpacity
+                                                    key={idx}
+                                                    style={[styles.courseCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                                                    activeOpacity={0.7}
+                                                    onPress={() => {
+                                                        router.push({
+                                                            pathname: "/university/program-details",
+                                                            params: {
+                                                                name: course.name || "",
+                                                                category: course.category || "",
+                                                                level: JSON.stringify(course.level || []),
+                                                                fee: course.fee || "",
+                                                                description: course.description || "",
+                                                                other_fees: JSON.stringify(course.other_fees || []),
+                                                                coop: course.coop_participating ? "true" : "false",
+                                                                pgwp: course.pgwp_participating ? "true" : "false",
+                                                                universityName: details.title,
+                                                                application_fee: course.application_fee || "",
+                                                                delivery_method: course.delivery_method || "",
+                                                                length_breakdown: course.length_breakdown || "",
+                                                                language_of_instruction: course.language_of_instruction || "",
+                                                                requirements: course.requirements ? JSON.stringify(course.requirements) : "",
+                                                                country: uniData?.country || "",
+                                                            },
+                                                        });
+                                                    }}
+                                                >
+                                                    {/* Category Tag */}
+                                                    <View style={styles.courseTopRow}>
+                                                        <View style={[styles.categoryTag, { backgroundColor: colors.primary + "15" }]}>
+                                                            <Text style={[styles.categoryTagText, { color: colors.primary }]}>
+                                                                {(course.category || "General").toUpperCase()}
+                                                            </Text>
+                                                        </View>
+                                                    </View>
 
-                            {/* Tuition Row */}
-                            <View style={styles.tuitionRowCompact}>
-                                <View>
-                                    <Text style={[styles.tuitionLabelCompact, { color: colors.textSecondary }]}>Annual Tuition</Text>
-                                    <Text style={[styles.tuitionValueCompact, { color: colors.primary }]}>{course.fee || "Varies"}</Text>
+                                                    {/* Course Title */}
+                                                    <Text style={[styles.courseName, { color: colors.text }]}>{course.name}</Text>
+
+                                                    {/* Course Details */}
+                                                    <View style={styles.courseDetails}>
+                                                        <View style={styles.courseDetailItem}>
+                                                            <Ionicons name="time-outline" size={15} color={colors.textSecondary} />
+                                                            <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>
+                                                                {Array.isArray(course.level) ? course.level.join(", ") : (course.level || "2 - 4 Years")}
+                                                            </Text>
+                                                        </View>
+                                                        <View style={styles.courseDetailItem}>
+                                                            <Ionicons name="briefcase-outline" size={15} color={colors.textSecondary} />
+                                                            <Text style={[styles.courseDetailText, { color: colors.textSecondary }]}>Full-time</Text>
+                                                        </View>
+                                                    </View>
+
+                                                    <View style={[styles.courseDivider, { backgroundColor: colors.border }]} />
+
+                                                    {/* Tuition Row */}
+                                                    <View style={styles.tuitionRowCompact}>
+                                                        <View>
+                                                            <Text style={[styles.tuitionLabelCompact, { color: colors.textSecondary }]}>Annual Tuition</Text>
+                                                            <Text style={[styles.tuitionValueCompact, { color: colors.primary }]}>{course.fee || "Varies"}</Text>
+                                                        </View>
+                                                        <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+                                                    </View>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color={colors.primary} />
-                            </View>
-                        </TouchableOpacity>
-                    ))
+                            );
+                        });
+                    })()
                 ) : (
                     <View style={[styles.noPhotosBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <Text style={[styles.noPhotosText, { color: colors.textSecondary }]}>
@@ -965,6 +1036,26 @@ export default function UniversityDetails() {
 }
 
 const styles = StyleSheet.create({
+    categoryHeaderCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+    },
+    categoryHeaderLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    categoryHeaderTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    categoryHeaderSub: {
+        fontSize: 12,
+        marginTop: 2,
+    },
     mapContainer: {
         height: 200,
         borderRadius: 24,

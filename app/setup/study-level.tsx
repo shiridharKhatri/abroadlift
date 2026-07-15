@@ -201,7 +201,7 @@ export default function StudyLevelSelection() {
       </View>
 
       <View style={styles.trackerContainer}>
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <View 
             key={i} 
             style={[
@@ -310,7 +310,7 @@ export default function StudyLevelSelection() {
             if (edit === "true") {
               router.back();
             } else {
-              router.push("/setup/field-of-study");
+              router.push("/setup/academics");
             }
           }}
         >
